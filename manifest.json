@@ -1,0 +1,22 @@
+{
+  "name": "AgriQ",
+  "short_name": "AgriQ",
+  "description": "Ultimate Agriculture Mock for MCEAR",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/535/535234.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/535/535234.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

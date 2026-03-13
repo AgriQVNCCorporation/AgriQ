@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Live Rankings</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #10b981;
+            --gold: #f59e0b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+        /* LOADER */
+        #leader-loader {
+            position: fixed; inset: 0; background: #ffffff; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s; 
+        }
+        #leader-loader.fade-out { opacity: 0; visibility: hidden; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; }
+        .brand span { color: var(--primary); }
+
+        /* LIVE DOT */
+        .live-tag {
+            font-size: 10px; font-weight: 800; color: var(--accent);
+            display: flex; align-items: center; gap: 5px; background: #f0fdf4;
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; }
+
+        .podium { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px; align-items: flex-end; margin: 20px 0 40px; }
+        .podium-item { background: white; border-radius: 24px; padding: 20px 10px; text-align: center; box-shadow: var(--card-shadow); border: 1.5px solid #f1f5f9; transition: 0.3s; }
+        .podium-1 { height: 180px; border-color: var(--gold); }
+        .podium-2 { height: 140px; }
+        .podium-3 { height: 120px; }
+        .p-name { font-weight: 800; font-size: 14px; display: block; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-score { font-size: 12px; font-weight: 700; color: var(--primary); }
+
+        .rank-card {
+            display: flex; align-items: center; gap: 15px;
+            background: white; padding: 18px; border-radius: 20px;
+            margin-bottom: 12px; border: 1px solid #f1f5f9; 
+            box-shadow: var(--card-shadow); transition: 0.3s;
+        }
+        
+        /* HIGHLIGHT FOR YOU */
+        .rank-card.is-me { background: #f0fdf4 !important; border: 2px solid var(--accent) !important; }
+        .me-badge { background: var(--accent); color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; margin-left: 8px; }
+
+        .rank-num { width: 35px; font-weight: 900; color: var(--text-dim); font-family: 'JetBrains Mono'; }
+        .user-info { flex: 1; }
+        .user-name { font-weight: 800; font-size: 15px; }
+        .user-meta { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
+        .user-score { font-weight: 900; color: var(--accent); font-family: 'JetBrains Mono'; font-size: 17px; }
+
+        .btn-home {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--text-main); color: white; padding: 16px 32px;
+            border-radius: 50px; text-decoration: none; font-weight: 800;
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="leader-loader">
+        <div class="spinner"></div>
+        <p style="font-weight: 700; color: var(--text-dim); margin-top: 15px;">Connecting to Live Data...</p>
+    </div>
+
+    <header>
+        <div class="brand">Agri<span>Q</span> Rankings</div>
+        <div class="live-tag"><div class="dot"></div> LIVE</div>
+    </header>
+
+    <main>
+        <div class="podium" id="podium-area"></div>
+        <div id="leaderboard-list"></div>
+        <div style="height: 100px;"></div>
+    </main>
+
+    <a href="index.html" class="btn-home"><i data-lucide="home"></i> Home</a>
+
+    <script>
+        lucide.createIcons();
+
+        // 1. UNIQUE DEVICE IDENTIFIER
+        if(!localStorage.getItem('agriq_uid')) {
+            localStorage.setItem('agriq_uid', 'u' + Date.now() + Math.random().toString(36).substr(2, 5));
+        }
+        const myUID = localStorage.getItem('agriq_uid');
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 2. LIVE LISTENING (This fixes the "not giving new data" issue)
+        database.ref('leaderboard').orderByChild('score').limitToLast(50).on('value', (snap) => {
+            let data = [];
+            snap.forEach(child => {
+                data.push(child.val());
+            });
+            data.reverse(); 
+            renderLeaderboard(data);
+
+            // Hide loader once first data arrives
+            document.getElementById('leader-loader').classList.add('fade-out');
+        });
+
+        function renderLeaderboard(users) {
+            const podium = document.getElementById('podium-area');
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = ""; 
+
+            // Podium
+            if (users.length >= 1) {
+                podium.innerHTML = `
+                    <div class="podium-item podium-2">
+                        <span>🥈</span><span class="p-name">${users[1]?.name || '---'}</span>
+                        <span class="p-score">${users[1]?.score || 0}%</span>
+                    </div>
+                    <div class="podium-item podium-1">
+                        <span>🥇</span><span class="p-name">${users[0].name}</span>
+                        <span class="p-score">${users[0].score}%</span>
+                    </div>
+                    <div class="podium-item podium-3">
+                        <span>🥉</span><span class="p-name">${users[2]?.name || '---'}</span>
+                        <span class="p-score">${users[2]?.score || 0}%</span>
+                    </div>
+                `;
+            }
+
+            // List
+            users.forEach((u, i) => {
+                const isMe = u.uid === myUID;
+                const card = document.createElement('div');
+                card.className = `rank-card ${isMe ? 'is-me' : ''}`;
+                card.innerHTML = `
+                    <div class="rank-num">#${i + 1}</div>
+                    <div class="user-info">
+                        <span class="user-name">${u.name} ${isMe ? '<span class="me-badge">YOU</span>' : ''}</span>
+                        <span class="user-meta">${u.subject || 'EXAM'}</span>
+                    </div>
+                    <div class="user-score">${u.score}%</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
