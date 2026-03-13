@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="apple-mobile-web-app-title" content="AgriQ">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-1.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-1.png">
+    <link rel="apple-touch-icon" href="favicon-1.png">
+
+    <title>AgriQ | Ultimate Agriculture Mock</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            /* Black & White Theme Palette */
+            --primary: #ffffff;
+            --primary-glow: rgba(255, 255, 255, 0.2);
+            --primary-soft: #1e1e1e;
+            --accent: #ffffff;
+            --bg: #000000;
+            --surface: #111111;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --danger: #ff4444;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --border: #27272a;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+        /* --- Custom Alert Popup Styles --- */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 28px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: translateY(20px); opacity: 0;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .alert-modal.active { transform: translateY(0); opacity: 1; }
+        .alert-icon { width: 64px; height: 64px; background: #fff; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #000; }
+        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
+        .alert-actions { display: flex; gap: 12px; }
+        .alert-btn { flex: 1; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; border: none; }
+        .btn-sec { background: var(--primary-soft); color: #fff; border: 1px solid var(--border); }
+        .btn-main { background: #fff; color: #000; }
+        /* -------------------------------- */
+
+        #app-loader {
+            position: fixed; inset: 0; background: #000000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s; 
+        }
+        #app-loader.fade-out { opacity: 0; visibility: hidden; }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; }
+        .brand span { color: var(--text-dim); }
+        .timer-badge { background: #fff; color: #000; padding: 6px 14px; border-radius: 12px; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 13px; }
+
+        main { padding: 24px; max-width: 500px; margin: 0 auto; flex: 1; width: 100%; }
+
+        .greeting-area { margin-bottom: 25px; }
+        #dynamic-greet { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #fff; }
+        .sub-greet { color: var(--text-dim); font-size: 15px; font-weight: 500; }
+
+        .card { background: var(--surface); border-radius: 24px; padding: 24px; box-shadow: var(--card-shadow); border: 1px solid var(--border); margin-bottom: 20px; }
+
+        .set-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px; background: var(--surface); border-radius: 20px;
+            margin-bottom: 12px; border: 1.5px solid var(--border); cursor: pointer;
+            transition: 0.3s; color: #fff;
+        }
+        .set-card:hover { border-color: #fff; background: var(--primary-soft); }
+
+        .opt-box { 
+            background: var(--surface); border: 2px solid var(--border); padding: 16px; 
+            border-radius: 16px; margin-bottom: 10px; font-weight: 600; cursor: pointer; 
+            transition: 0.2s; position: relative; color: #fff;
+        }
+        .opt-box.selected { border-color: #fff; background: #fff; color: #000; transform: scale(1.02); }
+        .opt-box.selected::after { content: '✓'; position: absolute; right: 15px; font-weight: 900; }
+
+        .marker-scroll { 
+            display: flex; gap: 10px; overflow-x: auto; padding: 15px 5px; 
+            scrollbar-width: none; -ms-overflow-style: none;
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        .marker-scroll::-webkit-scrollbar { display: none; }
+        
+        .q-pill { 
+            min-width: 44px; height: 44px; border-radius: 14px; 
+            background: var(--surface); border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 800; font-size: 14px; color: var(--text-dim);
+            flex-shrink: 0; cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .q-pill.active { 
+            border-color: #fff;
+            background: #fff;
+            color: #000;
+            transform: translateY(-2px);
+        }
+        .q-pill.done { 
+            background: var(--primary-soft); 
+            color: white; 
+            border-color: #555;
+        }
+
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+        input, select { width: 100%; padding: 16px 16px 16px 48px; border-radius: 18px; border: 2px solid var(--border); outline: none; font-size: 15px; font-weight: 600; background: var(--surface); color: #fff; }
+
+        .btn-primary { width: 100%; padding: 18px; border-radius: 20px; border: none; background: #ffffff; color: #000; font-weight: 800; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 20px rgba(255,255,255,0.1); }
+
+        .hidden { display: none !important; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .desc-box { 
+            margin-top: 30px; padding: 20px; 
+            background: var(--surface); border-radius: 18px; 
+            border: 1px solid var(--border);
+        }
+        .desc-title { font-weight: 800; color: #fff; font-size: 14px; margin-bottom: 8px; display: block; }
+        .desc-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; font-weight: 500; }
+
+        footer { padding: 24px; text-align: center; border-top: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <div class="alert-icon"><i data-lucide="bell" size="28"></i></div>
+            <div class="alert-title" id="alert-title">Attention</div>
+            <div class="alert-msg" id="alert-msg">Message goes here...</div>
+            <div class="alert-actions" id="alert-actions">
+                <button class="alert-btn btn-sec" id="alert-cancel">Cancel</button>
+                <button class="alert-btn btn-main" id="alert-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-loader">
+        <div class="spinner"></div>
+        <p style="font-weight: 700; color: var(--text-dim); margin-top: 15px;">Syncing AgriQ Database...</p>
+    </div>
+
+    <header>
+        <div class="brand">Agri<span>Q</span> </div>
+        <div id="total-clock" class="timer-badge">00:00</div>
+    </header>
+
+    <main>
+        <div id="screen-login" class="screen">
+            <div class="greeting-area">
+                <h1 id="dynamic-greet">Welcome</h1>
+                <p class="sub-greet">Let's prepare for your Agri MCEAR excellence.</p>
+            </div>
+            <div class="card">
+                <div class="input-group">
+                    <i data-lucide="user"></i>
+                    <input type="text" id="username" placeholder="Enter Full Name">
+                </div>
+                <div class="input-group">
+                    <i data-lucide="book-open"></i>
+                    <select id="subject-select"><option>Fetching Subjects...</option></select>
+                </div>
+                <button class="btn-primary" onclick="initSubject()">Start Session <i data-lucide="zap"></i></button>
+            </div>
+
+            <div class="desc-box">
+                <span class="desc-title">Session Instructions</span>
+                <div class="desc-text">
+                    Ensure you have a stable internet connection. Each question has a 60-second timer. You can deselect an answer by tapping it again.
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-selection" class="screen hidden">
+            <div class="greeting-area">
+                <h2 style="font-weight: 800; margin:0;">Choose Set</h2>
+                <p class="sub-greet">Select a question bank to begin.</p>
+            </div>
+            <div id="selection-list"></div>
+        </div>
+
+        <div id="screen-quiz" class="screen hidden">
+            <div id="marker-grid" class="marker-scroll"></div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0;">
+                <div style="display:flex; flex-direction:column;">
+                    <span id="q-label" style="font-weight: 800; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Question 1</span>
+                    <span style="font-size: 11px; font-weight: 700; color: var(--text-dim);">TAP TO SELECT / TAP AGAIN TO CLEAR</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; background: #331111; padding: 6px 12px; border-radius: 10px;">
+                    <i data-lucide="clock" size="14" style="color:var(--danger)"></i>
+                    <span id="q-timer" style="color: var(--danger); font-weight: 800; font-family: 'JetBrains Mono';">60s</span>
+                </div>
+            </div>
+
+            <div class="card" id="q-card" style="border-left: 5px solid #fff;">
+                <div id="q-display" style="font-weight: 700; min-height: 100px; font-size: 17px; line-height: 1.6;"></div>
+            </div>
+            
+            <div id="opts-display"></div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:25px;">
+                <button class="btn-primary" style="background:var(--surface); color:#fff; border: 2px solid var(--border);" onclick="changeQ(-1)">
+                    <i data-lucide="chevron-left"></i> PREV
+                </button>
+                <button class="btn-primary" onclick="changeQ(1)">
+                    NEXT <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+            <button class="btn-primary" style="background:var(--danger); color:#fff; margin-top:12px;" onclick="submitTest()">
+                <i data-lucide="check-circle"></i> FINISH EXAM
+            </button>
+
+            <div class="desc-box">
+                <span class="desc-title">Question Insight</span>
+                <div id="q-description" class="desc-text">Analysis will appear here.</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>&copy; 2026 AGRIQ • VNC Corp </footer>
+
+    <script>
+        // --- Custom Alert Logic (The Pop-Up) ---
+        function agriPopup(title, msg, onConfirm, isConfirm = false) {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            const okBtn = document.getElementById('alert-ok');
+            const cancelBtn = document.getElementById('alert-cancel');
+            
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            
+            cancelBtn.style.display = isConfirm ? 'block' : 'none';
+            
+            okBtn.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+                if(onConfirm) onConfirm();
+            };
+            
+            cancelBtn.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+            };
+        }
+        // ---------------------------------------
+
+        lucide.createIcons();
+
+        if(!localStorage.getItem('agriq_uid')) {
+            localStorage.setItem('agriq_uid', 'u' + Date.now() + Math.random().toString(36).substr(2, 5));
+        }
+        const myUID = localStorage.getItem('agriq_uid');
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let masterData = [], currentQuestions = [], currentIdx = 0, userChoices = {};
+        let totalSec = 0, qSec = 60, timer;
+
+        window.onload = async () => {
+            try {
+                const snap = await database.ref('questions').once('value');
+                const selector = document.getElementById('subject-select');
+                selector.innerHTML = '';
+                Object.keys(snap.val()).forEach(k => {
+                    selector.innerHTML += `<option value="${k}">${k.toUpperCase().replace(/_/g,' ')}</option>`;
+                });
+            } catch(e) { console.error("DB Error", e); }
+            document.getElementById('app-loader').classList.add('fade-out');
+        };
+
+        async function initSubject() {
+            const name = document.getElementById('username').value.trim();
+            if(!name) return agriPopup("Action Required", "Please enter your full name to proceed.", null, false);
+            localStorage.setItem('agriq_user', name);
+
+            const sub = document.getElementById('subject-select').value;
+            const snap = await database.ref('questions/' + sub).once('value');
+            masterData = Object.values(snap.val()).filter(q => q);
+            
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-selection').classList.remove('hidden');
+            
+            const list = document.getElementById('selection-list');
+            list.innerHTML = '';
+            for(let i=0; i<masterData.length; i+=200) {
+                const setNum = (i/200)+1;
+                const div = document.createElement('div');
+                div.className = 'set-card';
+                div.innerHTML = `<div><b style="display:block; font-size:16px;">SET ${setNum}</b><small style="color:var(--text-dim); font-weight:600;">HIGH-YIELD QUESTIONS</small></div><i data-lucide="chevron-right" style="color:#fff"></i>`;
+                div.onclick = () => startTest(i, i+200);
+                list.appendChild(div);
+            }
+            lucide.createIcons();
+        }
+
+        function startTest(s, e) {
+            currentQuestions = masterData.slice(s, e).sort(() => Math.random() - 0.5);
+            document.getElementById('screen-selection').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            
+            const grid = document.getElementById('marker-grid');
+            grid.innerHTML = '';
+            currentQuestions.forEach((_, i) => {
+                const p = document.createElement('div');
+                p.className = 'q-pill';
+                p.id = `mark-${i}`;
+                p.innerText = i+1;
+                p.onclick = () => { currentIdx = i; showQ(); };
+                grid.appendChild(p);
+            });
+
+            timer = setInterval(() => {
+                totalSec++; qSec--;
+                document.getElementById('total-clock').innerText = new Date(totalSec * 1000).toISOString().substr(14, 5);
+                document.getElementById('q-timer').innerText = qSec + 's';
+                if(qSec <= 0) changeQ(1);
+            }, 1000);
+            showQ();
+        }
+
+        function showQ() {
+            qSec = 60;
+            const q = currentQuestions[currentIdx];
+            document.getElementById('q-label').innerText = `QUESTION ${currentIdx+1} OF ${currentQuestions.length}`;
+            document.getElementById('q-display').innerHTML = `<span style="color:#fff; margin-right:8px;">Q${currentIdx+1}.</span>${q.question}`;
+            document.getElementById('q-description').innerText = q.description || "Analyze the agricultural concept presented above.";
+
+            document.querySelectorAll('.q-pill').forEach((p, i) => {
+                p.classList.remove('active', 'done');
+                if(i === currentIdx) p.classList.add('active');
+                if(userChoices[i]) p.classList.add('done');
+            });
+
+            const optBox = document.getElementById('opts-display');
+            optBox.innerHTML = '';
+            const opts = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
+            
+            opts.forEach(o => {
+                const div = document.createElement('div');
+                div.className = `opt-box ${userChoices[currentIdx] === o ? 'selected' : ''}`;
+                div.innerText = o;
+                
+                div.onclick = () => {
+                    if (userChoices[currentIdx] === o) {
+                        delete userChoices[currentIdx];
+                    } else {
+                        userChoices[currentIdx] = o;
+                    }
+                    showQ();
+                };
+                optBox.appendChild(div);
+            });
+            
+            const activePill = document.getElementById(`mark-${currentIdx}`);
+            if(activePill) {
+                activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
+
+        function changeQ(v) {
+            let next = currentIdx + v;
+            if(next >= 0 && next < currentQuestions.length) { currentIdx = next; showQ(); }
+        }
+
+        async function submitTest() {
+            agriPopup("Submit Exam", "Are you sure you want to end the session? This action cannot be undone.", async () => {
+                clearInterval(timer);
+                document.getElementById('app-loader').classList.remove('fade-out');
+                let score = 0;
+                let details = [];
+                currentQuestions.forEach((q, i) => {
+                    const uAns = userChoices[i] || null;
+                    if(uAns === q.answer) score++;
+                    details.push({ question: q.question, userAns: uAns, correctAns: q.answer });
+                });
+                const finalAccuracy = Math.round((score / currentQuestions.length) * 100);
+                localStorage.setItem('agriq_last_result', JSON.stringify({ score, total: currentQuestions.length, accuracy: finalAccuracy, details }));
+                window.location.href = 'analysis.html';
+            }, true);
+        }
+    </script>
+</body>
+</html>

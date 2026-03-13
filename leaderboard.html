@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Live Rankings</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            /* Black & White Theme Palette */
+            --primary: #ffffff;
+            --primary-soft: #1e1e1e;
+            --bg: #000000;
+            --surface: #111111;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --danger: #ff4444;
+            --accent: #ffffff;
+            --border: #27272a;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+        /* --- Custom Alert Popup Styles --- */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 28px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: translateY(20px); opacity: 0;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .alert-modal.active { transform: translateY(0); opacity: 1; }
+        .alert-icon { width: 64px; height: 64px; background: #fff; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #000; }
+        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
+        .alert-actions { display: flex; gap: 12px; }
+        .alert-btn { flex: 1; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; cursor: pointer; border: none; }
+        .btn-sec { background: var(--primary-soft); color: #fff; border: 1px solid var(--border); }
+        .btn-main { background: #fff; color: #000; }
+
+        /* LOADER */
+        #leader-loader {
+            position: fixed; inset: 0; background: #000000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s; 
+        }
+        #leader-loader.fade-out { opacity: 0; visibility: hidden; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; }
+        .brand span { color: var(--text-dim); }
+
+        /* LIVE DOT */
+        .live-tag {
+            font-size: 10px; font-weight: 800; color: #fff;
+            display: flex; align-items: center; gap: 5px; background: #1a1a1a;
+            padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+        }
+        .dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; }
+
+        .podium { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px; align-items: flex-end; margin: 20px 0 40px; }
+        .podium-item { background: var(--surface); border-radius: 24px; padding: 20px 10px; text-align: center; border: 1px solid var(--border); transition: 0.3s; }
+        .podium-1 { height: 180px; border-color: #fff; background: #1a1a1a; }
+        .podium-2 { height: 140px; }
+        .podium-3 { height: 120px; }
+        .p-name { font-weight: 800; font-size: 13px; display: block; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+        .p-score { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+
+        .rank-card {
+            display: flex; align-items: center; gap: 15px;
+            background: var(--surface); padding: 18px; border-radius: 20px;
+            margin-bottom: 12px; border: 1px solid var(--border); 
+            transition: 0.3s;
+        }
+        
+        /* HIGHLIGHT FOR YOU */
+        .rank-card.is-me { border-color: #fff !important; background: #1a1a1a !important; }
+        .me-badge { background: #fff; color: #000; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+
+        .rank-num { width: 35px; font-weight: 900; color: var(--text-dim); font-family: 'JetBrains Mono'; }
+        .user-info { flex: 1; }
+        .user-name { font-weight: 800; font-size: 15px; color: #fff; }
+        .user-meta { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .user-score { font-weight: 900; color: #fff; font-family: 'JetBrains Mono'; font-size: 17px; }
+
+        .btn-home {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #fff; color: #000; padding: 16px 32px;
+            border-radius: 50px; text-decoration: none; font-weight: 800;
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(255,255,255,0.1);
+            z-index: 1001; border: none; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <div class="alert-icon"><i data-lucide="bell" size="28"></i></div>
+            <div class="alert-title" id="alert-title">Attention</div>
+            <div class="alert-msg" id="alert-msg">Message goes here...</div>
+            <div class="alert-actions" id="alert-actions">
+                <button class="alert-btn btn-sec" id="alert-cancel">No</button>
+                <button class="alert-btn btn-main" id="alert-ok">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="leader-loader">
+        <div class="spinner"></div>
+        <p style="font-weight: 700; color: var(--text-dim); margin-top: 15px;">Connecting to Live Data...</p>
+    </div>
+
+    <header>
+        <div class="brand">Agri<span>Q</span> Rankings</div>
+        <div class="live-tag"><div class="dot"></div> LIVE</div>
+    </header>
+
+    <main>
+        <div class="podium" id="podium-area"></div>
+        <div id="leaderboard-list"></div>
+        <div style="height: 100px;"></div>
+    </main>
+
+    <button onclick="handleHome()" class="btn-home"><i data-lucide="home"></i> Home</button>
+
+    <script>
+        function agriPopup(title, msg, onConfirm, isConfirm = false) {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            const okBtn = document.getElementById('alert-ok');
+            const cancelBtn = document.getElementById('alert-cancel');
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            cancelBtn.style.display = isConfirm ? 'block' : 'none';
+            okBtn.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+                if(onConfirm) onConfirm();
+            };
+            cancelBtn.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+            };
+        }
+
+        function handleHome() {
+            agriPopup("Return Home", "Do you want to leave the live rankings?", () => {
+                window.location.href = 'index.html';
+            }, true);
+        }
+
+        lucide.createIcons();
+
+        if(!localStorage.getItem('agriq_uid')) {
+            localStorage.setItem('agriq_uid', 'u' + Date.now() + Math.random().toString(36).substr(2, 5));
+        }
+        const myUID = localStorage.getItem('agriq_uid');
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        database.ref('leaderboard').orderByChild('score').limitToLast(50).on('value', (snap) => {
+            let data = [];
+            snap.forEach(child => {
+                data.push(child.val());
+            });
+            data.reverse(); 
+            renderLeaderboard(data);
+            document.getElementById('leader-loader').classList.add('fade-out');
+        });
+
+        function renderLeaderboard(users) {
+            const podium = document.getElementById('podium-area');
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = ""; 
+
+            if (users.length >= 1) {
+                podium.innerHTML = `
+                    <div class="podium-item podium-2">
+                        <span style="font-size: 24px;">🥈</span><span class="p-name">${users[1]?.name || '---'}</span>
+                        <span class="p-score">${users[1]?.score || 0}%</span>
+                    </div>
+                    <div class="podium-item podium-1">
+                        <span style="font-size: 32px;">🥇</span><span class="p-name">${users[0].name}</span>
+                        <span class="p-score" style="color:#fff;">${users[0].score}%</span>
+                    </div>
+                    <div class="podium-item podium-3">
+                        <span style="font-size: 20px;">🥉</span><span class="p-name">${users[2]?.name || '---'}</span>
+                        <span class="p-score">${users[2]?.score || 0}%</span>
+                    </div>
+                `;
+            }
+
+            users.forEach((u, i) => {
+                const isMe = u.uid === myUID;
+                const card = document.createElement('div');
+                card.className = `rank-card ${isMe ? 'is-me' : ''}`;
+                card.innerHTML = `
+                    <div class="rank-num">#${i + 1}</div>
+                    <div class="user-info">
+                        <span class="user-name">${u.name} ${isMe ? '<span class="me-badge">YOU</span>' : ''}</span>
+                        <span class="user-meta">${u.subject || 'EXAM'}</span>
+                    </div>
+                    <div class="user-score">${u.score}%</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
