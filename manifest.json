@@ -1,27 +1,15 @@
 {
-  "name": "AgriQ Pro | Ultimate Agriculture Mock",
+  "name": "AgriQ",
   "short_name": "AgriQ Pro",
-  "description": "Premium preparation and mock tests for Agri MCEAR excellence.",
-  "start_url": "./index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
-    }
-  ],
-  "categories": ["education", "agriculture"],
-  "screenshots": [
-    {
-      "src": "screenshot.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "platform": "narrow",
-      "label": "AgriQ Pro Home Screen"
     }
   ]
 }
