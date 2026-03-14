@@ -31,7 +31,7 @@
             color: var(--text-main); 
             font-family: 'Plus Jakarta Sans', sans-serif;
             line-height: 1.5;
-            padding-bottom: calc(80px + var(--safe-bottom)); /* Space for bottom nav */
+            padding-bottom: calc(80px + var(--safe-bottom)); 
         }
 
         /* --- LOADER --- */
@@ -57,6 +57,21 @@
             padding: 32px; border: 1px solid var(--border); border-radius: 28px;
             background: var(--surface);
         }
+        .gate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .home-link {
+            color: var(--text-dim);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: -8px;
+        }
+        .home-link:hover { color: var(--accent); }
 
         /* --- INPUTS --- */
         input, textarea {
@@ -90,13 +105,6 @@
             letter-spacing: 1px; color: var(--text-dim); margin-bottom: 16px; 
             display: flex; align-items: center; gap: 8px;
         }
-
-        /* --- MODULE ITEMS --- */
-        .module-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 0; border-bottom: 1px solid #1a1a1a;
-        }
-        .module-item:last-child { border: none; }
 
         /* --- MOBILE BOTTOM NAV --- */
         .bottom-nav {
@@ -154,7 +162,12 @@
 
     <div id="admin-gate">
         <div class="gate-card" id="gate-card">
-            <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">AgriQ<span> PRO</span></h1>
+            <div class="gate-header">
+                <h1 style="font-size: 24px; font-weight: 800; margin: 0;">AgriQ<span> PRO</span></h1>
+                <a href="index.html" class="home-link" title="Back to Home">
+                    <i data-lucide="home" size="20"></i>
+                </a>
+            </div>
             <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 24px;">Terminal Authentication</p>
             <input type="email" id="admin-email" placeholder="Admin Email">
             <input type="password" id="admin-pass" placeholder="Access Key">
@@ -188,7 +201,7 @@
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2><i data-lucide="trending-up" size="14"></i> Performance</h2>
-                    <span onclick="purgeLeaderboard()" style="color:var(--accent); font-size: 11px; font-weight: 700;">WIPE ALL</span>
+                    <span onclick="purgeLeaderboard()" style="color:var(--accent); font-size: 11px; font-weight: 700; cursor:pointer;">WIPE ALL</span>
                 </div>
                 <table>
                     <thead>
@@ -287,6 +300,7 @@
             snap.forEach(child => {
                 const div = document.createElement('div');
                 div.className = "module-item";
+                div.style = "display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #1a1a1a;";
                 div.innerHTML = `<span style="font-weight:600">${child.key}</span>
                                  <button class="btn-kill" style="padding:4px 8px" onclick="purgeModule('${child.key}')">Wipe</button>`;
                 container.appendChild(div);
@@ -303,7 +317,7 @@
                     <td class="rank">#${i+1}</td>
                     <td><div style="font-weight:700">${p.name}</div></td>
                     <td>${p.score}%</td>
-                    <td style="text-align:right"><i data-lucide="trash-2" size="14" style="color:#444" onclick="kickUser('${p.id}')"></i></td>
+                    <td style="text-align:right"><i data-lucide="trash-2" size="14" style="color:#444; cursor:pointer;" onclick="kickUser('${p.id}')"></i></td>
                 </tr>`;
             });
             lucide.createIcons();
