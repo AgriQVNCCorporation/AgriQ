@@ -34,6 +34,7 @@
             --danger: #ff3b3b;
             --card-shadow: 0 10px 40px -10px rgba(255, 0, 0, 0.1);
             --border: #222222;
+            --whatsapp: #25D366;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -158,6 +159,27 @@
             display: flex; align-items: center; gap: 5px; transition: 0.2s;
         }
         .admin-login-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+        /* WhatsApp Floating Link */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 24px;
+            background: var(--whatsapp);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+            z-index: 999;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+        }
+        .whatsapp-float:hover { transform: scale(1.1) rotate(5deg); }
+        .wa-link-inline { color: var(--whatsapp); text-decoration: none; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -206,9 +228,16 @@
             <div class="desc-box">
                 <span class="desc-title">Session Instructions</span>
                 <div class="desc-text">
-                    Ensure you have a stable internet connection. Each question has a 60-second timer. You can deselect an answer by tapping it again.
+                    Ensure you have a stable internet connection. Each question has a 60-second timer. 
+                    <br><br>
+                    <i data-lucide="message-circle" size="12" style="vertical-align:middle; color:var(--whatsapp)"></i> 
+                    Join our <a href="https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=hq2tcla" class="wa-link-inline">WhatsApp Group</a> for daily exam updates and notes.
                 </div>
             </div>
+
+            <a href="https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=hq2tcla" class="whatsapp-float" target="_blank">
+                <i data-lucide="message-square"></i>
+            </a>
         </div>
 
         <div id="screen-selection" class="screen hidden">
