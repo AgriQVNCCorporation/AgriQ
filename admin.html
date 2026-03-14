@@ -31,58 +31,57 @@
             color: var(--text-main); 
             font-family: 'Plus Jakarta Sans', sans-serif;
             line-height: 1.5;
-            padding-bottom: calc(80px + var(--safe-bottom)); 
+            padding-bottom: calc(100px + var(--safe-bottom)); 
         }
 
-        /* --- LOADER --- */
         #system-loader {
             position: fixed; inset: 0; background: #000; z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.5s ease;
         }
-        #system-loader.hidden { opacity: 0; visibility: hidden; }
+        #system-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .scanner {
             width: 32px; height: 32px; border: 2px solid #111; border-top: 2px solid var(--accent);
             border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* --- AUTH SCREEN --- */
         #admin-gate {
             position: fixed; inset: 0; background: #000; z-index: 9000;
-            display: flex; align-items: center; justify-content: center; padding: 24px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
         }
+        
+        /* Home Icon Styling linked to index.html */
+        .home-link {
+            margin-bottom: 30px;
+            color: var(--text-dim);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .home-link:hover { color: var(--accent); transform: translateY(-2px); }
+
         .gate-card {
             width: 100%; max-width: 360px;
             padding: 32px; border: 1px solid var(--border); border-radius: 28px;
             background: var(--surface);
         }
-        .gate-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-        .home-link {
-            color: var(--text-dim);
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            margin: -8px;
-        }
-        .home-link:hover { color: var(--accent); }
-
-        /* --- INPUTS --- */
+        
         input, textarea {
             width: 100%; background: #000; border: 1px solid var(--border);
             border-radius: 14px; padding: 14px; color: #fff; outline: none;
             font-size: 15px; margin-bottom: 12px; transition: 0.2s;
         }
         input:focus { border-color: var(--accent); }
-        textarea { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        textarea { font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: vertical; }
 
-        /* --- HEADER --- */
         header { 
             padding: 24px 20px 10px; 
             display: flex; justify-content: space-between; align-items: center;
@@ -91,7 +90,6 @@
         .brand { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
         .brand span { color: var(--accent); }
 
-        /* --- GRID/LAYOUT --- */
         #command-center { display: none; max-width: 600px; margin: 0 auto; padding: 0 16px; }
         .card { 
             background: var(--surface); 
@@ -106,7 +104,6 @@
             display: flex; align-items: center; gap: 8px;
         }
 
-        /* --- MOBILE BOTTOM NAV --- */
         .bottom-nav {
             position: fixed; bottom: 20px; left: 20px; right: 20px;
             background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(20px);
@@ -118,17 +115,15 @@
         .nav-item {
             display: flex; flex-direction: column; align-items: center;
             color: var(--text-dim); text-decoration: none; font-size: 10px;
-            font-weight: 600; gap: 4px; border: none; background: none; transition: 0.2s;
+            font-weight: 600; gap: 4px; border: none; background: none; transition: 0.2s; cursor: pointer;
         }
         .nav-item.active { color: var(--accent); }
 
-        /* --- TABLE --- */
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; font-size: 11px; color: var(--text-dim); padding: 12px 0; }
         td { padding: 14px 0; font-size: 14px; border-bottom: 1px solid #1a1a1a; }
         .rank { font-weight: 800; color: var(--accent); width: 40px; }
 
-        /* --- BUTTONS --- */
         .btn-primary { 
             width: 100%; padding: 16px; border-radius: 14px; border: none;
             background: var(--accent); color: #fff; font-weight: 700;
@@ -139,14 +134,13 @@
         .btn-kill {
             background: var(--accent-soft); color: var(--accent);
             border: 1px solid var(--accent); padding: 6px 12px; border-radius: 10px;
-            font-size: 11px; font-weight: 700;
+            font-size: 11px; font-weight: 700; cursor: pointer;
         }
 
         .view-section { display: none; animation: slideUp 0.3s ease-out; }
         .view-section.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- MODAL --- */
         #custom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10001; display: none; align-items: flex-end; }
         .alert-modal { 
             background: var(--surface); width: 100%; border-radius: 32px 32px 0 0; 
@@ -158,16 +152,17 @@
 
     <div id="system-loader">
         <div class="scanner"></div>
+        <p style="color: var(--text-dim); font-size: 11px; margin-top: 12px; font-weight: 700;">AUTHENTICATING...</p>
     </div>
 
     <div id="admin-gate">
-        <div class="gate-card" id="gate-card">
-            <div class="gate-header">
-                <h1 style="font-size: 24px; font-weight: 800; margin: 0;">AgriQ<span> PRO</span></h1>
-                <a href="index.html" class="home-link" title="Back to Home">
-                    <i data-lucide="home" size="20"></i>
-                </a>
-            </div>
+        <a href="index.html" class="home-link">
+            <i data-lucide="home" size="28"></i>
+            <span>Back to Portal</span>
+        </a>
+
+        <div class="gate-card">
+            <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">AgriQ<span> PRO</span></h1>
             <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 24px;">Terminal Authentication</p>
             <input type="email" id="admin-email" placeholder="Admin Email">
             <input type="password" id="admin-pass" placeholder="Access Key">
@@ -185,10 +180,10 @@
         <div id="view-dashboard" class="view-section active">
             <div class="card">
                 <h2><i data-lucide="plus-circle" size="14"></i> Add New Module</h2>
-                <input type="text" id="sub-name" placeholder="Module Title">
-                <textarea id="json-input" rows="6" placeholder="Paste JSON Nodes..."></textarea>
+                <input type="text" id="sub-name" placeholder="Module Title (e.g. Agronomy)">
+                <textarea id="json-input" rows="6" placeholder='[{"q": "...", "a": ["..."], "c": 0}]'></textarea>
                 <button class="btn-primary" onclick="uploadData()">Push Data</button>
-                <p id="status" style="font-size: 12px; text-align: center; margin-top: 12px; color: var(--accent);"></p>
+                <p id="status" style="font-size: 12px; text-align: center; margin-top: 12px; color: var(--accent); font-weight: 700;"></p>
             </div>
 
             <div class="card">
@@ -213,13 +208,11 @@
         </div>
 
         <nav class="bottom-nav">
-            <button class="nav-item active" id="btn-dash" onclick="switchView('dashboard')">
-                <i data-lucide="terminal" size="20"></i>
-                Terminal
+            <button class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">
+                <i data-lucide="terminal" size="20"></i>Terminal
             </button>
-            <button class="nav-item" id="btn-lead" onclick="switchView('leaderboard')">
-                <i data-lucide="award" size="20"></i>
-                Rankings
+            <button class="nav-item" id="nav-leaderboard" onclick="switchView('leaderboard')">
+                <i data-lucide="award" size="20"></i>Rankings
             </button>
         </nav>
     </div>
@@ -236,7 +229,6 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
         authDomain: "agri-mcar.firebaseapp.com",
@@ -255,13 +247,8 @@
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         
-        if(view === 'dashboard') {
-            document.getElementById('view-dashboard').classList.add('active');
-            document.getElementById('btn-dash').classList.add('active');
-        } else {
-            document.getElementById('view-leaderboard').classList.add('active');
-            document.getElementById('btn-lead').classList.add('active');
-        }
+        document.getElementById(`view-${view}`).classList.add('active');
+        document.getElementById(`nav-${view}`).classList.add('active');
         window.scrollTo(0,0);
     }
 
@@ -284,10 +271,15 @@
     async function tryLogin() {
         const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-pass').value;
+        const errDisplay = document.getElementById('gate-error');
+        errDisplay.innerText = "";
+        
+        if(!email || !pass) { errDisplay.innerText = "Credentials required"; return; }
+        
         try {
             await auth.signInWithEmailAndPassword(email, pass);
         } catch (e) {
-            document.getElementById('gate-error').innerText = "Access Denied";
+            errDisplay.innerText = "Access Denied: " + e.message;
         }
     }
 
@@ -299,7 +291,6 @@
             container.innerHTML = "";
             snap.forEach(child => {
                 const div = document.createElement('div');
-                div.className = "module-item";
                 div.style = "display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #1a1a1a;";
                 div.innerHTML = `<span style="font-weight:600">${child.key}</span>
                                  <button class="btn-kill" style="padding:4px 8px" onclick="purgeModule('${child.key}')">Wipe</button>`;
@@ -307,35 +298,46 @@
             });
         });
 
-        db.ref('leaderboard').on('value', snap => {
+        db.ref('leaderboard').orderByChild('score').limitToLast(50).on('value', snap => {
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
             let data = [];
             snap.forEach(c => { data.push({id: c.key, ...c.val()}) });
-            data.sort((a,b) => b.score - a.score).forEach((p, i) => {
-                tbody.innerHTML += `<tr>
+            
+            data.reverse().forEach((p, i) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
                     <td class="rank">#${i+1}</td>
-                    <td><div style="font-weight:700">${p.name}</div></td>
+                    <td><div style="font-weight:700">${p.name}</div><div style="font-size:10px; color:#555">${p.subject || 'EXAM'}</div></td>
                     <td>${p.score}%</td>
                     <td style="text-align:right"><i data-lucide="trash-2" size="14" style="color:#444; cursor:pointer;" onclick="kickUser('${p.id}')"></i></td>
-                </tr>`;
+                `;
+                tbody.appendChild(row);
             });
             lucide.createIcons();
         });
     }
 
     function uploadData() {
-        const name = document.getElementById('sub-name').value;
-        const json = document.getElementById('json-input').value;
-        if(!name || !json) return;
+        const name = document.getElementById('sub-name').value.trim();
+        const jsonText = document.getElementById('json-input').value.trim();
+        const status = document.getElementById('status');
+        
+        if(!name || !jsonText) return;
+        
         try {
-            db.ref('questions/' + name).set(JSON.parse(json)).then(() => {
-                document.getElementById('status').innerText = "DEPLOYED SUCCESSFULLY";
+            const parsed = JSON.parse(jsonText);
+            if(!Array.isArray(parsed)) throw new Error("JSON must be an Array []");
+            
+            db.ref('questions/' + name).set(parsed).then(() => {
+                status.innerText = "DEPLOYED SUCCESSFULLY";
                 document.getElementById('json-input').value = "";
                 document.getElementById('sub-name').value = "";
-                setTimeout(() => document.getElementById('status').innerText = "", 2000);
+                setTimeout(() => status.innerText = "", 2000);
             });
-        } catch(e) { alert("Format Error: Ensure JSON is valid."); }
+        } catch(e) { 
+            alert("Format Error: " + e.message); 
+        }
     }
 
     function agriPopup(title, msg, onConfirm) {
@@ -351,7 +353,6 @@
     function kickUser(id) { agriPopup("Remove Entry", "Remove this score from rankings?", () => db.ref('leaderboard/' + id).remove()); }
     function purgeLeaderboard() { agriPopup("Full Format", "This will clear the entire leaderboard.", () => db.ref('leaderboard').remove()); }
 
-    window.onload = () => lucide.createIcons();
 </script>
 </body>
 </html>
