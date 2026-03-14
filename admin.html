@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AgriQ Pro | Admin</title>
+    <title>AgriQ Pro | Admin Terminal</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -14,13 +14,13 @@
 
     <style>
         :root {
-            --bg: #050505;
-            --surface: #0d0d0d;
-            --border: #222;
-            --accent: #ff0000;
-            --accent-soft: rgba(255, 0, 0, 0.1);
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --border: #1a1a1a;
+            --accent: #ff3b3b;
+            --accent-soft: rgba(255, 59, 59, 0.1);
             --text-main: #ffffff;
-            --text-dim: #888;
+            --text-dim: #a1a1aa;
             --safe-bottom: env(safe-area-inset-bottom);
         }
 
@@ -30,18 +30,22 @@
             margin: 0; 
             color: var(--text-main); 
             font-family: 'Plus Jakarta Sans', sans-serif;
-            line-height: 1.5;
             padding-bottom: calc(100px + var(--safe-bottom)); 
+            overflow-x: hidden;
         }
+
+        /* --- UI Animations --- */
+        @keyframes scanline { 0% { top: -100%; } 100% { top: 100%; } }
+        @keyframes glitch { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
 
         #system-loader {
             position: fixed; inset: 0; background: #000; z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
+            transition: 0.5s ease;
         }
         #system-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .scanner {
-            width: 32px; height: 32px; border: 2px solid #111; border-top: 2px solid var(--accent);
+            width: 40px; height: 40px; border: 3px solid #111; border-top: 3px solid var(--accent);
             border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -51,156 +55,159 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
         }
         
-        /* Home Icon Styling linked to index.html */
         .home-link {
-            margin-bottom: 30px;
-            color: var(--text-dim);
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            transition: 0.3s;
+            margin-bottom: 40px; color: var(--text-dim); text-decoration: none;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
         }
-        .home-link:hover { color: var(--accent); transform: translateY(-2px); }
 
         .gate-card {
-            width: 100%; max-width: 360px;
-            padding: 32px; border: 1px solid var(--border); border-radius: 28px;
-            background: var(--surface);
+            width: 100%; max-width: 380px; padding: 40px; border: 1px solid var(--border); 
+            border-radius: 32px; background: var(--surface); position: relative; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
+        .gate-card::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--accent); animation: scanline 4s linear infinite; opacity: 0.3; }
         
         input, textarea {
-            width: 100%; background: #000; border: 1px solid var(--border);
-            border-radius: 14px; padding: 14px; color: #fff; outline: none;
-            font-size: 15px; margin-bottom: 12px; transition: 0.2s;
+            width: 100%; background: #050505; border: 1.5px solid var(--border);
+            border-radius: 18px; padding: 18px; color: #fff; outline: none;
+            font-size: 15px; margin-bottom: 14px; transition: 0.3s;
         }
-        input:focus { border-color: var(--accent); }
-        textarea { font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: vertical; }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(255, 59, 59, 0.1); }
+        textarea { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
         header { 
-            padding: 24px 20px 10px; 
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); z-index: 100;
+            padding: 24px; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 100;
+            border-bottom: 1px solid var(--border);
         }
-        .brand { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
-        .brand span { color: var(--accent); }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; text-transform: uppercase; }
+        .brand span { color: var(--accent); font-family: 'JetBrains Mono'; }
 
         #command-center { display: none; max-width: 600px; margin: 0 auto; padding: 0 16px; }
         .card { 
-            background: var(--surface); 
-            border: 1px solid var(--border); 
-            border-radius: 24px; 
-            padding: 20px; 
-            margin-bottom: 20px;
+            background: linear-gradient(180deg, #0a0a0a 0%, #050505 100%); 
+            border: 1px solid var(--border); border-radius: 28px; padding: 24px; margin-top: 20px;
         }
         h2 { 
-            font-size: 12px; font-weight: 700; text-transform: uppercase; 
-            letter-spacing: 1px; color: var(--text-dim); margin-bottom: 16px; 
-            display: flex; align-items: center; gap: 8px;
+            font-size: 11px; font-weight: 800; text-transform: uppercase; 
+            letter-spacing: 2px; color: var(--accent); margin-bottom: 20px; 
+            display: flex; align-items: center; gap: 10px;
         }
 
         .bottom-nav {
-            position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.05);
-            height: 64px; border-radius: 20px;
+            position: fixed; bottom: 24px; left: 24px; right: 24px;
+            background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px);
+            border: 1px solid var(--border); height: 72px; border-radius: 24px;
             display: flex; align-items: center; justify-content: space-around;
-            z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center;
             color: var(--text-dim); text-decoration: none; font-size: 10px;
-            font-weight: 600; gap: 4px; border: none; background: none; transition: 0.2s; cursor: pointer;
+            font-weight: 800; gap: 6px; border: none; background: none; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
         .nav-item.active { color: var(--accent); }
 
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 11px; color: var(--text-dim); padding: 12px 0; }
-        td { padding: 14px 0; font-size: 14px; border-bottom: 1px solid #1a1a1a; }
-        .rank { font-weight: 800; color: var(--accent); width: 40px; }
+        th { text-align: left; font-size: 10px; color: var(--text-dim); padding: 12px 5px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 16px 5px; font-size: 14px; border-bottom: 1px solid var(--border); }
+        .rank { font-weight: 900; color: var(--accent); font-family: 'JetBrains Mono'; }
 
         .btn-primary { 
-            width: 100%; padding: 16px; border-radius: 14px; border: none;
-            background: var(--accent); color: #fff; font-weight: 700;
-            font-size: 15px; cursor: pointer; transition: 0.2s;
+            width: 100%; padding: 18px; border-radius: 20px; border: none;
+            background: #fff; color: #000; font-weight: 900;
+            font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
-        .btn-primary:active { transform: scale(0.96); opacity: 0.9; }
-        
         .btn-kill {
-            background: var(--accent-soft); color: var(--accent);
-            border: 1px solid var(--accent); padding: 6px 12px; border-radius: 10px;
-            font-size: 11px; font-weight: 700; cursor: pointer;
+            background: rgba(255, 59, 59, 0.1); color: var(--accent);
+            border: 1px solid var(--accent); padding: 8px 14px; border-radius: 12px;
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
         }
 
-        .view-section { display: none; animation: slideUp 0.3s ease-out; }
+        .view-section { display: none; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .view-section.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        #custom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10001; display: none; align-items: flex-end; }
+        #custom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 10001; display: none; align-items: flex-end; }
         .alert-modal { 
             background: var(--surface); width: 100%; border-radius: 32px 32px 0 0; 
-            padding: 32px 24px calc(32px + var(--safe-bottom)); border-top: 1px solid var(--accent);
+            padding: 40px 24px calc(40px + var(--safe-bottom)); border-top: 2px solid var(--accent);
         }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 8px; box-shadow: 0 0 10px #22c55e; }
+        
+        .matrix-text { font-family: 'JetBrains Mono'; font-weight: 800; color: var(--text-main); }
+        .module-pill { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #050505; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="system-loader">
         <div class="scanner"></div>
-        <p style="color: var(--text-dim); font-size: 11px; margin-top: 12px; font-weight: 700;">AUTHENTICATING...</p>
+        <p style="color: var(--accent); font-size: 10px; margin-top: 15px; font-weight: 800; letter-spacing: 3px;">SYSTEM.REBOOTING</p>
     </div>
 
     <div id="admin-gate">
         <a href="index.html" class="home-link">
-            <i data-lucide="home" size="28"></i>
-            <span>Back to Portal</span>
+            <i data-lucide="shield-chevron" size="32" color="#ff3b3b"></i>
+            <span>Portal Access</span>
         </a>
 
         <div class="gate-card">
-            <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">AgriQ<span> PRO</span></h1>
-            <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 24px;">Terminal Authentication</p>
-            <input type="email" id="admin-email" placeholder="Admin Email">
-            <input type="password" id="admin-pass" placeholder="Access Key">
-            <button id="login-btn" class="btn-primary" onclick="tryLogin()">Login to Command</button>
-            <p id="gate-error" style="color: var(--accent); font-size: 12px; margin-top: 16px; text-align: center;"></p>
+            <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 10px; letter-spacing: -1px;">AGRIQ<span>.ADMIN</span></h1>
+            <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 30px; font-weight: 600;">Secure Terminal Authorization Required</p>
+            <input type="email" id="admin-email" placeholder="ADMIN_ID">
+            <input type="password" id="admin-pass" placeholder="ACCESS_KEY">
+            <button id="login-btn" class="btn-primary" onclick="tryLogin()">Initialize Session</button>
+            <p id="gate-error" style="color: var(--accent); font-size: 11px; margin-top: 20px; text-align: center; font-weight: 800;"></p>
         </div>
     </div>
 
     <div id="command-center">
         <header>
-            <div class="brand">AgriQ<span>Pro</span></div>
-            <button class="btn-kill" onclick="logout()">Logout</button>
+            <div class="brand">AGRIQ<span>TERMINAL</span></div>
+            <button class="btn-kill" onclick="logout()">Disconnect</button>
         </header>
 
         <div id="view-dashboard" class="view-section active">
             <div class="card">
-                <h2><i data-lucide="plus-circle" size="14"></i> Add New Module</h2>
-                <input type="text" id="sub-name" placeholder="Module Title (e.g. Agronomy)">
-                <textarea id="json-input" rows="6" placeholder='[{"q": "...", "a": ["..."], "c": 0}]'></textarea>
-                <button class="btn-primary" onclick="uploadData()">Push Data</button>
-                <p id="status" style="font-size: 12px; text-align: center; margin-top: 12px; color: var(--accent); font-weight: 700;"></p>
+                <h2><i data-lucide="upload-cloud" size="14"></i> Data Deployment</h2>
+                <input type="text" id="sub-name" placeholder="MODULE_NAME (e.g. Agronomy)">
+                <textarea id="json-input" rows="8" placeholder='[{"q": "Question Text", "options": ["A", "B", "C", "D"], "answer": "A", "description": "..."}]'></textarea>
+                <button class="btn-primary" style="background:var(--accent); color:#fff;" onclick="uploadData()">Push to Mainframe</button>
+                <p id="status" style="font-size: 11px; text-align: center; margin-top: 15px; color: var(--accent); font-weight: 800; letter-spacing: 1px;"></p>
             </div>
 
             <div class="card">
-                <h2><i data-lucide="layers" size="14"></i> Active Modules</h2>
+                <h2><i data-lucide="box" size="14"></i> Active Modules</h2>
                 <div id="module-list"></div>
+            </div>
+        </div>
+
+        <div id="view-live" class="view-section">
+            <div class="card" style="border-left: 4px solid var(--accent);">
+                <h2><i data-lucide="radio" size="14" style="color:var(--accent)"></i> Real-time Telemetry</h2>
+                <div style="font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; margin: 10px 0 20px;" id="live-count">00</div>
+                <table>
+                    <thead>
+                        <tr><th>Subject</th><th>Activity</th><th>Node</th></tr>
+                    </thead>
+                    <tbody id="live-users-table" class="matrix-text"></tbody>
+                </table>
             </div>
         </div>
 
         <div id="view-leaderboard" class="view-section">
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2><i data-lucide="trending-up" size="14"></i> Performance</h2>
-                    <span onclick="purgeLeaderboard()" style="color:var(--accent); font-size: 11px; font-weight: 700; cursor:pointer;">WIPE ALL</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2><i data-lucide="database" size="14"></i> Global Rankings</h2>
+                    <span onclick="purgeLeaderboard()" style="color:var(--accent); font-size: 10px; font-weight: 900; cursor:pointer; letter-spacing: 1px;">WIPE_DATA</span>
                 </div>
                 <table>
                     <thead>
-                        <tr><th>#</th><th>PLAYER</th><th>SCORE</th><th></th></tr>
+                        <tr><th>RANK</th><th>ID</th><th>SCORE</th><th>OP</th></tr>
                     </thead>
                     <tbody id="leaderboard-body"></tbody>
                 </table>
@@ -209,21 +216,24 @@
 
         <nav class="bottom-nav">
             <button class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">
-                <i data-lucide="terminal" size="20"></i>Terminal
+                <i data-lucide="cpu" size="20"></i>Console
+            </button>
+            <button class="nav-item" id="nav-live" onclick="switchView('live')">
+                <i data-lucide="activity" size="20"></i>Live
             </button>
             <button class="nav-item" id="nav-leaderboard" onclick="switchView('leaderboard')">
-                <i data-lucide="award" size="20"></i>Rankings
+                <i data-lucide="bar-chart-3" size="20"></i>Stats
             </button>
         </nav>
     </div>
 
     <div id="custom-overlay">
         <div class="alert-modal">
-            <h3 id="alert-title" style="margin-top:0">System Override</h3>
-            <p id="alert-msg" style="color: var(--text-dim); margin-bottom: 24px;">Are you sure you want to proceed?</p>
+            <h3 id="alert-title" style="margin:0 0 10px; font-weight: 900; text-transform: uppercase;">System Override</h3>
+            <p id="alert-msg" style="color: var(--text-dim); margin-bottom: 30px; font-size: 14px; line-height: 1.6;">Are you sure you want to proceed with this protocol?</p>
             <div style="display: flex; gap: 12px;">
-                <button class="btn-primary" id="alert-ok" style="flex:2">Confirm Action</button>
-                <button class="btn-primary" id="alert-cancel" style="flex:1; background: #222;">Abort</button>
+                <button class="btn-primary" id="alert-ok" style="flex:2; background: var(--accent); color: #fff;">Confirm Protocol</button>
+                <button class="btn-primary" id="alert-cancel" style="flex:1; background: #1a1a1a; color: #fff;">Abort</button>
             </div>
         </div>
     </div>
@@ -246,7 +256,6 @@
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        
         document.getElementById(`view-${view}`).classList.add('active');
         document.getElementById(`nav-${view}`).classList.add('active');
         window.scrollTo(0,0);
@@ -265,7 +274,7 @@
         setTimeout(() => {
             loader.classList.add('hidden');
             lucide.createIcons();
-        }, 1000);
+        }, 1200);
     });
 
     async function tryLogin() {
@@ -273,13 +282,11 @@
         const pass = document.getElementById('admin-pass').value;
         const errDisplay = document.getElementById('gate-error');
         errDisplay.innerText = "";
-        
-        if(!email || !pass) { errDisplay.innerText = "Credentials required"; return; }
-        
+        if(!email || !pass) { errDisplay.innerText = "AUTHENTICATION_REQUIRED"; return; }
         try {
             await auth.signInWithEmailAndPassword(email, pass);
         } catch (e) {
-            errDisplay.innerText = "Access Denied: " + e.message;
+            errDisplay.innerText = "ACCESS_DENIED: " + e.message.toUpperCase();
         }
     }
 
@@ -291,10 +298,33 @@
             container.innerHTML = "";
             snap.forEach(child => {
                 const div = document.createElement('div');
-                div.style = "display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #1a1a1a;";
-                div.innerHTML = `<span style="font-weight:600">${child.key}</span>
-                                 <button class="btn-kill" style="padding:4px 8px" onclick="purgeModule('${child.key}')">Wipe</button>`;
+                div.className = "module-pill";
+                div.innerHTML = `<span style="font-weight:700; font-size:14px;">${child.key.toUpperCase()}</span>
+                                 <button class="btn-kill" style="padding:6px 10px" onclick="purgeModule('${child.key}')">DELETE</button>`;
                 container.appendChild(div);
+            });
+        });
+
+        db.ref('live_users').on('value', snap => {
+            const tbody = document.getElementById('live-users-table');
+            const countEl = document.getElementById('live-count');
+            tbody.innerHTML = "";
+            const users = snap.val() ? Object.values(snap.val()) : [];
+            countEl.innerText = users.length < 10 ? '0' + users.length : users.length;
+            
+            if(users.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:30px; color:#333; font-size:10px;'>NO_ACTIVE_NODES</td></tr>";
+                return;
+            }
+
+            users.forEach(u => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><div class="status-dot"></div><span style="font-size:13px">${u.name || 'ANON'}</span></td>
+                    <td style="color:var(--text-dim); font-size:11px;">${u.subject || 'IDLE'}</td>
+                    <td style="font-size:11px; text-align:right;">${new Date(u.lastActive).toLocaleTimeString([], {hour12: false, hour:'2-digit', minute:'2-digit'})}</td>
+                `;
+                tbody.appendChild(row);
             });
         });
 
@@ -308,9 +338,9 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="rank">#${i+1}</td>
-                    <td><div style="font-weight:700">${p.name}</div><div style="font-size:10px; color:#555">${p.subject || 'EXAM'}</div></td>
-                    <td>${p.score}%</td>
-                    <td style="text-align:right"><i data-lucide="trash-2" size="14" style="color:#444; cursor:pointer;" onclick="kickUser('${p.id}')"></i></td>
+                    <td><div style="font-weight:700; font-size:13px;">${p.name}</div></td>
+                    <td class="matrix-text" style="color:var(--accent)">${p.score}%</td>
+                    <td style="text-align:right"><i data-lucide="x-square" size="16" style="color:#333; cursor:pointer;" onclick="kickUser('${p.id}')"></i></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -322,21 +352,17 @@
         const name = document.getElementById('sub-name').value.trim();
         const jsonText = document.getElementById('json-input').value.trim();
         const status = document.getElementById('status');
-        
         if(!name || !jsonText) return;
-        
         try {
             const parsed = JSON.parse(jsonText);
-            if(!Array.isArray(parsed)) throw new Error("JSON must be an Array []");
-            
             db.ref('questions/' + name).set(parsed).then(() => {
-                status.innerText = "DEPLOYED SUCCESSFULLY";
+                status.innerText = "PROTOCOL_SUCCESS: DATA_DEPLOYED";
                 document.getElementById('json-input').value = "";
                 document.getElementById('sub-name').value = "";
-                setTimeout(() => status.innerText = "", 2000);
+                setTimeout(() => status.innerText = "", 3000);
             });
         } catch(e) { 
-            alert("Format Error: " + e.message); 
+            alert("DECRYPTION_ERROR: INVALID_JSON_STRUCTURE"); 
         }
     }
 
@@ -349,9 +375,9 @@
         document.getElementById('alert-cancel').onclick = () => { overlay.style.display = 'none'; };
     }
 
-    function purgeModule(name) { agriPopup("Delete Module", `This will erase all questions in ${name}.`, () => db.ref('questions/' + name).remove()); }
-    function kickUser(id) { agriPopup("Remove Entry", "Remove this score from rankings?", () => db.ref('leaderboard/' + id).remove()); }
-    function purgeLeaderboard() { agriPopup("Full Format", "This will clear the entire leaderboard.", () => db.ref('leaderboard').remove()); }
+    function purgeModule(name) { agriPopup("WIPE MODULE", `ERASE ALL DATA FOR: ${name.toUpperCase()}?`, () => db.ref('questions/' + name).remove()); }
+    function kickUser(id) { agriPopup("PURGE RECORD", "REMOVE THIS CANDIDATE FROM SYSTEM RANKINGS?", () => db.ref('leaderboard/' + id).remove()); }
+    function purgeLeaderboard() { agriPopup("SYSTEM WIPE", "CLEAR ALL CANDIDATE DATA FROM THE DATABASE?", () => db.ref('leaderboard').remove()); }
 
 </script>
 </body>
