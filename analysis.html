@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AgriQ Pro | Deep Analysis</title>
+    <title>AgriQ Pro | Mission Analysis</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -14,163 +14,167 @@
     <style>
         :root {
             --primary: #ff3b3b;
-            --primary-glow: rgba(255, 59, 59, 0.2);
-            --primary-soft: #1a1a1a;
+            --primary-glow: rgba(255, 59, 59, 0.4);
             --bg: #000000;
             --surface: #0a0a0a;
             --text-main: #ffffff;
             --text-dim: #a1a1aa;
             --danger: #ff3b3b;
-            --success: #22c55e; /* Green for correct answers */
-            --accent: #ff3b3b;
+            --success: #22c55e;
             --border: #222222;
-            --card-shadow: 0 10px 40px -10px rgba(255, 0, 0, 0.1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
+        /* --- Animations --- */
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseBorder { 0% { border-color: #222; } 50% { border-color: var(--danger); } 100% { border-color: #222; } }
+
         /* --- Custom Alert Popup --- */
         #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px);
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .alert-modal {
-            background: var(--surface); border: 1px solid var(--danger); border-radius: 28px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
             width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            box-shadow: 0 0 30px rgba(255, 59, 59, 0.2); transform: translateY(20px); opacity: 0;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .alert-modal.active { transform: translateY(0); opacity: 1; }
-        .alert-icon { width: 64px; height: 64px; background: var(--danger); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fff; }
-        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
-        .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
-        .alert-actions { display: flex; gap: 12px; }
-        .alert-btn { flex: 1; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; cursor: pointer; border: none; }
-        .btn-sec { background: var(--primary-soft); color: #fff; border: 1px solid var(--border); }
+        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--danger); }
+        .alert-btn { flex: 1; padding: 16px; border-radius: 18px; font-weight: 800; cursor: pointer; border: none; }
+        .btn-sec { background: #1a1a1a; color: #fff; border: 1px solid var(--border); }
         .btn-main { background: var(--danger); color: #fff; }
 
         /* --- Loader --- */
         #analysis-loader {
-            position: fixed; inset: 0; background: #000000; z-index: 9999;
+            position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.6s ease, visibility 0.6s; 
+            transition: 0.6s ease; 
         }
         #analysis-loader.fade-out { opacity: 0; visibility: hidden; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--danger); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 50px; height: 50px; border: 3px solid #111; border-top: 3px solid var(--danger); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
-            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px);
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
         }
-        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; }
-        .brand span { color: var(--danger); }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+        .brand span { color: var(--danger); font-family: 'JetBrains Mono'; }
 
-        main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; }
+        main { padding: 24px; max-width: 500px; margin: 0 auto; }
 
         .quote-box {
-            background: var(--surface); border: 1.5px solid var(--border);
-            color: white; padding: 25px; border-radius: 24px; margin-bottom: 25px;
+            background: linear-gradient(145deg, #0a0a0a, #111); border: 1px solid var(--border);
+            padding: 25px; border-radius: 28px; margin-bottom: 30px;
             text-align: center; position: relative; overflow: hidden;
+            animation: slideUp 0.6s ease;
         }
-        .quote-box i { position: absolute; opacity: 0.1; right: -10px; bottom: -10px; transform: scale(4); color: var(--danger); }
-        .quote-text { font-style: italic; font-size: 14px; line-height: 1.6; font-weight: 500; position: relative; z-index: 1; color: var(--text-dim); }
+        .quote-text { font-style: italic; font-size: 14px; line-height: 1.6; font-weight: 600; color: var(--text-dim); }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .stat-item { 
-            background: var(--surface); padding: 20px; border-radius: 20px; 
-            text-align: center; border: 1.5px solid var(--border);
+            background: #0a0a0a; padding: 22px; border-radius: 24px; 
+            text-align: center; border: 1px solid var(--border);
+            transition: 0.3s;
         }
-        .stat-val { font-size: 24px; font-weight: 800; color: var(--danger); display: block; }
-        .stat-lbl { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-val { font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; color: #fff; display: block; }
+        .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+        
+        /* Highlight Score */
+        .stat-item.highlight { border-color: var(--danger); background: rgba(255, 59, 59, 0.05); }
+        .stat-item.highlight .stat-val { color: var(--danger); }
 
         .analysis-card {
-            background: var(--surface); border-radius: 20px; padding: 20px;
+            background: #0f0f0f; border-radius: 24px; padding: 24px;
             margin-bottom: 15px; border: 1px solid var(--border);
-            position: relative;
+            position: relative; animation: slideUp 0.5s ease backwards;
         }
+        
         .status-tag { 
-            position: absolute; top: 20px; right: 20px; font-size: 10px; 
-            font-weight: 800; padding: 4px 8px; border-radius: 8px; text-transform: uppercase;
+            position: absolute; top: 24px; right: 24px; font-size: 9px; 
+            font-weight: 900; padding: 4px 10px; border-radius: 50px; text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .tag-correct { background: var(--success); color: #ffffff; }
-        .tag-wrong { background: var(--danger); color: #ffffff; }
+        .tag-correct { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .tag-wrong { background: rgba(255, 59, 59, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 
-        .q-text { font-weight: 700; font-size: 15px; margin-bottom: 12px; line-height: 1.5; padding-right: 60px; color: #fff; }
-        .ans-row { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; margin-top: 8px; }
+        .q-text { font-weight: 700; font-size: 16px; margin-bottom: 18px; line-height: 1.6; padding-right: 80px; color: #fff; }
+        .ans-row { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 600; margin-top: 10px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); }
         
         .btn-primary { 
-            width: 100%; padding: 18px; border-radius: 20px; border: none;
-            background: #fff; color: #000; font-weight: 800;
-            font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-            margin-top: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            width: 100%; padding: 20px; border-radius: 24px; border: none;
+            background: #fff; color: #000; font-weight: 900;
+            font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin-top: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .btn-secondary {
-            width: 100%; padding: 18px; border-radius: 20px; border: 2px solid var(--border);
+            width: 100%; padding: 20px; border-radius: 24px; border: 1.5px solid var(--border);
             background: transparent; color: #fff; font-weight: 800;
-            font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-            margin-top: 15px;
+            font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin-top: 12px;
         }
-        footer { padding: 40px 24px; text-align: center; color: var(--text-dim); font-size: 12px; font-weight: 700; }
+        footer { padding: 40px 24px; text-align: center; color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="custom-overlay">
         <div class="alert-modal" id="alert-modal">
-            <div class="alert-icon"><i data-lucide="bell" size="28"></i></div>
-            <div class="alert-title" id="alert-title">Attention</div>
-            <div class="alert-msg" id="alert-msg">Message goes here...</div>
-            <div class="alert-actions" id="alert-actions">
-                <button class="alert-btn btn-sec" id="alert-cancel">No</button>
-                <button class="alert-btn btn-main" id="alert-ok">Yes</button>
+            <h2 id="alert-title" style="margin:0 0 10px; font-size: 20px;">Navigation</h2>
+            <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">Message goes here...</p>
+            <div class="alert-actions" style="display: flex; gap: 12px;">
+                <button class="alert-btn btn-sec" id="alert-cancel">CANCEL</button>
+                <button class="alert-btn btn-main" id="alert-ok">CONFIRM</button>
             </div>
         </div>
     </div>
 
     <div id="analysis-loader">
         <div class="spinner"></div>
-        <p style="font-weight: 700; color: var(--text-dim); margin-top: 15px;">Synthesizing Performance Data...</p>
+        <p style="font-weight: 800; color: var(--text-dim); margin-top: 20px; font-size: 10px; letter-spacing: 2px;">GENERATING ANALYTICS</p>
     </div>
 
     <header>
-        <div class="brand">Agri<span>Q</span> Analysis</div>
-        <div id="user-display" style="font-size: 12px; font-weight: 800; color: var(--danger);">...</div>
+        <div class="brand">AGRI<span>Q</span> REPORT</div>
+        <div id="user-display" style="font-size: 10px; font-weight: 900; color: var(--danger); background: rgba(255,59,59,0.1); padding: 5px 12px; border-radius: 50px; border: 1px solid var(--danger);">...</div>
     </header>
 
     <main>
         <div class="quote-box">
-            <i data-lucide="quote"></i>
-            <p class="quote-text" id="inspire-quote">"The master's eye fattens the horse."</p>
+            <p class="quote-text" id="inspire-quote">"Loading agricultural wisdom..."</p>
         </div>
 
         <div class="stat-grid">
-            <div class="stat-item">
+            <div class="stat-item highlight">
                 <span class="stat-val" id="stat-accuracy">0%</span>
-                <span class="stat-lbl">Accuracy</span>
+                <span class="stat-lbl">Accuracy 🎯</span>
             </div>
             <div class="stat-item">
                 <span class="stat-val" id="stat-score">0/0</span>
-                <span class="stat-lbl">Score</span>
+                <span class="stat-lbl">Points 📊</span>
             </div>
         </div>
 
-        <h3 style="font-weight: 800; margin-bottom: 15px; color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Review Report</h3>
+        <h3 style="font-weight: 900; margin-bottom: 20px; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="list-checks" size="16" color="#ff3b3b"></i> Detailed Review
+        </h3>
+        
         <div id="review-list"></div>
 
-        <button class="btn-primary" onclick="handleNavigation('leaderboard.html', 'View Leaderboard?')">
-            <i data-lucide="trophy"></i> Global Leaderboard
+        <button class="btn-primary" onclick="handleNavigation('leaderboard.html', 'RANKINGS')">
+            VIEW GLOBAL LEADERBOARD <i data-lucide="arrow-right" size="18"></i>
         </button>
 
-        <button class="btn-secondary" onclick="handleNavigation('index.html', 'Start New Session?')">
-            <i data-lucide="rotate-ccw"></i> Try Another Subject
+        <button class="btn-secondary" onclick="handleNavigation('index.html', 'NEW MISSION')">
+            <i data-lucide="refresh-cw" size="18"></i> RETRY OR CHANGE SUBJECT
         </button>
     </main>
 
-    <footer>&copy; 2026 AGRIQ PRO • VNC CORP</footer>
+    <footer>&copy; 2026 AGRIQ TERMINAL • VNC CORP</footer>
 
     <script>
         const firebaseConfig = {
@@ -206,41 +210,44 @@
             };
         }
 
-        function handleNavigation(url, title) {
-            agriPopup(title, "Do you want to leave this analysis report?", () => {
+        function handleNavigation(url, type) {
+            agriPopup("TERMINATE REPORT", `Proceed to ${type}? Current analysis will be saved locally.`, () => {
                 window.location.href = url;
             }, true);
         }
 
         const quotes = [
-            "Agriculture is our wisest pursuit, contributing most to real wealth.",
-            "The master's eye fattens the horse. Stay focused.",
-            "Do not count the days, make the days count.",
-            "Farming is a profession of hope. Keep growing."
+            "Agriculture is the most healthful, most useful and most noble employment of man.",
+            "The goal of farming is not the growing of crops, but the cultivation of human beings.",
+            "Seeds of knowledge grow into harvests of success.",
+            "Precision in study leads to precision in the field."
         ];
 
         window.onload = async () => {
             const results = JSON.parse(localStorage.getItem('agriq_last_result')) || null;
             const userName = localStorage.getItem('agriq_user') || "Aspirant";
+            const myUID = localStorage.getItem('agriq_uid');
 
             document.getElementById('user-display').innerText = userName.toUpperCase();
             document.getElementById('inspire-quote').innerText = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
 
             if (!results) {
-                document.getElementById('review-list').innerHTML = "<p style='text-align:center; color: var(--text-dim);'>No recent test data found.</p>";
+                document.getElementById('review-list').innerHTML = "<div class='analysis-card' style='text-align:center'>No mission data found.</div>";
                 document.getElementById('analysis-loader').classList.add('fade-out');
                 return;
             }
 
+            // Sync to Leaderboard
             try {
                 await database.ref('leaderboard').push({
+                    uid: myUID,
                     name: userName,
-                    score: results.score,
+                    score: results.accuracy, // Saving accuracy as score for ranking
+                    raw: results.score,
                     total: results.total,
-                    accuracy: results.accuracy,
                     timestamp: Date.now()
                 });
-            } catch(e) { console.error("Leaderboard Sync Failed", e); }
+            } catch(e) { console.error("Sync Error", e); }
 
             document.getElementById('stat-accuracy').innerText = results.accuracy + "%";
             document.getElementById('stat-score').innerText = results.score + "/" + results.total;
@@ -250,19 +257,26 @@
                 const isCorrect = item.userAns === item.correctAns;
                 const card = document.createElement('div');
                 card.className = 'analysis-card';
+                card.style.animationDelay = (i * 0.1) + 's';
                 card.innerHTML = `
                     <span class="status-tag ${isCorrect ? 'tag-correct' : 'tag-wrong'}">
-                        ${isCorrect ? 'Correct' : 'Incorrect'}
+                        ${isCorrect ? '✓ REACHED' : '✗ FAILED'}
                     </span>
-                    <div class="q-text">${i + 1}. ${item.question}</div>
-                    <div class="ans-row" style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}">
-                        <i data-lucide="${isCorrect ? 'check-circle' : 'x-circle'}" size="14"></i>
-                        <span>Your Choice: ${item.userAns ? item.userAns : '<b>SKIPPED</b>'}</span>
+                    <div class="q-text"><span style="color:var(--danger); font-family:'JetBrains Mono'; margin-right:8px;">#${i + 1}</span>${item.question}</div>
+                    
+                    <div class="ans-row" style="border-left: 3px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'}">
+                        <div style="flex:1">
+                            <small style="display:block; font-size:9px; color:var(--text-dim); margin-bottom:4px;">YOUR RESPONSE</small>
+                            <span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">${item.userAns ? item.userAns : 'NO RESPONSE'}</span>
+                        </div>
                     </div>
+
                     ${!isCorrect ? `
-                    <div class="ans-row" style="color: #fff; opacity: 0.8; margin-top: 5px;">
-                        <i data-lucide="check-circle" size="14"></i>
-                        <span>Correct: ${item.correctAns}</span>
+                    <div class="ans-row" style="border-left: 3px solid var(--success); margin-top:8px; background: rgba(34, 197, 94, 0.05);">
+                        <div style="flex:1">
+                            <small style="display:block; font-size:9px; color:var(--text-dim); margin-bottom:4px;">CORRECT PROTOCOL</small>
+                            <span style="color:var(--success)">${item.correctAns}</span>
+                        </div>
                     </div>` : ''}
                 `;
                 list.appendChild(card);
@@ -272,7 +286,7 @@
 
             setTimeout(() => {
                 document.getElementById('analysis-loader').classList.add('fade-out');
-            }, 800);
+            }, 1000);
         };
     </script>
 </body>
