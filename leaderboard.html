@@ -12,17 +12,17 @@
 
     <style>
         :root {
-            /* Black & White Theme Palette */
-            --primary: #ffffff;
-            --primary-soft: #1e1e1e;
+            /* Black, Red & White Theme Palette */
+            --primary: #ff3b3b; /* Red */
+            --primary-soft: #1a1a1a;
             --bg: #000000;
-            --surface: #111111;
+            --surface: #0a0a0a;
             --text-main: #ffffff;
             --text-dim: #a1a1aa;
-            --danger: #ff4444;
-            --accent: #ffffff;
-            --border: #27272a;
-            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --danger: #ff3b3b;
+            --accent: #ff3b3b;
+            --border: #222222;
+            --card-shadow: 0 10px 40px -10px rgba(255, 0, 0, 0.1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -30,23 +30,23 @@
 
         /* --- Custom Alert Popup Styles --- */
         #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .alert-modal {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 28px;
+            background: var(--surface); border: 1px solid var(--danger); border-radius: 28px;
             width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: translateY(20px); opacity: 0;
+            box-shadow: 0 0 30px rgba(255, 59, 59, 0.2); transform: translateY(20px); opacity: 0;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .alert-modal.active { transform: translateY(0); opacity: 1; }
-        .alert-icon { width: 64px; height: 64px; background: #fff; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #000; }
+        .alert-icon { width: 64px; height: 64px; background: var(--danger); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fff; }
         .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
         .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
         .alert-actions { display: flex; gap: 12px; }
         .alert-btn { flex: 1; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; cursor: pointer; border: none; }
         .btn-sec { background: var(--primary-soft); color: #fff; border: 1px solid var(--border); }
-        .btn-main { background: #fff; color: #000; }
+        .btn-main { background: var(--danger); color: #fff; }
 
         /* LOADER */
         #leader-loader {
@@ -55,32 +55,32 @@
             transition: opacity 0.6s ease, visibility 0.6s; 
         }
         #leader-loader.fade-out { opacity: 0; visibility: hidden; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--danger); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
-            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
         }
         .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; }
-        .brand span { color: var(--text-dim); }
+        .brand span { color: var(--danger); }
 
         /* LIVE DOT */
         .live-tag {
             font-size: 10px; font-weight: 800; color: #fff;
-            display: flex; align-items: center; gap: 5px; background: #1a1a1a;
-            padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 5px; background: #1a0000;
+            padding: 6px 12px; border-radius: 20px; border: 1px solid var(--danger);
         }
-        .dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .dot { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0px rgba(255,59,59,0.4); } 50% { opacity: 0.3; } 100% { opacity: 1; box-shadow: 0 0 0 6px rgba(255,59,59,0); } }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; }
 
         .podium { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px; align-items: flex-end; margin: 20px 0 40px; }
         .podium-item { background: var(--surface); border-radius: 24px; padding: 20px 10px; text-align: center; border: 1px solid var(--border); transition: 0.3s; }
-        .podium-1 { height: 180px; border-color: #fff; background: #1a1a1a; }
+        .podium-1 { height: 180px; border-color: var(--danger); background: #1a0000; box-shadow: 0 0 20px rgba(255,59,59,0.1); }
         .podium-2 { height: 140px; }
         .podium-3 { height: 120px; }
         .p-name { font-weight: 800; font-size: 13px; display: block; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
@@ -89,13 +89,13 @@
         .rank-card {
             display: flex; align-items: center; gap: 15px;
             background: var(--surface); padding: 18px; border-radius: 20px;
-            margin-bottom: 12px; border: 1px solid var(--border); 
+            margin-bottom: 12px; border: 1.5px solid var(--border); 
             transition: 0.3s;
         }
         
         /* HIGHLIGHT FOR YOU */
-        .rank-card.is-me { border-color: #fff !important; background: #1a1a1a !important; }
-        .me-badge { background: #fff; color: #000; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+        .rank-card.is-me { border-color: var(--danger) !important; background: #150000 !important; }
+        .me-badge { background: var(--danger); color: #fff; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
 
         .rank-num { width: 35px; font-weight: 900; color: var(--text-dim); font-family: 'JetBrains Mono'; }
         .user-info { flex: 1; }
@@ -107,9 +107,10 @@
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: #fff; color: #000; padding: 16px 32px;
             border-radius: 50px; text-decoration: none; font-weight: 800;
-            display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(255,255,255,0.1);
-            z-index: 1001; border: none; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1001; border: none; cursor: pointer; transition: 0.2s;
         }
+        .btn-home:active { transform: translateX(-50%) scale(0.95); }
     </style>
 </head>
 <body>
@@ -132,7 +133,7 @@
     </div>
 
     <header>
-        <div class="brand">AgriQ <span> Pro</span>  Rankings</div>
+        <div class="brand">Agri<span>Q</span> Rankings</div>
         <div class="live-tag"><div class="dot"></div> LIVE</div>
     </header>
 
@@ -214,7 +215,7 @@
                     </div>
                     <div class="podium-item podium-1">
                         <span style="font-size: 32px;">🥇</span><span class="p-name">${users[0].name}</span>
-                        <span class="p-score" style="color:#fff;">${users[0].score}%</span>
+                        <span class="p-score" style="color:var(--danger);">${users[0].score}%</span>
                     </div>
                     <div class="podium-item podium-3">
                         <span style="font-size: 20px;">🥉</span><span class="p-name">${users[2]?.name || '---'}</span>
