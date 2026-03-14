@@ -15,16 +15,15 @@
 
     <title>AgriQ Pro | Ultimate Agriculture Mock</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
-            /* Black, Red & White Theme Palette */
-            --primary: #ff3b3b; /* Red */
-            --primary-glow: rgba(255, 59, 59, 0.2);
+            --primary: #ff3b3b;
+            --primary-glow: rgba(255, 59, 59, 0.4);
             --primary-soft: #1a1a1a;
             --accent: #ff3b3b;
             --bg: #000000;
@@ -32,34 +31,42 @@
             --text-main: #ffffff;
             --text-dim: #a1a1aa;
             --danger: #ff3b3b;
-            --card-shadow: 0 10px 40px -10px rgba(255, 0, 0, 0.1);
+            --warning: #ffcc00;
+            --whatsapp: #25d366;
+            --card-shadow: 0 10px 40px -10px rgba(255, 0, 0, 0.2);
             --border: #222222;
-            --whatsapp: #25D366;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px var(--primary-glow); } 50% { box-shadow: 0 0 20px var(--primary-glow); } 100% { box-shadow: 0 0 5px var(--primary-glow); } }
+        @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes bounceIn { 0% { transform: scale(0); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .screen { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
         /* --- Custom Alert Popup Styles --- */
         #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px);
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .alert-modal {
-            background: var(--surface); border: 1px solid var(--danger); border-radius: 28px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
             width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            box-shadow: 0 0 30px rgba(255, 59, 59, 0.2); transform: translateY(20px); opacity: 0;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); transform: scale(0.9); opacity: 0;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .alert-modal.active { transform: translateY(0); opacity: 1; }
-        .alert-icon { width: 64px; height: 64px; background: var(--danger); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fff; }
+        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--danger); }
+        .alert-icon { width: 64px; height: 64px; background: var(--danger); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fff; box-shadow: 0 10px 20px var(--primary-glow); }
         .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
         .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
         .alert-actions { display: flex; gap: 12px; }
-        .alert-btn { flex: 1; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; border: none; }
+        .alert-btn { flex: 1; padding: 16px; border-radius: 18px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; border: none; }
         .btn-sec { background: #1a1a1a; color: #fff; border: 1px solid var(--border); }
         .btn-main { background: var(--danger); color: #fff; }
-        /* -------------------------------- */
 
         #app-loader {
             position: fixed; inset: 0; background: #000000; z-index: 9999;
@@ -70,127 +77,120 @@
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
-            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px);
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
         }
-        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; }
-        .brand span { color: var(--danger); }
-        .timer-badge { background: var(--danger); color: #fff; padding: 6px 14px; border-radius: 12px; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 13px; }
+        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1.5px; color: #fff; text-transform: uppercase; }
+        .brand span { color: var(--danger); font-family: 'JetBrains Mono'; }
+        .timer-badge { background: var(--primary-soft); color: var(--danger); padding: 8px 16px; border-radius: 14px; border: 1px solid var(--border); font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; flex: 1; width: 100%; }
 
-        .greeting-area { margin-bottom: 25px; position: relative; }
-        #dynamic-greet { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #fff; }
-        .sub-greet { color: var(--text-dim); font-size: 15px; font-weight: 500; }
+        .greeting-area { margin-bottom: 30px; position: relative; animation: slideInRight 0.6s ease; }
+        #dynamic-greet { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px; color: #fff; }
+        .sub-greet { color: var(--text-dim); font-size: 15px; font-weight: 500; margin-top: 4px; }
 
-        .card { background: var(--surface); border-radius: 24px; padding: 24px; box-shadow: var(--card-shadow); border: 1px solid var(--border); margin-bottom: 20px; }
+        .card { background: var(--surface); border-radius: 28px; padding: 24px; border: 1px solid var(--border); margin-bottom: 20px; transition: 0.3s; }
 
         .set-card {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 20px; background: var(--surface); border-radius: 20px;
-            margin-bottom: 12px; border: 1.5px solid var(--border); cursor: pointer;
-            transition: 0.3s; color: #fff;
+            padding: 22px; background: linear-gradient(145deg, #0a0a0a, #111111); border-radius: 24px;
+            margin-bottom: 14px; border: 1px solid var(--border); cursor: pointer;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #fff;
         }
-        .set-card:hover { border-color: var(--danger); background: #111; }
+        .set-card:hover { transform: scale(1.03); border-color: var(--danger); box-shadow: 0 10px 30px rgba(255, 59, 59, 0.1); }
 
         .opt-box { 
-            background: var(--surface); border: 2px solid var(--border); padding: 16px; 
-            border-radius: 16px; margin-bottom: 10px; font-weight: 600; cursor: pointer; 
-            transition: 0.2s; position: relative; color: #fff;
+            background: var(--surface); border: 2px solid var(--border); padding: 18px; 
+            border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; 
+            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; color: #fff;
+            display: flex; align-items: center; gap: 12px;
         }
-        .opt-box.selected { border-color: var(--danger); background: var(--danger); color: #fff; transform: scale(1.02); }
-        .opt-box.selected::after { content: '✓'; position: absolute; right: 15px; font-weight: 900; }
+        .opt-box.selected { border-color: var(--danger); background: rgba(255, 59, 59, 0.05); color: var(--danger); box-shadow: inset 0 0 15px rgba(255, 59, 59, 0.1); }
+        .opt-box.selected::before { content: '🎯'; font-size: 18px; }
 
         .marker-scroll { 
-            display: flex; gap: 10px; overflow-x: auto; padding: 15px 5px; 
-            scrollbar-width: none; -ms-overflow-style: none;
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            display: flex; gap: 12px; overflow-x: auto; padding: 20px 5px; 
+            scrollbar-width: none; mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
-        .marker-scroll::-webkit-scrollbar { display: none; }
         
         .q-pill { 
-            min-width: 44px; height: 44px; border-radius: 14px; 
-            background: var(--surface); border: 2px solid var(--border);
+            min-width: 48px; height: 48px; border-radius: 16px; 
+            background: var(--surface); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; 
-            font-weight: 800; font-size: 14px; color: var(--text-dim);
-            flex-shrink: 0; cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 800; font-size: 15px; color: var(--text-dim);
+            flex-shrink: 0; cursor: pointer; transition: 0.3s;
         }
-        .q-pill.active { 
-            border-color: var(--danger);
-            background: var(--danger);
-            color: #fff;
-            transform: translateY(-2px);
-        }
-        .q-pill.done { 
-            background: var(--primary-soft); 
-            color: white; 
-            border-color: #444;
-        }
+        .q-pill.active { border-color: var(--danger); background: var(--danger); color: #fff; transform: translateY(-4px) scale(1.1); box-shadow: 0 10px 20px var(--primary-glow); }
+        .q-pill.done { background: #ffffff; color: #000; border-color: #fff; }
+        .q-pill.skipped { background: var(--warning); color: #000; border-color: var(--warning); box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3); }
 
-        .input-group { position: relative; margin-bottom: 15px; }
-        .input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--danger); }
-        input, select { width: 100%; padding: 16px 16px 16px 48px; border-radius: 18px; border: 2px solid var(--border); outline: none; font-size: 15px; font-weight: 600; background: var(--surface); color: #fff; }
-        input:focus, select:focus { border-color: var(--danger); }
+        .input-group { position: relative; margin-bottom: 18px; }
+        .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--danger); }
+        input, select { width: 100%; padding: 18px 18px 18px 52px; border-radius: 22px; border: 1.5px solid var(--border); outline: none; font-size: 15px; font-weight: 700; background: var(--surface); color: #fff; transition: 0.3s; }
+        input:focus { border-color: var(--danger); background: #000; box-shadow: 0 0 20px rgba(255, 59, 59, 0.1); }
 
-        .btn-primary { width: 100%; padding: 18px; border-radius: 20px; border: none; background: #ffffff; color: #000; font-weight: 800; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary { width: 100%; padding: 20px; border-radius: 24px; border: none; background: #ffffff; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 15px 30px rgba(0,0,0,0.4); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .btn-primary:active { transform: scale(0.95); }
 
         .hidden { display: none !important; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--danger); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #111; border-top: 4px solid var(--danger); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         .desc-box { 
-            margin-top: 30px; padding: 20px; 
-            background: var(--surface); border-radius: 18px; 
+            margin-top: 30px; padding: 24px; 
+            background: linear-gradient(145deg, #0a0a0a, #050505); border-radius: 24px; 
             border: 1px solid var(--border);
         }
-        .desc-title { font-weight: 800; color: var(--danger); font-size: 14px; margin-bottom: 8px; display: block; }
-        .desc-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; font-weight: 500; }
+        .desc-title { font-weight: 800; color: var(--danger); font-size: 13px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .desc-text { font-size: 14px; color: var(--text-dim); line-height: 1.6; font-weight: 500; }
 
-        footer { padding: 24px; text-align: center; border-top: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--text-dim); }
+        footer { padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); font-size: 11px; font-weight: 800; color: var(--text-dim); letter-spacing: 1px; }
 
-        /* Admin Button Styling */
         .admin-login-btn {
             position: absolute; right: 0; top: 0;
-            background: var(--primary-soft); color: var(--text-dim);
-            padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border);
-            font-size: 11px; font-weight: 800; text-decoration: none;
-            display: flex; align-items: center; gap: 5px; transition: 0.2s;
+            background: rgba(255,255,255,0.05); color: var(--text-dim);
+            padding: 10px 16px; border-radius: 14px; border: 1px solid var(--border);
+            font-size: 10px; font-weight: 900; text-decoration: none;
+            display: flex; align-items: center; gap: 6px; transition: 0.3s;
         }
-        .admin-login-btn:hover { color: var(--danger); border-color: var(--danger); }
+        .admin-login-btn:hover { background: var(--danger); color: #fff; border-color: var(--danger); transform: translateY(-2px); }
 
-        /* WhatsApp Floating Link */
-        .whatsapp-float {
-            position: fixed;
-            bottom: 30px;
-            right: 24px;
-            background: var(--whatsapp);
-            color: white;
-            width: 56px;
-            height: 56px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
-            z-index: 999;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-decoration: none;
+        /* --- WhatsApp Floating Button --- */
+        .wa-float {
+            position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); right: 24px;
+            width: 56px; height: 56px; background: var(--whatsapp);
+            border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            color: #fff; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+            z-index: 1001; text-decoration: none; border: 2px solid rgba(255,255,255,0.2);
+            animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.3s;
         }
-        .whatsapp-float:hover { transform: scale(1.1) rotate(5deg); }
-        .wa-link-inline { color: var(--whatsapp); text-decoration: none; font-weight: 700; }
+        .wa-float:hover { transform: translateY(-5px) rotate(8deg); filter: brightness(1.1); }
+        .wa-badge {
+            position: absolute; top: -5px; left: -5px; background: #fff; color: #000;
+            font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 10px;
+            letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        #q-timer-container { animation: pulseGlow 2s infinite; }
     </style>
 </head>
 <body>
 
+    <a href="https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R" target="_blank" class="wa-float">
+        <span class="wa-badge">JOIN</span>
+        <i data-lucide="message-circle" size="28" style="fill: #fff;"></i>
+    </a>
+
     <div id="custom-overlay">
         <div class="alert-modal" id="alert-modal">
-            <div class="alert-icon"><i data-lucide="bell" size="28"></i></div>
+            <div class="alert-icon"><i data-lucide="shield-alert" size="32"></i></div>
             <div class="alert-title" id="alert-title">Attention</div>
             <div class="alert-msg" id="alert-msg">Message goes here...</div>
             <div class="alert-actions" id="alert-actions">
-                <button class="alert-btn btn-sec" id="alert-cancel">Cancel</button>
+                <button class="alert-btn btn-sec" id="alert-cancel">Abort</button>
                 <button class="alert-btn btn-main" id="alert-ok">Confirm</button>
             </div>
         </div>
@@ -198,52 +198,47 @@
 
     <div id="app-loader">
         <div class="spinner"></div>
-        <p style="font-weight: 700; color: var(--text-dim); margin-top: 15px;">Syncing AgriQ Pro Database...</p>
+        <p style="font-weight: 800; color: #fff; margin-top: 20px; letter-spacing: 2px; font-size: 10px;">BOOTING SYSTEM V2.6</p>
     </div>
 
     <header>
-        <div class="brand">AgriQ  <span>Pro</span> </div>
+        <div class="brand">AGRI<span>Q</span> PRO</div>
         <div id="total-clock" class="timer-badge">00:00</div>
     </header>
 
     <main>
         <div id="screen-login" class="screen">
             <div class="greeting-area">
-                <a href="admin.html" class="admin-login-btn"><i data-lucide="shield-check" size="14"></i> ADMIN</a>
-                <h1 id="dynamic-greet">Welcome</h1>
-                <p class="sub-greet">Let's prepare for your Agri MCEAR excellence.</p>
+                <a href="admin.html" class="admin-login-btn"><i data-lucide="lock" size="14"></i> ADMIN ACCESS</a>
+                <h1 id="dynamic-greet">WELCOME !!🌾</h1>
+                <p class="sub-greet">Master the Agri MCEAR syllabus with precision.</p>
             </div>
             <div class="card">
                 <div class="input-group">
-                    <i data-lucide="user"></i>
-                    <input type="text" id="username" placeholder="Enter Full Name">
+                    <i data-lucide="user-check"></i>
+                    <input type="text" id="username" placeholder="Candidate Full Name">
                 </div>
                 <div class="input-group">
-                    <i data-lucide="book-open"></i>
-                    <select id="subject-select"><option>Fetching Subjects...</option></select>
+                    <i data-lucide="layers"></i>
+                    <select id="subject-select"><option>Synchronizing Database...</option></select>
                 </div>
-                <button class="btn-primary" onclick="initSubject()">Start Session <i data-lucide="zap"></i></button>
+                <button class="btn-primary" onclick="initSubject()">INITIALIZE SESSION 🚀</button>
             </div>
 
             <div class="desc-box">
-                <span class="desc-title">Session Instructions</span>
+                <span class="desc-title">🛡️ Candidate Guidelines</span>
                 <div class="desc-text">
-                    Ensure you have a stable internet connection. Each question has a 60-second timer. 
-                    <br><br>
-                    <i data-lucide="message-circle" size="12" style="vertical-align:middle; color:var(--whatsapp)"></i> 
-                    Join our <a href="https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=hq2tcla" class="wa-link-inline">WhatsApp Group</a> for daily exam updates and notes.
+                    • 60s auto-progression per query.<br>
+                    • Multi-set randomized architecture.<br>
+                    • Detailed analytics post-deployment.
                 </div>
             </div>
-
-            <a href="https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=hq2tcla" class="whatsapp-float" target="_blank">
-                <i data-lucide="message-square"></i>
-            </a>
         </div>
 
         <div id="screen-selection" class="screen hidden">
             <div class="greeting-area">
-                <h2 style="font-weight: 800; margin:0;">Choose Set</h2>
-                <p class="sub-greet">Select a question bank to begin.</p>
+                <h2 style="font-weight: 900; margin:0; font-size: 28px;">Select Module 📂</h2>
+                <p class="sub-greet">Pick a specialized question set to continue.</p>
             </div>
             <div id="selection-list"></div>
         </div>
@@ -253,70 +248,63 @@
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0;">
                 <div style="display:flex; flex-direction:column;">
-                    <span id="q-label" style="font-weight: 800; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Question 1</span>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--text-dim);">TAP TO SELECT / TAP AGAIN TO CLEAR</span>
+                    <span id="q-label" style="font-weight: 900; color: var(--danger); font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">SEC: 01 / Q: 01</span>
+                    <span style="font-size: 10px; font-weight: 800; color: var(--text-dim); margin-top:2px;">DOUBLE TAP TO CLEAR SELECTION</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:6px; background: #220000; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--danger);">
-                    <i data-lucide="clock" size="14" style="color:var(--danger)"></i>
-                    <span id="q-timer" style="color: var(--danger); font-weight: 800; font-family: 'JetBrains Mono';">60s</span>
+                <div id="q-timer-container" style="display:flex; align-items:center; gap:8px; background: #110000; padding: 10px 16px; border-radius: 18px; border: 1.5px solid var(--danger);">
+                    <i data-lucide="zap" size="14" style="color:var(--danger); fill: var(--danger);"></i>
+                    <span id="q-timer" style="color: #fff; font-weight: 900; font-family: 'JetBrains Mono'; font-size: 16px;">60s</span>
                 </div>
             </div>
 
-            <div class="card" id="q-card" style="border-left: 5px solid var(--danger);">
-                <div id="q-display" style="font-weight: 700; min-height: 100px; font-size: 17px; line-height: 1.6;"></div>
+            <div class="card" id="q-card" style="border-top: 4px solid var(--danger); background: linear-gradient(180deg, #0f0f0f, #0a0a0a);">
+                <div id="q-display" style="font-weight: 700; min-height: 100px; font-size: 18px; line-height: 1.6; color: #fff;"></div>
             </div>
             
             <div id="opts-display"></div>
             
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:25px;">
-                <button class="btn-primary" style="background:var(--surface); color:#fff; border: 2px solid var(--border);" onclick="changeQ(-1)">
-                    <i data-lucide="chevron-left"></i> PREV
+                <button class="btn-primary" style="background:var(--surface); color:#fff; border: 1px solid var(--border);" onclick="changeQ(-1)">
+                    <i data-lucide="arrow-left-circle"></i> BACK
                 </button>
                 <button class="btn-primary" onclick="changeQ(1)">
-                    NEXT <i data-lucide="chevron-right"></i>
+                    SKIP <i data-lucide="arrow-right-circle"></i>
                 </button>
             </div>
-            <button class="btn-primary" style="background:var(--danger); color:#fff; margin-top:12px;" onclick="submitTest()">
-                <i data-lucide="check-circle"></i> FINISH EXAM
+            <button class="btn-primary" style="background:var(--danger); color:#fff; margin-top:14px; box-shadow: 0 10px 30px var(--primary-glow);" onclick="submitTest()">
+                FINALIZE EXAM 🏁
             </button>
 
             <div class="desc-box">
-                <span class="desc-title">Question Insight</span>
-                <div id="q-description" class="desc-text">Analysis will appear here.</div>
+                <span class="desc-title">💡 Expert Insight</span>
+                <div id="q-description" class="desc-text">Contextual data loading...</div>
             </div>
         </div>
     </main>
 
-    <footer>&copy; 2026 AGRIQ PRO • VNC Corp </footer>
+    <footer>&copy; 2026 AGRIQ PRO TERMINAL • VNC CORP • ENCRYPTED SESSION</footer>
 
     <script>
-        // --- Custom Alert Logic (The Pop-Up) ---
         function agriPopup(title, msg, onConfirm, isConfirm = false) {
             const overlay = document.getElementById('custom-overlay');
             const modal = document.getElementById('alert-modal');
             const okBtn = document.getElementById('alert-ok');
             const cancelBtn = document.getElementById('alert-cancel');
-            
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-msg').innerText = msg;
-            
             overlay.style.display = 'flex';
             setTimeout(() => modal.classList.add('active'), 10);
-            
             cancelBtn.style.display = isConfirm ? 'block' : 'none';
-            
             okBtn.onclick = () => {
                 modal.classList.remove('active');
                 setTimeout(() => overlay.style.display = 'none', 300);
                 if(onConfirm) onConfirm();
             };
-            
             cancelBtn.onclick = () => {
                 modal.classList.remove('active');
                 setTimeout(() => overlay.style.display = 'none', 300);
             };
         }
-        // ---------------------------------------
 
         lucide.createIcons();
 
@@ -338,7 +326,7 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(); 
 
-        let masterData = [], currentQuestions = [], currentIdx = 0, userChoices = {};
+        let masterData = [], currentQuestions = [], currentIdx = 0, userChoices = {}, visited = {};
         let totalSec = 0, qSec = 60, timer;
 
         window.onload = async () => {
@@ -355,23 +343,20 @@
 
         async function initSubject() {
             const name = document.getElementById('username').value.trim();
-            if(!name) return agriPopup("Action Required", "Please enter your full name to proceed.", null, false);
+            if(!name) return agriPopup("Identification Needed", "Please enter your full name to proceed with the examination.", null, false);
             localStorage.setItem('agriq_user', name);
-
             const sub = document.getElementById('subject-select').value;
             const snap = await database.ref('questions/' + sub).once('value');
             masterData = Object.values(snap.val()).filter(q => q);
-            
             document.getElementById('screen-login').classList.add('hidden');
             document.getElementById('screen-selection').classList.remove('hidden');
-            
             const list = document.getElementById('selection-list');
             list.innerHTML = '';
             for(let i=0; i<masterData.length; i+=200) {
                 const setNum = (i/200)+1;
                 const div = document.createElement('div');
                 div.className = 'set-card';
-                div.innerHTML = `<div><b style="display:block; font-size:16px;">SET ${setNum}</b><small style="color:var(--text-dim); font-weight:600;">HIGH-YIELD QUESTIONS</small></div><i data-lucide="chevron-right" style="color:#fff"></i>`;
+                div.innerHTML = `<div><b style="display:block; font-size:17px; letter-spacing:-0.5px;">MISSION SET ${setNum < 10 ? '0' + setNum : setNum}</b><small style="color:var(--text-dim); font-weight:800; text-transform:uppercase; font-size:9px; letter-spacing:1px;">Targeting High-Yield Core Syllabus</small></div><i data-lucide="zap" style="color:var(--danger)"></i>`;
                 div.onclick = () => startTest(i, i+200);
                 list.appendChild(div);
             }
@@ -382,7 +367,6 @@
             currentQuestions = masterData.slice(s, e).sort(() => Math.random() - 0.5);
             document.getElementById('screen-selection').classList.add('hidden');
             document.getElementById('screen-quiz').classList.remove('hidden');
-            
             const grid = document.getElementById('marker-grid');
             grid.innerHTML = '';
             currentQuestions.forEach((_, i) => {
@@ -393,7 +377,6 @@
                 p.onclick = () => { currentIdx = i; showQ(); };
                 grid.appendChild(p);
             });
-
             timer = setInterval(() => {
                 totalSec++; qSec--;
                 document.getElementById('total-clock').innerText = new Date(totalSec * 1000).toISOString().substr(14, 5);
@@ -406,25 +389,29 @@
         function showQ() {
             qSec = 60;
             const q = currentQuestions[currentIdx];
-            document.getElementById('q-label').innerText = `QUESTION ${currentIdx+1} OF ${currentQuestions.length}`;
-            document.getElementById('q-display').innerHTML = `<span style="color:var(--danger); margin-right:8px;">Q${currentIdx+1}.</span>${q.question}`;
-            document.getElementById('q-description').innerText = q.description || "Analyze the agricultural concept presented above.";
+            visited[currentIdx] = true; // Mark as visited
+            document.getElementById('q-label').innerText = `MOD: 01 / Q: ${currentIdx + 1 < 10 ? '0' + (currentIdx + 1) : currentIdx + 1}`;
+            document.getElementById('q-display').innerHTML = `<span style="color:var(--danger); font-family:'JetBrains Mono'; margin-right:10px; font-weight:800;">[Q${currentIdx+1}]</span>${q.question}`;
+            document.getElementById('q-description').innerText = q.description || "The conceptual framework for this query is based on standard agricultural protocols.";
 
             document.querySelectorAll('.q-pill').forEach((p, i) => {
-                p.classList.remove('active', 'done');
-                if(i === currentIdx) p.classList.add('active');
-                if(userChoices[i]) p.classList.add('done');
+                p.classList.remove('active', 'done', 'skipped');
+                if(i === currentIdx) {
+                    p.classList.add('active');
+                } else if(userChoices[i]) {
+                    p.classList.add('done');
+                } else if(visited[i]) {
+                    p.classList.add('skipped'); // Yellow state
+                }
             });
 
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
             const opts = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
-            
             opts.forEach(o => {
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === o ? 'selected' : ''}`;
                 div.innerText = o;
-                
                 div.onclick = () => {
                     if (userChoices[currentIdx] === o) {
                         delete userChoices[currentIdx];
@@ -435,7 +422,6 @@
                 };
                 optBox.appendChild(div);
             });
-            
             const activePill = document.getElementById(`mark-${currentIdx}`);
             if(activePill) {
                 activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -448,7 +434,7 @@
         }
 
         async function submitTest() {
-            agriPopup("Submit Exam", "Are you sure you want to end the session? This action cannot be undone.", async () => {
+            agriPopup("Deployment Finalization", "Confirm final submission of your responses? Your analytics will be generated immediately.", async () => {
                 clearInterval(timer);
                 document.getElementById('app-loader').classList.remove('fade-out');
                 let score = 0;
