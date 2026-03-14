@@ -79,7 +79,7 @@
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; flex: 1; width: 100%; }
 
-        .greeting-area { margin-bottom: 25px; }
+        .greeting-area { margin-bottom: 25px; position: relative; }
         #dynamic-greet { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #fff; }
         .sub-greet { color: var(--text-dim); font-size: 15px; font-weight: 500; }
 
@@ -146,6 +146,16 @@
         .desc-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; font-weight: 500; }
 
         footer { padding: 24px; text-align: center; border-top: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--text-dim); }
+
+        /* Admin Button Styling */
+        .admin-login-btn {
+            position: absolute; right: 0; top: 0;
+            background: var(--primary-soft); color: var(--text-dim);
+            padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border);
+            font-size: 11px; font-weight: 800; text-decoration: none;
+            display: flex; align-items: center; gap: 5px; transition: 0.2s;
+        }
+        .admin-login-btn:hover { color: #fff; border-color: #fff; }
     </style>
 </head>
 <body>
@@ -175,6 +185,7 @@
     <main>
         <div id="screen-login" class="screen">
             <div class="greeting-area">
+                <a href="admin.html" class="admin-login-btn"><i data-lucide="shield-check" size="14"></i> ADMIN</a>
                 <h1 id="dynamic-greet">Welcome</h1>
                 <p class="sub-greet">Let's prepare for your Agri MCEAR excellence.</p>
             </div>
