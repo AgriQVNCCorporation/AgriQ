@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Arena Standings</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff3b3b;
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --card-bg: #111111;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --border: #222222;
+            --gold: #ffda44;
+            --silver: #e2e2e2;
+            --bronze: #cd7f32;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { 
+            background-color: var(--bg); margin: 0; color: var(--text-main); 
+            min-height: 100vh; overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, #1a0005 0%, #000000 100%); 
+        }
+
+        /* Animations */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes glow { 0%, 100% { filter: drop-shadow(0 0 5px var(--gold)); } 50% { filter: drop-shadow(0 0 20px var(--gold)); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        #loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid #111; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+        header { padding: 50px 24px 20px; text-align: center; }
+        .brand { font-weight: 900; font-size: 26px; letter-spacing: -1.5px; text-transform: uppercase; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        .mode-badge {
+            display: inline-block; padding: 6px 16px; background: rgba(255,59,59,0.1);
+            border: 1px solid var(--primary); border-radius: 100px; color: var(--primary);
+            font-size: 10px; font-weight: 800; text-transform: uppercase; margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        main { padding: 0 20px; max-width: 500px; margin: 0 auto; }
+
+        /* Enhanced Podium */
+        .podium { 
+            display: flex; justify-content: center; align-items: flex-end; 
+            gap: 12px; margin: 60px 0 50px; height: 200px; 
+        }
+        .podium-item { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+            padding: 12px; text-align: center; flex: 1; position: relative;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            transition: 0.3s; animation: float 4s ease-in-out infinite;
+        }
+        .podium-1 { 
+            height: 100%; border-color: var(--gold); 
+            background: linear-gradient(180deg, rgba(255,218,68,0.15) 0%, #0a0a0a 100%); 
+            animation-delay: 0.2s;
+        }
+        .podium-2 { height: 80%; border-color: var(--silver); animation-delay: 0.5s; }
+        .podium-3 { height: 70%; border-color: var(--bronze); animation-delay: 0.8s; }
+
+        .crown-icon {
+            position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+            font-size: 30px; animation: glow 2s infinite;
+        }
+
+        .p-name { font-weight: 800; font-size: 11px; color: #fff; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .p-wins { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 22px; color: var(--primary); }
+        .p-label { font-size: 8px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+
+        /* List Cards */
+        .rank-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 16px 20px; border-radius: 20px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 15px;
+            animation: slideUp 0.4s ease forwards; opacity: 0;
+        }
+
+        .rank-num { font-family: 'JetBrains Mono'; width: 30px; font-weight: 800; color: var(--text-dim); }
+        .player-info { flex: 1; }
+        .player-name { font-weight: 700; font-size: 14px; display: block; color: #fff; text-transform: uppercase; }
+        .player-college { font-size: 9px; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 4px; }
+        
+        /* Category Badge Styles */
+        .cat-tag { 
+            font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; 
+            text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;
+        }
+        .cat-rookie { background: #10b981; color: #fff; }
+        .cat-medium { background: #f59e0b; color: #fff; }
+        .cat-hard { background: #ef4444; color: #fff; }
+
+        .player-stat { text-align: right; }
+        .stat-val { display: block; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 18px; color: var(--primary); }
+        .stat-label { font-size: 8px; color: var(--text-dim); font-weight: 800; text-transform: uppercase; }
+
+        /* Fixed Navigation Buttons */
+        .nav-container {
+            position: fixed; bottom: 30px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 15px; padding: 0 20px;
+            z-index: 100;
+        }
+        .btn-action {
+            background: #fff; color: #000; padding: 14px 24px; border-radius: 100px;
+            font-weight: 900; border: none; cursor: pointer; 
+            display: flex; align-items: center; gap: 8px; font-size: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .btn-home { background: var(--primary); color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="brand">AGRIQ<span>PRO</span></div>
+        <div class="mode-badge">Arena Champions</div>
+    </header>
+
+    <main>
+        <div class="podium" id="podium-box"></div>
+        <div id="leader-list"></div>
+        <div style="height: 120px;"></div>
+    </main>
+
+    <div class="nav-container">
+        <button class="btn-action" onclick="window.history.back()">
+            <i data-lucide="arrow-left" size="16"></i> BACK
+        </button>
+        <button class="btn-action btn-home" onclick="window.location.href='index.html'">
+            <i data-lucide="home" size="16"></i> HOME
+        </button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const arenaRef = db.ref('rivalry_arena');
+
+        arenaRef.orderByChild('wins').limitToLast(30).on('value', (snap) => {
+            let champions = [];
+            snap.forEach(child => {
+                champions.push(child.val());
+            });
+            champions.reverse(); 
+            renderArenaUI(champions);
+            document.getElementById('loader').style.display = 'none';
+        });
+
+        function renderArenaUI(data) {
+            const podiumBox = document.getElementById('podium-box');
+            const listBox = document.getElementById('leader-list');
+
+            if (data.length === 0) {
+                listBox.innerHTML = `<div style="text-align:center; color:var(--text-dim); margin-top:40px;">ARENA EMPTY.</div>`;
+                return;
+            }
+
+            // Podium logic
+            podiumBox.innerHTML = `
+                <div class="podium-item podium-2" style="opacity: ${data[1] ? 1 : 0}">
+                    <div class="p-name">${data[1]?.name || ''}</div>
+                    <div class="p-wins">${data[1]?.wins || 0}</div>
+                    <div class="p-label">🥈 Rank 02</div>
+                </div>
+                <div class="podium-item podium-1">
+                    <div class="crown-icon">👑</div>
+                    <div class="p-name">${data[0]?.name || ''}</div>
+                    <div class="p-wins" style="font-size:28px;">${data[0]?.wins || 0}</div>
+                    <div class="p-label">🥇 Champion</div>
+                </div>
+                <div class="podium-item podium-3" style="opacity: ${data[2] ? 1 : 0}">
+                    <div class="p-name">${data[2]?.name || ''}</div>
+                    <div class="p-wins">${data[2]?.wins || 0}</div>
+                    <div class="p-label">🥉 Rank 03</div>
+                </div>
+            `;
+
+            listBox.innerHTML = "";
+            data.forEach((p, i) => {
+                // Category Mapping
+                const cat = (p.category || 'rookie').toLowerCase();
+                const catClass = `cat-${cat}`;
+
+                const card = document.createElement('div');
+                card.className = 'rank-card';
+                card.style.animationDelay = (i * 0.05) + 's';
+                card.innerHTML = `
+                    <div class="rank-num">#${(i + 1).toString().padStart(2, '0')}</div>
+                    <div class="player-info">
+                        <span class="player-name">${p.name}</span>
+                        <span class="player-college">${p.college}</span>
+                        <span class="cat-tag ${catClass}">${cat}</span>
+                    </div>
+                    <div class="player-stat">
+                        <span class="stat-val">${p.wins}</span>
+                        <span class="stat-label">Wins</span>
+                    </div>
+                `;
+                listBox.appendChild(card);
+            });
+
+            if(window.lucide) lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
