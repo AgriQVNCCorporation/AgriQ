@@ -19,6 +19,7 @@
             --border: #1a1a1a;
             --accent: #ff3b3b;
             --accent-soft: rgba(255, 59, 59, 0.1);
+            --success: #22c55e;
             --text-main: #ffffff;
             --text-dim: #a1a1aa;
             --safe-bottom: env(safe-area-inset-bottom);
@@ -33,10 +34,6 @@
             padding-bottom: calc(100px + var(--safe-bottom)); 
             overflow-x: hidden;
         }
-
-        /* --- UI Animations --- */
-        @keyframes scanline { 0% { top: -100%; } 100% { top: 100%; } }
-        @keyframes glitch { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
 
         #system-loader {
             position: fixed; inset: 0; background: #000; z-index: 10000;
@@ -55,26 +52,17 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
         }
         
-        .home-link {
-            margin-bottom: 40px; color: var(--text-dim); text-decoration: none;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
-        }
-
         .gate-card {
             width: 100%; max-width: 380px; padding: 40px; border: 1px solid var(--border); 
-            border-radius: 32px; background: var(--surface); position: relative; overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border-radius: 32px; background: var(--surface); position: relative;
         }
-        .gate-card::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--accent); animation: scanline 4s linear infinite; opacity: 0.3; }
         
-        input, textarea {
+        input, textarea, select {
             width: 100%; background: #050505; border: 1.5px solid var(--border);
             border-radius: 18px; padding: 18px; color: #fff; outline: none;
             font-size: 15px; margin-bottom: 14px; transition: 0.3s;
         }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(255, 59, 59, 0.1); }
-        textarea { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        input:focus, select:focus { border-color: var(--accent); }
 
         header { 
             padding: 24px; display: flex; justify-content: space-between; align-items: center;
@@ -89,78 +77,71 @@
             background: linear-gradient(180deg, #0a0a0a 0%, #050505 100%); 
             border: 1px solid var(--border); border-radius: 28px; padding: 24px; margin-top: 20px;
         }
-        h2 { 
-            font-size: 11px; font-weight: 800; text-transform: uppercase; 
-            letter-spacing: 2px; color: var(--accent); margin-bottom: 20px; 
-            display: flex; align-items: center; gap: 10px;
-        }
+        h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 20px; }
 
         .bottom-nav {
             position: fixed; bottom: 24px; left: 24px; right: 24px;
             background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px);
             border: 1px solid var(--border); height: 72px; border-radius: 24px;
             display: flex; align-items: center; justify-content: space-around;
-            z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 1000;
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center;
             color: var(--text-dim); text-decoration: none; font-size: 10px;
             font-weight: 800; gap: 6px; border: none; background: none; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 1px;
         }
         .nav-item.active { color: var(--accent); }
 
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 10px; color: var(--text-dim); padding: 12px 5px; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 16px 5px; font-size: 14px; border-bottom: 1px solid var(--border); }
-        .rank { font-weight: 900; color: var(--accent); font-family: 'JetBrains Mono'; }
-
-        .btn-primary { 
-            width: 100%; padding: 18px; border-radius: 20px; border: none;
-            background: #fff; color: #000; font-weight: 900;
-            font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background-color: #222; transition: .3s; border-radius: 20px;
         }
-        .btn-kill {
-            background: rgba(255, 59, 59, 0.1); color: var(--accent);
-            border: 1px solid var(--accent); padding: 8px 14px; border-radius: 12px;
-            font-size: 10px; font-weight: 800; text-transform: uppercase;
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
         }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(18px); }
 
-        .view-section { display: none; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .module-pill { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #050505; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 8px; }
+        
+        .btn-primary { width: 100%; padding: 18px; border-radius: 20px; border: none; background: #fff; color: #000; font-weight: 900; font-size: 14px; cursor: pointer; }
+        .btn-kill { background: rgba(255, 59, 59, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 12px; font-size: 10px; font-weight: 800; }
+
+        .view-section { display: none; }
         .view-section.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         #custom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 10001; display: none; align-items: flex-end; }
-        .alert-modal { 
-            background: var(--surface); width: 100%; border-radius: 32px 32px 0 0; 
-            padding: 40px 24px calc(40px + var(--safe-bottom)); border-top: 2px solid var(--accent);
-        }
+        .alert-modal { background: var(--surface); width: 100%; border-radius: 32px 32px 0 0; padding: 40px 24px; border-top: 2px solid var(--accent); }
 
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 8px; box-shadow: 0 0 10px #22c55e; }
+        /* Tabs Styling */
+        .hub-tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #050505; padding: 5px; border-radius: 15px; }
+        .hub-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-dim); font-size: 10px; font-weight: 800; cursor: pointer; border-radius: 12px; transition: 0.3s; }
+        .hub-tab.active { background: var(--accent); color: #fff; }
+        .tab-pane { display: none; max-height: 350px; overflow-y: auto; padding-right: 5px; }
+        .tab-pane.active { display: block; }
         
-        .matrix-text { font-family: 'JetBrains Mono'; font-weight: 800; color: var(--text-main); }
-        .module-pill { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #050505; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 10px; }
+        /* Pulse Indicator */
+        .pulse { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); animation: neon-pulse 1.5s infinite; }
+        @keyframes neon-pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div id="system-loader">
         <div class="scanner"></div>
-        <p style="color: var(--accent); font-size: 10px; margin-top: 15px; font-weight: 800; letter-spacing: 3px;">SYSTEM.REBOOTING</p>
+        <p style="color: var(--accent); font-size: 10px; margin-top: 15px; font-weight: 800; letter-spacing: 3px;">INITIALIZING_ADMIN</p>
     </div>
 
     <div id="admin-gate">
-        <a href="index.html" class="home-link">
-            <i data-lucide="shield-chevron" size="32" color="#ff3b3b"></i>
-            <span>Portal Access</span>
-        </a>
-
         <div class="gate-card">
-            <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 10px; letter-spacing: -1px;">AGRIQ<span>.ADMIN</span></h1>
-            <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 30px; font-weight: 600;">Secure Terminal Authorization Required</p>
+            <h1 style="font-size: 24px; font-weight: 900; margin-bottom: 30px;">AGRIQ PRO<span>.ADMIN</span></h1>
             <input type="email" id="admin-email" placeholder="ADMIN_ID">
             <input type="password" id="admin-pass" placeholder="ACCESS_KEY">
-            <button id="login-btn" class="btn-primary" onclick="tryLogin()">Initialize Session</button>
+            <button class="btn-primary" onclick="tryLogin()">Login</button>
             <p id="gate-error" style="color: var(--accent); font-size: 11px; margin-top: 20px; text-align: center; font-weight: 800;"></p>
         </div>
     </div>
@@ -168,49 +149,73 @@
     <div id="command-center">
         <header>
             <div class="brand">AGRIQ<span>TERMINAL</span></div>
-            <button class="btn-kill" onclick="logout()">Disconnect</button>
+            <button class="btn-kill" onclick="logout()">Logout</button>
         </header>
 
         <div id="view-dashboard" class="view-section active">
+            
             <div class="card">
-                <h2><i data-lucide="upload-cloud" size="14"></i> Data Deployment</h2>
-                <input type="text" id="sub-name" placeholder="MODULE_NAME (e.g. Agronomy)">
-                <textarea id="json-input" rows="8" placeholder='[{"q": "Question Text", "options": ["A", "B", "C", "D"], "answer": "A", "description": "..."}]'></textarea>
-                <button class="btn-primary" style="background:var(--accent); color:#fff;" onclick="uploadData()">Push to Mainframe</button>
-                <p id="status" style="font-size: 11px; text-align: center; margin-top: 15px; color: var(--accent); font-weight: 800; letter-spacing: 1px;"></p>
+                <h2><i data-lucide="upload-cloud" size="14"></i> Deploy Module</h2>
+                <input type="text" id="sub-name" placeholder="Module Name (e.g., Agronomy)">
+                <textarea id="json-input" rows="4" placeholder='[{"question": "...", "options": ["A", "B", "C", "D"], "answer": "A"}]'></textarea>
+                <button class="btn-primary" style="background:var(--accent); color:#fff;" onclick="uploadData()">Push to Database</button>
+                <p id="status" style="font-size: 11px; text-align: center; margin-top: 15px; color: var(--success); font-weight: 800;"></p>
             </div>
 
             <div class="card">
-                <h2><i data-lucide="box" size="14"></i> Active Modules</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2><i data-lucide="layers" size="14"></i> Data Hub</h2>
+                    <span onclick="wipeHubData()" style="color:var(--accent); font-size: 9px; font-weight: 900; cursor:pointer;">WIPE_SELECTED</span>
+                </div>
+
+                <div class="hub-tabs">
+                    <button class="hub-tab active" onclick="switchTab('arena', this)">ARENA</button>
+                    <button class="hub-tab" onclick="switchTab('general', this)">GENERAL</button>
+                    <button class="hub-tab" onclick="switchTab('bots', this)">BOTS</button>
+                </div>
+
+                <div id="pane-arena" class="tab-pane active">
+                    <div id="arena-data-list"></div>
+                </div>
+
+                <div id="pane-general" class="tab-pane">
+                    <div id="general-data-list"></div>
+                </div>
+
+                <div id="pane-bots" class="tab-pane">
+                    <input type="text" id="bot-name" placeholder="Bot Name">
+                    <div style="display: flex; gap: 10px;">
+                        <select id="bot-diff" style="flex:1">
+                            <option value="Rookie">Rookie</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                        <input type="number" id="bot-wins" placeholder="Wins" style="flex:1">
+                    </div>
+                    <button class="btn-primary" onclick="deployBot()" style="background:var(--success); color:#fff;">Create System Bot</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i data-lucide="box" size="14"></i> Module Control</h2>
                 <div id="module-list"></div>
-            </div>
-        </div>
-
-        <div id="view-live" class="view-section">
-            <div class="card" style="border-left: 4px solid var(--accent);">
-                <h2><i data-lucide="radio" size="14" style="color:var(--accent)"></i> Real-time Telemetry</h2>
-                <div style="font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; margin: 10px 0 20px;" id="live-count">00</div>
-                <table>
-                    <thead>
-                        <tr><th>Subject</th><th>Activity</th><th>Node</th></tr>
-                    </thead>
-                    <tbody id="live-users-table" class="matrix-text"></tbody>
-                </table>
             </div>
         </div>
 
         <div id="view-leaderboard" class="view-section">
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                    <h2><i data-lucide="database" size="14"></i> Global Rankings</h2>
-                    <span onclick="purgeLeaderboard()" style="color:var(--accent); font-size: 10px; font-weight: 900; cursor:pointer; letter-spacing: 1px;">WIPE_DATA</span>
+                <h2><i data-lucide="activity" size="14"></i> Live Traffic</h2>
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <div style="flex:1; background: #050505; padding: 18px; border-radius: 20px; border: 1px solid var(--border);">
+                        <div style="font-size: 10px; color: var(--text-dim); font-weight: 800; letter-spacing: 1px;">ACTIVE_SESSIONS</div>
+                        <div id="live-count" style="font-size: 28px; font-weight: 900; color: var(--success); margin-top: 5px;">0</div>
+                    </div>
+                    <div style="flex:1; background: #050505; padding: 18px; border-radius: 20px; border: 1px solid var(--border);">
+                        <div style="font-size: 10px; color: var(--text-dim); font-weight: 800; letter-spacing: 1px;">ACTIVE_MODULES</div>
+                        <div id="active-mods" style="font-size: 28px; font-weight: 900; margin-top: 5px;">0</div>
+                    </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr><th>RANK</th><th>ID</th><th>SCORE</th><th>OP</th></tr>
-                    </thead>
-                    <tbody id="leaderboard-body"></tbody>
-                </table>
+                <div id="live-users-list"></div>
             </div>
         </div>
 
@@ -218,21 +223,18 @@
             <button class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">
                 <i data-lucide="cpu" size="20"></i>Console
             </button>
-            <button class="nav-item" id="nav-live" onclick="switchView('live')">
-                <i data-lucide="activity" size="20"></i>Live
-            </button>
             <button class="nav-item" id="nav-leaderboard" onclick="switchView('leaderboard')">
-                <i data-lucide="bar-chart-3" size="20"></i>Stats
+                <i data-lucide="activity" size="20"></i>Stats
             </button>
         </nav>
     </div>
 
     <div id="custom-overlay">
         <div class="alert-modal">
-            <h3 id="alert-title" style="margin:0 0 10px; font-weight: 900; text-transform: uppercase;">System Override</h3>
-            <p id="alert-msg" style="color: var(--text-dim); margin-bottom: 30px; font-size: 14px; line-height: 1.6;">Are you sure you want to proceed with this protocol?</p>
+            <h3 id="alert-title" style="margin:0 0 10px; font-weight: 900; color:#fff;">Wipe Data?</h3>
+            <p id="alert-msg" style="color: var(--text-dim); margin-bottom: 30px; font-size: 14px;">This action is permanent.</p>
             <div style="display: flex; gap: 12px;">
-                <button class="btn-primary" id="alert-ok" style="flex:2; background: var(--accent); color: #fff;">Confirm Protocol</button>
+                <button class="btn-primary" id="alert-ok" style="flex:2; background: var(--accent); color: #fff;">Confirm</button>
                 <button class="btn-primary" id="alert-cancel" style="flex:1; background: #1a1a1a; color: #fff;">Abort</button>
             </div>
         </div>
@@ -252,133 +254,207 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
+    let currentTab = 'arena';
 
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.getElementById(`view-${view}`).classList.add('active');
         document.getElementById(`nav-${view}`).classList.add('active');
-        window.scrollTo(0,0);
+    }
+
+    function switchTab(tab, btn) {
+        currentTab = tab;
+        document.querySelectorAll('.hub-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`pane-${tab}`).classList.add('active');
     }
 
     auth.onAuthStateChanged(user => {
-        const loader = document.getElementById('system-loader');
         if (user) {
             document.getElementById('admin-gate').style.display = 'none';
             document.getElementById('command-center').style.display = 'block';
-            loadData();
+            loadModules();
+            loadArenaData();
+            loadGeneralData();
+            loadLiveStats();
         } else {
             document.getElementById('admin-gate').style.display = 'flex';
             document.getElementById('command-center').style.display = 'none';
         }
-        setTimeout(() => {
-            loader.classList.add('hidden');
-            lucide.createIcons();
-        }, 1200);
+        document.getElementById('system-loader').classList.add('hidden');
+        lucide.createIcons();
     });
 
+    // DATA LOADING
+    function loadModules() {
+        db.ref('questions').on('value', snap => {
+            const container = document.getElementById('module-list');
+            container.innerHTML = "";
+            let count = 0;
+            snap.forEach(child => {
+                count++;
+                const div = document.createElement('div');
+                div.className = "module-pill";
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <label class="switch"><input type="checkbox" ${child.val().enabled !== false ? 'checked' : ''} onchange="toggleModule('${child.key}', this.checked)"><span class="slider"></span></label>
+                        <span style="font-weight:700;">${child.key.toUpperCase()}</span>
+                    </div>
+                    <button class="btn-kill" onclick="purgeModule('${child.key}')">DEL</button>`;
+                container.appendChild(div);
+            });
+            document.getElementById('active-mods').innerText = count;
+        });
+    }
+
+    function loadLiveStats() {
+        db.ref('status').on('value', snap => {
+            const list = document.getElementById('live-users-list');
+            const count = document.getElementById('live-count');
+            list.innerHTML = "";
+            let active = 0;
+            const now = Date.now();
+            const threshold = 5 * 60 * 1000; // 5 mins
+
+            snap.forEach(child => {
+                const u = child.val();
+                if (now - u.last_active < threshold) {
+                    active++;
+                    const div = document.createElement('div');
+                    div.className = "module-pill";
+                    div.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="pulse"></div>
+                            <div>
+                                <div style="font-weight:800; font-size:11px;">${u.name || 'Anonymous'}</div>
+                                <div style="font-size:9px; color:var(--text-dim)">${u.current_page || 'Active'} • ${u.college || 'Agri Student'}</div>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                }
+            });
+            count.innerText = active;
+            if(active === 0) list.innerHTML = `<p style="text-align:center; color:var(--text-dim); font-size:11px; margin-top:20px;">SYSTEM_IDLE: No live traffic</p>`;
+        });
+    }
+
+    function loadArenaData() {
+        db.ref('rivalry_arena').orderByChild('wins').on('value', snap => {
+            const container = document.getElementById('arena-data-list');
+            container.innerHTML = "";
+            let items = [];
+            snap.forEach(child => { items.push({key: child.key, ...child.val()}); });
+            items.reverse().forEach(p => {
+                const div = document.createElement('div');
+                div.className = "module-pill";
+                div.innerHTML = `
+                    <div style="flex:1">
+                        <div style="font-weight:800; font-size:11px;">${p.name} <span style="color:var(--accent)">[${p.category || 'User'}]</span></div>
+                        <div style="font-size:9px; color:var(--text-dim)">${p.wins} Wins • ${p.college || 'No College'}</div>
+                    </div>
+                    <button class="btn-kill" style="padding:4px 8px" onclick="deleteEntry('rivalry_arena', '${p.key}')">X</button>`;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    function loadGeneralData() {
+        db.ref('leaderboard').orderByChild('score').on('value', snap => {
+            const container = document.getElementById('general-data-list');
+            container.innerHTML = "";
+            let items = [];
+            snap.forEach(child => { items.push({key: child.key, ...child.val()}); });
+            items.reverse().forEach(p => {
+                const div = document.createElement('div');
+                div.className = "module-pill";
+                div.innerHTML = `
+                    <div style="flex:1">
+                        <div style="font-weight:800; font-size:11px;">${p.name || 'Anonymous'}</div>
+                        <div style="font-size:9px; color:var(--text-dim)">${p.score || 0} pts • ${p.college || 'N/A'}</div>
+                    </div>
+                    <button class="btn-kill" style="padding:4px 8px" onclick="deleteEntry('leaderboard', '${p.key}')">X</button>`;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    // ACTIONS
     async function tryLogin() {
         const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-pass').value;
-        const errDisplay = document.getElementById('gate-error');
-        errDisplay.innerText = "";
-        if(!email || !pass) { errDisplay.innerText = "AUTHENTICATION_REQUIRED"; return; }
-        try {
-            await auth.signInWithEmailAndPassword(email, pass);
-        } catch (e) {
-            errDisplay.innerText = "ACCESS_DENIED: " + e.message.toUpperCase();
-        }
+        try { await auth.signInWithEmailAndPassword(email, pass); } 
+        catch (e) { document.getElementById('gate-error').innerText = "ERROR: " + e.message; }
     }
 
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    function loadData() {
-        db.ref('questions').on('value', snap => {
-            const container = document.getElementById('module-list');
-            container.innerHTML = "";
-            snap.forEach(child => {
-                const div = document.createElement('div');
-                div.className = "module-pill";
-                div.innerHTML = `<span style="font-weight:700; font-size:14px;">${child.key.toUpperCase()}</span>
-                                 <button class="btn-kill" style="padding:6px 10px" onclick="purgeModule('${child.key}')">DELETE</button>`;
-                container.appendChild(div);
-            });
-        });
-
-        db.ref('live_users').on('value', snap => {
-            const tbody = document.getElementById('live-users-table');
-            const countEl = document.getElementById('live-count');
-            tbody.innerHTML = "";
-            const users = snap.val() ? Object.values(snap.val()) : [];
-            countEl.innerText = users.length < 10 ? '0' + users.length : users.length;
-            
-            if(users.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:30px; color:#333; font-size:10px;'>NO_ACTIVE_NODES</td></tr>";
-                return;
-            }
-
-            users.forEach(u => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><div class="status-dot"></div><span style="font-size:13px">${u.name || 'ANON'}</span></td>
-                    <td style="color:var(--text-dim); font-size:11px;">${u.subject || 'IDLE'}</td>
-                    <td style="font-size:11px; text-align:right;">${new Date(u.lastActive).toLocaleTimeString([], {hour12: false, hour:'2-digit', minute:'2-digit'})}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        });
-
-        db.ref('leaderboard').orderByChild('score').limitToLast(50).on('value', snap => {
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = "";
-            let data = [];
-            snap.forEach(c => { data.push({id: c.key, ...c.val()}) });
-            
-            data.reverse().forEach((p, i) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="rank">#${i+1}</td>
-                    <td><div style="font-weight:700; font-size:13px;">${p.name}</div></td>
-                    <td class="matrix-text" style="color:var(--accent)">${p.score}%</td>
-                    <td style="text-align:right"><i data-lucide="x-square" size="16" style="color:#333; cursor:pointer;" onclick="kickUser('${p.id}')"></i></td>
-                `;
-                tbody.appendChild(row);
-            });
-            lucide.createIcons();
-        });
-    }
+    function toggleModule(name, isChecked) { db.ref(`questions/${name}`).update({ enabled: isChecked }); }
 
     function uploadData() {
-        const name = document.getElementById('sub-name').value.trim();
+        const name = document.getElementById('sub-name').value.trim().toLowerCase().replace(/\s+/g, '_');
         const jsonText = document.getElementById('json-input').value.trim();
-        const status = document.getElementById('status');
         if(!name || !jsonText) return;
         try {
             const parsed = JSON.parse(jsonText);
-            db.ref('questions/' + name).set(parsed).then(() => {
-                status.innerText = "PROTOCOL_SUCCESS: DATA_DEPLOYED";
+            db.ref('questions/' + name).set({ enabled: true, data: parsed }).then(() => {
+                document.getElementById('status').innerText = "DEPLOYED SUCCESSFULLY";
                 document.getElementById('json-input').value = "";
-                document.getElementById('sub-name').value = "";
-                setTimeout(() => status.innerText = "", 3000);
+                setTimeout(() => document.getElementById('status').innerText = "", 3000);
             });
-        } catch(e) { 
-            alert("DECRYPTION_ERROR: INVALID_JSON_STRUCTURE"); 
-        }
+        } catch(e) { alert("Invalid JSON Format!"); }
     }
 
-    function agriPopup(title, msg, onConfirm) {
+    function deployBot() {
+        const name = document.getElementById('bot-name').value.trim();
+        const category = document.getElementById('bot-diff').value;
+        const wins = parseInt(document.getElementById('bot-wins').value) || 0;
+        if(!name) return;
+        const botId = 'bot_' + Date.now();
+        db.ref('rivalry_arena/' + botId).set({
+            name: name + " [BOT]",
+            category: category,
+            wins: wins,
+            college: "SYSTEM_CORE",
+            isBot: true
+        }).then(() => {
+            document.getElementById('bot-name').value = "";
+            document.getElementById('bot-wins').value = "";
+            alert(category + " Bot Deployed!");
+        });
+    }
+
+    function deleteEntry(path, key) {
+        if(confirm("Permanently remove this record?")) db.ref(`${path}/${key}`).remove();
+    }
+
+    function wipeHubData() {
+        if (currentTab === 'bots') return alert("Select Arena or General to wipe data.");
+        const path = currentTab === 'arena' ? 'rivalry_arena' : 'leaderboard';
         const overlay = document.getElementById('custom-overlay');
-        document.getElementById('alert-title').innerText = title;
-        document.getElementById('alert-msg').innerText = msg;
+        document.getElementById('alert-title').innerText = "WIPE " + currentTab.toUpperCase() + "?";
+        document.getElementById('alert-msg').innerText = "This will delete all student records in this list forever.";
         overlay.style.display = 'flex';
-        document.getElementById('alert-ok').onclick = () => { overlay.style.display = 'none'; onConfirm(); };
-        document.getElementById('alert-cancel').onclick = () => { overlay.style.display = 'none'; };
+        document.getElementById('alert-ok').onclick = () => {
+            db.ref(path).remove();
+            overlay.style.display = 'none';
+        };
+        document.getElementById('alert-cancel').onclick = () => overlay.style.display = 'none';
     }
 
-    function purgeModule(name) { agriPopup("WIPE MODULE", `ERASE ALL DATA FOR: ${name.toUpperCase()}?`, () => db.ref('questions/' + name).remove()); }
-    function kickUser(id) { agriPopup("PURGE RECORD", "REMOVE THIS CANDIDATE FROM SYSTEM RANKINGS?", () => db.ref('leaderboard/' + id).remove()); }
-    function purgeLeaderboard() { agriPopup("SYSTEM WIPE", "CLEAR ALL CANDIDATE DATA FROM THE DATABASE?", () => db.ref('leaderboard').remove()); }
-
+    function purgeModule(name) {
+        const overlay = document.getElementById('custom-overlay');
+        document.getElementById('alert-title').innerText = "Delete Module?";
+        document.getElementById('alert-msg').innerText = "Permanently remove " + name.toUpperCase() + "?";
+        overlay.style.display = 'flex';
+        document.getElementById('alert-ok').onclick = () => {
+            db.ref('questions/' + name).remove();
+            overlay.style.display = 'none';
+        };
+        document.getElementById('alert-cancel').onclick = () => overlay.style.display = 'none';
+    }
 </script>
 </body>
 </html>
