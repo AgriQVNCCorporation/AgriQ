@@ -1,7 +1,7 @@
 {
   "name": "AgriQ Pro",
   "short_name": "AgriQ",
-  "start_url": "/AgriQ/home.html",
+  "start_url": "/AgriQ/install.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#ff3b3b",
