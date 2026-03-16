@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#020617">
+    <title>AgriQ Pro | Focus Terminal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            /* Midnight Focus Palette */
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --primary-soft: rgba(56, 189, 248, 0.1);
+            --accent: #fbbf24;
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --danger: #f43f5e;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --border: #1e293b;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg);
+            margin: 0; color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; 
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+        @keyframes electric-red-pulse {
+            0% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(244, 63, 94, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
+        }
+
+        .screen { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* --- Power Up Button --- */
+        .power-up-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(244, 63, 94, 0.1); color: var(--danger);
+            border: 1px solid var(--danger); padding: 8px 14px; border-radius: 12px;
+            font-size: 10px; font-weight: 900; letter-spacing: 1px;
+            text-decoration: none; margin-top: 15px; transition: 0.3s;
+            animation: electric-red-pulse 2s infinite ease-in-out;
+        }
+        .power-up-btn:active { transform: scale(0.95); }
+
+        /* --- Custom Alert Popup --- */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); transform: scale(0.9); opacity: 0;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--primary); }
+        .alert-icon { width: 64px; height: 64px; background: var(--primary); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #020617; box-shadow: 0 0 20px var(--primary-glow); }
+        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
+        .alert-actions { display: flex; gap: 12px; }
+        .alert-btn { flex: 1; padding: 16px; border-radius: 18px; font-weight: 800; font-size: 14px; cursor: pointer; border: none; }
+        .btn-sec { background: #1e293b; color: #fff; border: 1px solid var(--border); }
+        .btn-main { background: var(--primary); color: #020617; }
+
+        /* --- App Loader --- */
+        #app-loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease; 
+        }
+        #app-loader.fade-out { opacity: 0; visibility: hidden; }
+
+        .electric-icon {
+            color: var(--primary);
+            animation: electricPulse 1.5s infinite ease-in-out;
+            margin-bottom: 25px;
+        }
+        @keyframes electricPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 20px var(--primary)); opacity: 1; }
+            100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
+        }
+
+        .loading-bar-container { width: 140px; height: 2px; background: #111; border-radius: 10px; overflow: hidden; position: relative; }
+        .loading-bar-fill {
+            position: absolute; width: 45%; height: 100%; background: var(--primary);
+            box-shadow: 0 0 15px var(--primary); animation: scan 1.5s infinite ease-in-out;
+        }
+        @keyframes scan { 0% { left: -45%; } 100% { left: 100%; } }
+
+        .status-text { font-weight: 800; color: var(--primary); margin-top: 20px; letter-spacing: 5px; font-size: 10px; font-family: 'JetBrains Mono'; text-transform: uppercase; }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { font-weight: 900; font-size: 22px; color: #fff; letter-spacing: -1px; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+        .timer-badge { background: var(--primary-soft); color: var(--primary); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--primary); font-family: 'JetBrains Mono'; font-weight: 800; }
+
+        main { padding: 24px; max-width: 500px; margin: 0 auto; flex: 1; width: 100%; }
+
+        .greeting-area { margin-bottom: 30px; position: relative; }
+        #dynamic-greet { font-size: 32px; font-weight: 900; margin: 0; color: #fff; letter-spacing: -1px; }
+        .sub-greet { color: var(--text-dim); font-size: 15px; margin-top: 4px; }
+
+        .card { background: var(--surface); border-radius: 28px; padding: 24px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: var(--card-shadow); }
+
+        .set-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 22px; background: #1e293b; border-radius: 24px;
+            margin-bottom: 14px; border: 1px solid var(--border); cursor: pointer;
+            transition: 0.3s; color: #fff;
+        }
+        .set-card:hover { border-color: var(--primary); transform: translateY(-2px); background: var(--primary-soft); }
+
+        .bot-arena-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 1px solid var(--primary);
+            display: flex; align-items: center; gap: 15px;
+            padding: 20px; border-radius: 24px; margin-bottom: 20px;
+            cursor: pointer; text-decoration: none; transition: 0.3s;
+        }
+        .bot-icon-wrapper { width: 45px; height: 45px; background: var(--primary); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #020617; }
+
+        .opt-box { 
+            background: #1e293b; border: 2px solid var(--border); padding: 18px; 
+            border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; 
+            transition: 0.2s; color: var(--text-dim); display: flex; align-items: center; gap: 12px;
+        }
+        .opt-box.selected { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        .marker-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 20px 0; scrollbar-width: none; }
+        .q-pill { 
+            min-width: 48px; height: 48px; border-radius: 16px; 
+            background: #1e293b; border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 800; color: var(--text-dim); flex-shrink: 0; transition: 0.3s;
+        }
+        .q-pill.active { border-color: var(--primary); background: var(--primary); color: #020617; transform: scale(1.1); }
+        .q-pill.done { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+
+        input, select { width: 100%; padding: 18px 18px 18px 52px; border-radius: 22px; border: 1px solid var(--border); background: #1e293b; color: #fff; font-weight: 700; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); }
+
+        .btn-primary { width: 100%; padding: 20px; border-radius: 24px; border: none; background: var(--primary); color: #020617; font-weight: 900; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
+        .btn-primary:active { transform: scale(0.96); opacity: 0.9; }
+
+        .desc-box { padding: 24px; background: rgba(30, 41, 59, 0.5); border-radius: 24px; border: 1px solid var(--border); margin-top: 30px; }
+        .desc-title { font-weight: 800; color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+        .desc-text { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+        footer { padding: 30px; text-align: center; font-size: 11px; color: #475569; font-weight: 800; letter-spacing: 1px; }
+
+        .admin-login-btn {
+            position: absolute; right: 0; top: 0; background: rgba(255,255,255,0.05); color: var(--text-dim);
+            padding: 10px 16px; border-radius: 14px; border: 1px solid var(--border); font-size: 10px; font-weight: 900; text-decoration: none;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <div class="alert-icon"><i data-lucide="shield-alert" size="32"></i></div>
+            <div class="alert-title" id="alert-title">Attention</div>
+            <div class="alert-msg" id="alert-msg">Message goes here...</div>
+            <div class="alert-actions" id="alert-actions">
+                <button class="alert-btn btn-sec" id="alert-cancel">Abort</button>
+                <button class="alert-btn btn-main" id="alert-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-loader">
+        <div class="electric-icon">
+            <i data-lucide="zap" size="64" stroke-width="3" fill="currentColor"></i>
+        </div>
+        <div class="loading-bar-container">
+            <div class="loading-bar-fill"></div>
+        </div>
+        <p class="status-text">Cooling System</p>
+        <p style="font-weight: 800; color: #fff; margin-top: 20px; letter-spacing: 2px; font-size: 10px;">Agri Q Pro V2.6</p>
+    </div>
+
+    <header>
+        <div class="brand">AGRI<span>Q</span> PRO</div>
+        <div id="total-clock" class="timer-badge">00:00</div>
+    </header>
+
+    <main>
+        <div id="screen-login" class="screen">
+            <div class="greeting-area">
+                <a href="admin.html" class="admin-login-btn"><i data-lucide="lock" size="14"></i> ADMIN ACCESS</a>
+                <h1 id="dynamic-greet">Welcome !!</h1>
+                <p class="sub-greet">Master the Agri MCEAR syllabus with precision.</p>
+                
+            
+            <a href="home.html" class="bot-arena-card" style="background: linear-gradient(135deg, #1a0000 0%, #0f172a 100%); border-color: #f43f5e; margin-top:20px;">
+                <div class="bot-icon-wrapper" style="background: #f43f5e;"><i data-lucide="zap" size="24"></i></div>
+                <div>
+                    <div style="color: #fff; font-weight: 800; font-size: 15px;">Power System</div>
+                    <div style="color: #f43f5e; font-weight: 800; font-size: 9px; letter-spacing: 1px;">Focused mode</div>
+                </div>
+                <i data-lucide="chevron-right" size="18" style="margin-left: auto; color: var(--text-dim);"></i>
+            </a>
+
+            <a href="rivalry.html" class="bot-arena-card">
+                <div class="bot-icon-wrapper"><i data-lucide="swords" size="24"></i></div>
+                <div>
+                    <div style="color: #fff; font-weight: 800; font-size: 15px;">BOT RIVALRY ARENA</div>
+                    <div style="color: var(--primary); font-weight: 800; font-size: 9px; letter-spacing: 1px;">CHALLENGE AI OPPONENTS</div>
+                </div>
+                <i data-lucide="chevron-right" size="18" style="margin-left: auto; color: var(--text-dim);"></i>
+            </a>
+
+            <div class="card">
+                <div class="input-group" style="position:relative; margin-bottom:15px;">
+                    <i data-lucide="user-check" style="position:absolute; left:18px; top:18px; color:var(--primary);" size="18"></i>
+                    <input type="text" id="username" placeholder="Candidate Full Name">
+                </div>
+                <div class="input-group" style="position:relative; margin-bottom:20px;">
+                    <i data-lucide="layers" style="position:absolute; left:18px; top:18px; color:var(--primary);" size="18"></i>
+                    <select id="subject-select"><option>Synchronizing Database...</option></select>
+                </div>
+                <button class="btn-primary" onclick="initSubject()">INITIALIZE SESSION 🚀</button>
+            </div>
+
+            <div class="desc-box">
+                <span class="desc-title">🛡️ Candidate Guidelines</span>
+                <div class="desc-text">
+                    • 60s auto-progression per query.<br>
+                    • Multi-set randomized architecture.<br>
+                    • Detailed analytics post-deployment.
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-selection" class="screen hidden">
+            <div class="greeting-area">
+                <h2 style="font-weight: 900; margin:0; font-size: 28px;">Select Module 📂</h2>
+                <p class="sub-greet">Pick a specialized question set to continue.</p>
+            </div>
+            <div id="selection-list"></div>
+        </div>
+
+        <div id="screen-quiz" class="screen hidden">
+            <div id="marker-grid" class="marker-scroll"></div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0;">
+                <div>
+                    <span id="q-label" style="font-weight: 900; color: var(--primary); font-size: 12px; letter-spacing: 2px;">SEC: 01 / Q: 01</span>
+                </div>
+                <div id="q-timer-container" style="display:flex; align-items:center; gap:8px; background: var(--primary-soft); padding: 10px 16px; border-radius: 18px; border: 1.5px solid var(--primary);">
+                    <i data-lucide="zap" size="14" style="color:var(--primary);"></i>
+                    <span id="q-timer" style="color: #fff; font-weight: 900; font-family: 'JetBrains Mono'; font-size: 16px;">60s</span>
+                </div>
+            </div>
+
+            <div class="card" id="q-card" style="border-top: 4px solid var(--primary);">
+                <div id="q-display" style="font-weight: 700; min-height: 100px; font-size: 18px; line-height: 1.6;"></div>
+            </div>
+            
+            <div id="opts-display"></div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:25px;">
+                <button class="btn-primary" style="background:#1e293b; color:#fff; border: 1px solid var(--border);" onclick="changeQ(-1)">BACK</button>
+                <button class="btn-primary" onclick="changeQ(1)">SKIP</button>
+            </div>
+            <button class="btn-primary" style="background:transparent; color:var(--danger); border: 1px solid var(--danger); margin-top:14px;" onclick="submitTest()">FINALIZE EXAM 🏁</button>
+
+            <div class="desc-box">
+                <span class="desc-title">💡 Expert Insight</span>
+                <div id="q-description" class="desc-text">Contextual data loading...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>&copy; 2026 AGRIQ PRO TERMINAL • VNC CORP</footer>
+
+    <script>
+        function agriPopup(title, msg, onConfirm, isConfirm = false) {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            const okBtn = document.getElementById('alert-ok');
+            const cancelBtn = document.getElementById('alert-cancel');
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            cancelBtn.style.display = isConfirm ? 'block' : 'none';
+            okBtn.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+                if(onConfirm) onConfirm();
+            };
+            cancelBtn.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+            };
+        }
+
+        lucide.createIcons();
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database(); 
+
+        let masterData = [], currentQuestions = [], currentIdx = 0, userChoices = {};
+        let totalSec = 0, qSec = 60, timer;
+
+        window.onload = async () => {
+            try {
+                const snap = await database.ref('questions').once('value');
+                const selector = document.getElementById('subject-select');
+                selector.innerHTML = '';
+                const allModules = snap.val() || {};
+                Object.keys(allModules).forEach(k => {
+                    if (allModules[k].enabled !== false) {
+                        selector.innerHTML += `<option value="${k}">${k.toUpperCase().replace(/_/g,' ')}</option>`;
+                    }
+                });
+            } catch(e) { console.error("DB Error", e); }
+            
+            setTimeout(() => {
+                const loader = document.getElementById('app-loader');
+                loader.classList.add('fade-out');
+                setTimeout(() => { loader.style.display = 'none'; }, 800);
+            }, 3000); 
+            
+            listenForAdminBroadcasts();
+        };
+
+        function startLiveHeartbeat(name) {
+            const studentId = localStorage.getItem('agri_uid') || 'stu_' + Date.now();
+            localStorage.setItem('agri_uid', studentId);
+            const update = () => {
+                database.ref('status/' + studentId).set({
+                    name: name,
+                    college: "Agri Candidate",
+                    last_active: Date.now(),
+                    current_page: window.location.hash || "Selection Phase"
+                });
+            };
+            update();
+            setInterval(update, 30000); 
+        }
+
+        function listenForAdminBroadcasts() {
+            database.ref('broadcast').on('value', snap => {
+                const data = snap.val();
+                if (data && data.timestamp > (Date.now() - 15000)) { 
+                    showSystemBroadcast(data.message);
+                }
+            });
+        }
+
+        function showSystemBroadcast(msg) {
+            const bBox = document.createElement('div');
+            bBox.style = `position:fixed; top:20px; left:20px; right:20px; background:#38bdf8; color:#020617; padding:20px; border-radius:20px; z-index:20000; font-weight:800; box-shadow:0 15px 40px rgba(56,189,248,0.4); animation:slideDown 0.5s ease-out;`;
+            bBox.innerHTML = `<div style="font-size:9px; letter-spacing:1px; opacity:0.8; margin-bottom:5px;">SYSTEM NOTIFICATION</div>${msg}`;
+            document.body.appendChild(bBox);
+            setTimeout(() => {
+                bBox.style.animation = "slideUp 0.5s ease-in";
+                setTimeout(() => bBox.remove(), 500);
+            }, 6000);
+        }
+
+        async function initSubject() {
+            const name = document.getElementById('username').value.trim();
+            if(!name) return agriPopup("Identification Needed", "Please enter your name.", null, false);
+            localStorage.setItem('agriq_user', name);
+            startLiveHeartbeat(name);
+            const sub = document.getElementById('subject-select').value;
+            const snap = await database.ref(`questions/${sub}`).once('value');
+            const val = snap.val();
+            if(!val) return agriPopup("Module Empty", "No data found.", null, false);
+            let rawData = val.data ? val.data : val;
+            masterData = Object.values(rawData).filter(q => q && typeof q === 'object' && (q.question || q.q));
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-selection').classList.remove('hidden');
+            window.location.hash = "Module-Selection";
+            const list = document.getElementById('selection-list');
+            list.innerHTML = '';
+            for(let i=0; i<masterData.length; i+=200) {
+                const setNum = (i/200)+1;
+                const div = document.createElement('div');
+                div.className = 'set-card';
+                div.innerHTML = `<div><b style="display:block; font-size:17px;">MISSION SET ${setNum}</b><small style="color:var(--text-dim); text-transform:uppercase; font-size:9px;">Core Syllabus Module</small></div><i data-lucide="zap"></i>`;
+                div.onclick = () => startTest(i, i+200);
+                list.appendChild(div);
+            }
+            lucide.createIcons();
+        }
+
+        function startTest(s, e) {
+            currentQuestions = masterData.slice(s, e).sort(() => Math.random() - 0.5);
+            document.getElementById('screen-selection').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            window.location.hash = "Live-Mock-Exam";
+            const grid = document.getElementById('marker-grid');
+            grid.innerHTML = '';
+            currentQuestions.forEach((_, i) => {
+                const p = document.createElement('div');
+                p.className = 'q-pill'; p.id = `mark-${i}`; p.innerText = i+1;
+                p.onclick = () => { currentIdx = i; showQ(); };
+                grid.appendChild(p);
+            });
+            timer = setInterval(() => {
+                totalSec++; qSec--;
+                document.getElementById('total-clock').innerText = new Date(totalSec * 1000).toISOString().substr(14, 5);
+                document.getElementById('q-timer').innerText = qSec + 's';
+                if(qSec <= 0) changeQ(1);
+            }, 1000);
+            showQ();
+        }
+
+        function showQ() {
+            qSec = 60;
+            const q = currentQuestions[currentIdx];
+            document.getElementById('q-label').innerText = `MOD: 01 / Q: ${currentIdx + 1}`;
+            document.getElementById('q-display').innerHTML = q.question;
+            document.getElementById('q-description').innerText = q.description || "Conceptual framework based on standard agricultural protocols.";
+            document.querySelectorAll('.q-pill').forEach((p, i) => {
+                p.classList.remove('active', 'done');
+                if(i === currentIdx) p.classList.add('active');
+                if(userChoices[i]) p.classList.add('done');
+            });
+            const optBox = document.getElementById('opts-display');
+            optBox.innerHTML = '';
+            const opts = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
+            opts.forEach(o => {
+                const div = document.createElement('div');
+                div.className = `opt-box ${userChoices[currentIdx] === o ? 'selected' : ''}`;
+                div.innerText = o;
+                div.onclick = () => {
+                    userChoices[currentIdx] = (userChoices[currentIdx] === o) ? null : o;
+                    showQ();
+                };
+                optBox.appendChild(div);
+            });
+            const activePill = document.getElementById(`mark-${currentIdx}`);
+            if(activePill) activePill.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+
+        function changeQ(v) {
+            let next = currentIdx + v;
+            if(next >= 0 && next < currentQuestions.length) { currentIdx = next; showQ(); }
+        }
+
+        async function submitTest() {
+            agriPopup("Deployment Finalization", "Confirm final submission?", async () => {
+                clearInterval(timer);
+                document.getElementById('app-loader').classList.remove('fade-out');
+                let score = 0; let details = [];
+                currentQuestions.forEach((q, i) => {
+                    const uAns = userChoices[i] || null;
+                    if(uAns === q.answer) score++;
+                    details.push({ question: q.question, userAns: uAns, correctAns: q.answer });
+                });
+                const finalAccuracy = Math.round((score / currentQuestions.length) * 100);
+                localStorage.setItem('agriq_last_result', JSON.stringify({ score, total: currentQuestions.length, accuracy: finalAccuracy, details }));
+                window.location.href = 'coolanalysis.html';
+            }, true);
+        }
+    </script>
+</body>
+</html>
