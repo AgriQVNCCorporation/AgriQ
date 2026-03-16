@@ -13,85 +13,95 @@
 
     <style>
         :root {
-            /* Midnight Focus Palette */
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --bg: #020617;
-            --surface: #0f172a;
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
-            --danger: #f43f5e;
+            /* Sky Blue & White Glass Palette */
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.2);
+            --bg: #f0f9ff;
+            --surface: rgba(255, 255, 255, 0.6);
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --danger: #ef4444;
             --success: #10b981;
-            --border: #1e293b;
+            --border: rgba(255, 255, 255, 0.4);
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+        body { 
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); 
+            margin: 0; 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+        }
 
         /* --- Animations --- */
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         /* --- Custom Alert Popup --- */
         #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+            position: fixed; inset: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px);
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .alert-modal {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            background: rgba(255, 255, 255, 0.9); border: 1px solid var(--border); border-radius: 32px;
             width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); transform: scale(0.9); opacity: 0;
+            box-shadow: var(--card-shadow); transform: scale(0.9); opacity: 0;
             transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--primary); }
         .alert-btn { flex: 1; padding: 16px; border-radius: 18px; font-weight: 800; cursor: pointer; border: none; }
-        .btn-sec { background: #1e293b; color: #fff; border: 1px solid var(--border); }
-        .btn-main { background: var(--primary); color: #020617; }
+        .btn-sec { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-main { background: var(--primary); color: #fff; }
 
         /* --- Loader --- */
         #analysis-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
+            position: fixed; inset: 0; background: #e0f2fe; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: 0.6s ease; 
         }
         #analysis-loader.fade-out { opacity: 0; visibility: hidden; }
-        .spinner { width: 50px; height: 50px; border: 3px solid #111; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(0,0,0,0.05); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
-            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px);
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
         }
-        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; color: #0f172a; text-transform: uppercase; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; }
 
         .quote-box {
-            background: #1e293b; border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.5); border: 1px solid var(--border);
             padding: 25px; border-radius: 28px; margin-bottom: 30px;
             text-align: center; position: relative; overflow: hidden;
             animation: slideUp 0.6s ease;
+            box-shadow: var(--card-shadow);
         }
         .quote-text { font-style: italic; font-size: 14px; line-height: 1.6; font-weight: 600; color: var(--text-dim); }
 
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .stat-item { 
-            background: var(--surface); padding: 22px; border-radius: 24px; 
+            background: var(--surface); backdrop-filter: blur(10px); padding: 22px; border-radius: 24px; 
             text-align: center; border: 1px solid var(--border);
             transition: 0.3s;
+            box-shadow: var(--card-shadow);
         }
-        .stat-val { font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; color: #fff; display: block; }
+        .stat-val { font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; color: #1e293b; display: block; }
         .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
         
-        .stat-item.highlight { border-color: var(--primary); background: var(--primary-soft); }
+        .stat-item.highlight { border-color: var(--primary); background: #fff; }
         .stat-item.highlight .stat-val { color: var(--primary); }
 
         .analysis-card {
-            background: var(--surface); border-radius: 24px; padding: 24px;
+            background: var(--surface); backdrop-filter: blur(16px); border-radius: 24px; padding: 24px;
             margin-bottom: 15px; border: 1px solid var(--border);
             position: relative; animation: slideUp 0.5s ease backwards;
+            box-shadow: var(--card-shadow);
         }
         
         .status-tag { 
@@ -100,33 +110,34 @@
             letter-spacing: 1px;
         }
         .tag-correct { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
-        .tag-wrong { background: rgba(244, 63, 94, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .tag-wrong { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 
-        .q-text { font-weight: 700; font-size: 16px; margin-bottom: 18px; line-height: 1.6; padding-right: 80px; color: #fff; }
-        .ans-row { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 600; margin-top: 10px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+        .q-text { font-weight: 700; font-size: 16px; margin-bottom: 18px; line-height: 1.6; padding-right: 80px; color: #1e293b; }
+        .ans-row { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 600; margin-top: 10px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.4); }
         
         .btn-primary { 
             width: 100%; padding: 20px; border-radius: 24px; border: none;
-            background: var(--primary); color: #020617; font-weight: 900;
+            background: #0f172a; color: #fff; font-weight: 900;
             font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
             margin-top: 15px; transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .btn-secondary {
             width: 100%; padding: 20px; border-radius: 24px; border: 1.5px solid var(--border);
-            background: transparent; color: #fff; font-weight: 800;
+            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); color: #1e293b; font-weight: 800;
             font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
             margin-top: 12px; transition: 0.3s;
         }
-        .btn-secondary:hover { background: rgba(255,255,255,0.05); }
+        .btn-secondary:hover { background: #fff; }
 
-        footer { padding: 40px 24px; text-align: center; color: #475569; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
+        footer { padding: 40px 24px; text-align: center; color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="custom-overlay">
         <div class="alert-modal" id="alert-modal">
-            <h2 id="alert-title" style="margin:0 0 10px; font-size: 20px;">Navigation</h2>
+            <h2 id="alert-title" style="margin:0 0 10px; font-size: 20px; color: #1e293b;">Navigation</h2>
             <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">Message goes here...</p>
             <div class="alert-actions" style="display: flex; gap: 12px;">
                 <button class="alert-btn btn-sec" id="alert-cancel">CANCEL</button>
@@ -142,7 +153,7 @@
 
     <header>
         <div class="brand">AGRI<span>Q</span> REPORT</div>
-        <div id="user-display" style="font-size: 10px; font-weight: 900; color: var(--primary); background: var(--primary-soft); padding: 5px 12px; border-radius: 50px; border: 1px solid var(--primary);">...</div>
+        <div id="user-display" style="font-size: 10px; font-weight: 900; color: var(--primary); background: #fff; padding: 5px 12px; border-radius: 50px; border: 1px solid var(--border); box-shadow: 0 4px 8px rgba(0,0,0,0.05);">...</div>
     </header>
 
     <main>
@@ -161,8 +172,8 @@
             </div>
         </div>
 
-        <h3 style="font-weight: 900; margin-bottom: 20px; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
-            <i data-lucide="list-checks" size="16" color="#38bdf8"></i> Detailed Review
+        <h3 style="font-weight: 900; margin-bottom: 20px; color: #1e293b; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="list-checks" size="16" color="#0ea5e9"></i> Detailed Review
         </h3>
         
         <div id="review-list"></div>
