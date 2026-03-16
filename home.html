@@ -35,6 +35,9 @@
             --danger: #ff3b3b;
             --card-shadow: 0 10px 40px -10px rgba(255, 0, 0, 0.2);
             --border: #222222;
+            /* Blue Theme Vars */
+            --blue-main: #0066ff;
+            --blue-glow: rgba(0, 102, 255, 0.4);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -148,6 +151,17 @@
         .bot-arena-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px var(--primary-glow); }
         .bot-icon-wrapper { width: 45px; height: 45px; background: var(--danger); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; }
 
+        /* Cooling Hub Card Style (NEW) */
+        .cooling-hub-card {
+            background: linear-gradient(135deg, #001a33 0%, #0a0a0a 100%);
+            border: 1px solid var(--blue-main);
+            display: flex; align-items: center; gap: 15px;
+            padding: 20px; border-radius: 24px; margin-bottom: 12px;
+            cursor: pointer; text-decoration: none; transition: 0.3s;
+        }
+        .cooling-hub-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px var(--blue-glow); }
+        .blue-icon-wrapper { width: 45px; height: 45px; background: var(--blue-main); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; }
+
         .opt-box { 
             background: var(--surface); border: 2px solid var(--border); padding: 18px; 
             border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; 
@@ -242,6 +256,17 @@
                 <h1 id="dynamic-greet">Welcome !!</h1>
                 <p class="sub-greet">Master the Agri MCEAR syllabus with precision.</p>
             </div>
+
+            <a href="cooling.html" class="cooling-hub-card">
+                <div class="blue-icon-wrapper">
+                    <i data-lucide="snowflake" size="24"></i>
+                </div>
+                <div>
+                    <div style="color: #fff; font-weight: 800; font-size: 15px;">COOL System</div>
+                    <div style="color: var(--blue-main); font-weight: 800; font-size: 9px; letter-spacing: 1px;">FOCUSED PERFORMANCE</div>
+                </div>
+                <i data-lucide="chevron-right" size="18" style="margin-left: auto; color: var(--text-dim);"></i>
+            </a>
 
             <a href="rivalry.html" class="bot-arena-card">
                 <div class="bot-icon-wrapper">
