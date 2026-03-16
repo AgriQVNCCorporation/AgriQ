@@ -6,176 +6,232 @@
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#020617">
-    <title>AgriQ Pro | Focus Terminal</title>
-    
+    <meta name="theme-color" content="#e0f2fe">
+    <title>AgriQ Pro | Ultimate Agriculture Mock</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker Active'))
+        .catch(err => console.log('Registration Failed', err));
+    });
+  }
+</script>
 
     <style>
         :root {
-            /* Midnight Focus Palette */
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --primary-soft: rgba(56, 189, 248, 0.1);
-            --accent: #fbbf24;
-            --bg: #020617;
-            --surface: #0f172a;
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
-            --danger: #f43f5e;
-            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-            --border: #1e293b;
+            --primary: #0070f3;
+            --primary-glow: rgba(0, 112, 243, 0.3);
+            --primary-soft: rgba(255, 255, 255, 0.7);
+            --accent: #0070f3;
+            --bg: #f0f9ff;
+            --surface: rgba(255, 255, 255, 0.6);
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --danger: #ef4444;
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --border: rgba(255, 255, 255, 0.4);
+            /* Blue Theme Vars */
+            --blue-main: #0ea5e9;
+            --blue-glow: rgba(14, 165, 233, 0.3);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
         body { 
-            background: var(--bg);
-            margin: 0; color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; 
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); 
+            margin: 0; 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden; 
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px var(--primary-glow); } 50% { box-shadow: 0 0 20px var(--primary-glow); } 100% { box-shadow: 0 0 5px var(--primary-glow); } }
+        @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* New Broadcast Animation */
         @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
-        @keyframes electric-red-pulse {
-            0% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
-            50% { box-shadow: 0 0 20px rgba(244, 63, 94, 0.8); }
-            100% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
-        }
 
         .screen { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* --- Power Up Button --- */
-        .power-up-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(244, 63, 94, 0.1); color: var(--danger);
-            border: 1px solid var(--danger); padding: 8px 14px; border-radius: 12px;
-            font-size: 10px; font-weight: 900; letter-spacing: 1px;
-            text-decoration: none; margin-top: 15px; transition: 0.3s;
-            animation: electric-red-pulse 2s infinite ease-in-out;
-        }
-        .power-up-btn:active { transform: scale(0.95); }
-
-        /* --- Custom Alert Popup --- */
+        /* --- Custom Alert Popup Styles --- */
         #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+            position: fixed; inset: 0; background: rgba(255,255,255,0.7); backdrop-filter: blur(12px);
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .alert-modal {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            background: rgba(255, 255, 255, 0.9); border: 1px solid var(--border); border-radius: 32px;
             width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); transform: scale(0.9); opacity: 0;
+            box-shadow: var(--card-shadow); transform: scale(0.9); opacity: 0;
             transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--primary); }
-        .alert-icon { width: 64px; height: 64px; background: var(--primary); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #020617; box-shadow: 0 0 20px var(--primary-glow); }
-        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--blue-main); }
+        .alert-icon { width: 64px; height: 64px; background: var(--blue-main); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fff; box-shadow: 0 10px 20px var(--blue-glow); }
+        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #1e293b; }
         .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
         .alert-actions { display: flex; gap: 12px; }
-        .alert-btn { flex: 1; padding: 16px; border-radius: 18px; font-weight: 800; font-size: 14px; cursor: pointer; border: none; }
-        .btn-sec { background: #1e293b; color: #fff; border: 1px solid var(--border); }
-        .btn-main { background: var(--primary); color: #020617; }
+        .alert-btn { flex: 1; padding: 16px; border-radius: 18px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; border: none; }
+        .btn-sec { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-main { background: var(--blue-main); color: #fff; }
 
-        /* --- App Loader --- */
+        /* --- COMBINED APP LOADER STYLES --- */
         #app-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
+            position: fixed; inset: 0; background: #e0f2fe; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.8s ease; 
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s; 
         }
         #app-loader.fade-out { opacity: 0; visibility: hidden; }
 
+        /* --- ELECTRIC PULSE ANIMATION (NEW) --- */
         .electric-icon {
-            color: var(--primary);
+            color: var(--blue-main);
             animation: electricPulse 1.5s infinite ease-in-out;
             margin-bottom: 25px;
         }
         @keyframes electricPulse {
-            0% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
-            50% { transform: scale(1.15); filter: drop-shadow(0 0 20px var(--primary)); opacity: 1; }
-            100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px var(--blue-main)); opacity: 0.8; }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 15px var(--blue-main)); opacity: 1; }
+            100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--blue-main)); opacity: 0.8; }
         }
 
-        .loading-bar-container { width: 140px; height: 2px; background: #111; border-radius: 10px; overflow: hidden; position: relative; }
+        /* --- SCANNING LOADING BAR (NEW) --- */
+        .loading-bar-container {
+            width: 140px; height: 3px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden; position: relative;
+        }
         .loading-bar-fill {
-            position: absolute; width: 45%; height: 100%; background: var(--primary);
-            box-shadow: 0 0 15px var(--primary); animation: scan 1.5s infinite ease-in-out;
+            position: absolute; width: 45%; height: 100%; background: var(--blue-main);
+            box-shadow: 0 0 10px var(--blue-main); animation: scan 1.5s infinite ease-in-out;
         }
-        @keyframes scan { 0% { left: -45%; } 100% { left: 100%; } }
+        @keyframes scan {
+            0% { left: -45%; }
+            100% { left: 100%; }
+        }
 
-        .status-text { font-weight: 800; color: var(--primary); margin-top: 20px; letter-spacing: 5px; font-size: 10px; font-family: 'JetBrains Mono'; text-transform: uppercase; }
+        /* --- TYPOGRAPHY (NEW & OLD COMBINED) --- */
+        .status-text {
+            font-weight: 800; color: var(--blue-main); margin-top: 20px; letter-spacing: 5px; 
+            font-size: 10px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;
+        }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(0,0,0,0.05); border-top: 4px solid var(--blue-main); border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
-            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px);
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
         }
-        .brand { font-weight: 900; font-size: 22px; color: #fff; letter-spacing: -1px; }
-        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
-        .timer-badge { background: var(--primary-soft); color: var(--primary); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--primary); font-family: 'JetBrains Mono'; font-weight: 800; }
+        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1.5px; color: #0f172a; text-transform: uppercase; }
+        .brand span { color: var(--blue-main); font-family: 'JetBrains Mono'; }
+        .timer-badge { background: #fff; color: var(--blue-main); padding: 8px 16px; border-radius: 14px; border: 1px solid var(--border); font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; flex: 1; width: 100%; }
 
-        .greeting-area { margin-bottom: 30px; position: relative; }
-        #dynamic-greet { font-size: 32px; font-weight: 900; margin: 0; color: #fff; letter-spacing: -1px; }
-        .sub-greet { color: var(--text-dim); font-size: 15px; margin-top: 4px; }
+        .greeting-area { margin-bottom: 30px; position: relative; animation: slideInRight 0.6s ease; }
+        #dynamic-greet { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px; color: #0f172a; }
+        .sub-greet { color: var(--text-dim); font-size: 15px; font-weight: 500; margin-top: 4px; }
 
-        .card { background: var(--surface); border-radius: 28px; padding: 24px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: var(--card-shadow); }
+        .card { 
+            background: var(--surface); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 28px; 
+            padding: 24px; 
+            border: 1px solid var(--border); 
+            margin-bottom: 20px; 
+            transition: 0.3s; 
+            box-shadow: var(--card-shadow);
+        }
 
         .set-card {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 22px; background: #1e293b; border-radius: 24px;
-            margin-bottom: 14px; border: 1px solid var(--border); cursor: pointer;
-            transition: 0.3s; color: #fff;
+            padding: 22px; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); 
+            border-radius: 24px; margin-bottom: 14px; border: 1px solid var(--border); cursor: pointer;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #1e293b;
         }
-        .set-card:hover { border-color: var(--primary); transform: translateY(-2px); background: var(--primary-soft); }
+        .set-card:hover { transform: scale(1.03); border-color: var(--blue-main); background: #fff; }
 
         .bot-arena-card {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border: 1px solid var(--primary);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border: 1px solid var(--blue-main);
             display: flex; align-items: center; gap: 15px;
             padding: 20px; border-radius: 24px; margin-bottom: 20px;
             cursor: pointer; text-decoration: none; transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.1);
         }
-        .bot-icon-wrapper { width: 45px; height: 45px; background: var(--primary); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #020617; }
+        .bot-arena-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px var(--blue-glow); }
+        .bot-icon-wrapper { width: 45px; height: 45px; background: var(--blue-main); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; }
+
+        .cooling-hub-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 15px;
+            padding: 20px; border-radius: 24px; margin-bottom: 12px;
+            cursor: pointer; text-decoration: none; transition: 0.3s;
+            box-shadow: var(--card-shadow);
+        }
+        .cooling-hub-card:hover { transform: translateY(-3px); background: #fff; }
+        .blue-icon-wrapper { width: 45px; height: 45px; background: #e0f2fe; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--blue-main); }
 
         .opt-box { 
-            background: #1e293b; border: 2px solid var(--border); padding: 18px; 
+            background: rgba(255, 255, 255, 0.5); border: 2px solid var(--border); padding: 18px; 
             border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; 
-            transition: 0.2s; color: var(--text-dim); display: flex; align-items: center; gap: 12px;
+            transition: 0.2s; position: relative; color: #1e293b;
+            display: flex; align-items: center; gap: 12px;
         }
-        .opt-box.selected { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+        .opt-box.selected { border-color: var(--blue-main); background: #fff; color: var(--blue-main); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.15); }
+        .opt-box.selected::before { content: '🎯'; font-size: 18px; }
 
-        .marker-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 20px 0; scrollbar-width: none; }
+        .marker-scroll { 
+            display: flex; gap: 12px; overflow-x: auto; padding: 20px 5px; 
+            scrollbar-width: none; mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        
         .q-pill { 
             min-width: 48px; height: 48px; border-radius: 16px; 
-            background: #1e293b; border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.6); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; 
-            font-weight: 800; color: var(--text-dim); flex-shrink: 0; transition: 0.3s;
+            font-weight: 800; font-size: 15px; color: var(--text-dim);
+            flex-shrink: 0; cursor: pointer; transition: 0.3s;
         }
-        .q-pill.active { border-color: var(--primary); background: var(--primary); color: #020617; transform: scale(1.1); }
-        .q-pill.done { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+        .q-pill.active { border-color: var(--blue-main); background: var(--blue-main); color: #fff; transform: translateY(-4px) scale(1.1); box-shadow: 0 10px 20px var(--blue-glow); }
+        .q-pill.done { background: #fff; color: #0ea5e9; border-color: #0ea5e9; }
 
-        input, select { width: 100%; padding: 18px 18px 18px 52px; border-radius: 22px; border: 1px solid var(--border); background: #1e293b; color: #fff; font-weight: 700; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--primary); }
+        .input-group { position: relative; margin-bottom: 18px; }
+        .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--blue-main); }
+        input, select { width: 100%; padding: 18px 18px 18px 52px; border-radius: 22px; border: 1.5px solid var(--border); outline: none; font-size: 15px; font-weight: 700; background: rgba(255, 255, 255, 0.8); color: #0f172a; transition: 0.3s; }
+        input:focus { border-color: var(--blue-main); background: #fff; box-shadow: 0 0 20px rgba(14, 165, 233, 0.1); }
 
-        .btn-primary { width: 100%; padding: 20px; border-radius: 24px; border: none; background: var(--primary); color: #020617; font-weight: 900; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
-        .btn-primary:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-primary { width: 100%; padding: 20px; border-radius: 24px; border: none; background: #0f172a; color: #fff; font-weight: 900; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 15px 30px rgba(0,0,0,0.1); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .btn-primary:active { transform: scale(0.95); }
 
-        .desc-box { padding: 24px; background: rgba(30, 41, 59, 0.5); border-radius: 24px; border: 1px solid var(--border); margin-top: 30px; }
-        .desc-title { font-weight: 800; color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
-        .desc-text { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+        .hidden { display: none !important; }
 
-        footer { padding: 30px; text-align: center; font-size: 11px; color: #475569; font-weight: 800; letter-spacing: 1px; }
+        .desc-box { 
+            margin-top: 30px; padding: 24px; 
+            background: rgba(255, 255, 255, 0.4); border-radius: 24px; 
+            border: 1px solid var(--border);
+        }
+        .desc-title { font-weight: 800; color: var(--blue-main); font-size: 13px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .desc-text { font-size: 14px; color: var(--text-dim); line-height: 1.6; font-weight: 500; }
+
+        footer { padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); font-size: 11px; font-weight: 800; color: var(--text-dim); letter-spacing: 1px; }
 
         .admin-login-btn {
-            position: absolute; right: 0; top: 0; background: rgba(255,255,255,0.05); color: var(--text-dim);
-            padding: 10px 16px; border-radius: 14px; border: 1px solid var(--border); font-size: 10px; font-weight: 900; text-decoration: none;
+            position: absolute; right: 0; top: 0;
+            background: rgba(255,255,255,0.5); color: var(--text-dim);
+            padding: 10px 16px; border-radius: 14px; border: 1px solid var(--border);
+            font-size: 10px; font-weight: 900; text-decoration: none;
+            display: flex; align-items: center; gap: 6px; transition: 0.3s;
         }
-        .hidden { display: none !important; }
+        .admin-login-btn:hover { background: #fff; color: var(--blue-main); border-color: var(--blue-main); }
     </style>
 </head>
 <body>
@@ -195,11 +251,15 @@
         <div class="electric-icon">
             <i data-lucide="zap" size="64" stroke-width="3" fill="currentColor"></i>
         </div>
+        
         <div class="loading-bar-container">
             <div class="loading-bar-fill"></div>
         </div>
-        <p class="status-text">Cooling System</p>
-        <p style="font-weight: 800; color: #fff; margin-top: 20px; letter-spacing: 2px; font-size: 10px;">Agri Q Pro V2.6</p>
+
+        <p class="status-text">Focused Mode</p>
+
+        <div class="spinner"></div>
+        <p style="font-weight: 800; color: #1e293b; margin-top: 20px; letter-spacing: 2px; font-size: 10px;">Agri Q Pro V2.6</p>
     </div>
 
     <header>
@@ -213,33 +273,37 @@
                 <a href="admin.html" class="admin-login-btn"><i data-lucide="lock" size="14"></i> ADMIN ACCESS</a>
                 <h1 id="dynamic-greet">Welcome !!</h1>
                 <p class="sub-greet">Master the Agri MCEAR syllabus with precision.</p>
-                
-            
-            <a href="home.html" class="bot-arena-card" style="background: linear-gradient(135deg, #1a0000 0%, #0f172a 100%); border-color: #f43f5e; margin-top:20px;">
-                <div class="bot-icon-wrapper" style="background: #f43f5e;"><i data-lucide="zap" size="24"></i></div>
+            </div>
+
+            <a href="home.html" class="cooling-hub-card">
+                <div class="blue-icon-wrapper">
+                    <i data-lucide="snowflake" size="24"></i>
+                </div>
                 <div>
-                    <div style="color: #fff; font-weight: 800; font-size: 15px;">Power System</div>
-                    <div style="color: #f43f5e; font-weight: 800; font-size: 9px; letter-spacing: 1px;">Focused mode</div>
+                    <div style="color: #1e293b; font-weight: 800; font-size: 15px;">Power Heating</div>
+                    <div style="color: var(--blue-main); font-weight: 800; font-size: 9px; letter-spacing: 1px;">FOCUSED PERFORMANCE</div>
                 </div>
                 <i data-lucide="chevron-right" size="18" style="margin-left: auto; color: var(--text-dim);"></i>
             </a>
 
             <a href="rivalry.html" class="bot-arena-card">
-                <div class="bot-icon-wrapper"><i data-lucide="swords" size="24"></i></div>
+                <div class="bot-icon-wrapper">
+                    <i data-lucide="swords" size="24"></i>
+                </div>
                 <div>
-                    <div style="color: #fff; font-weight: 800; font-size: 15px;">BOT RIVALRY ARENA</div>
-                    <div style="color: var(--primary); font-weight: 800; font-size: 9px; letter-spacing: 1px;">CHALLENGE AI OPPONENTS</div>
+                    <div style="color: #0f172a; font-weight: 800; font-size: 15px;">BOT RIVALRY ARENA</div>
+                    <div style="color: var(--blue-main); font-weight: 800; font-size: 9px; letter-spacing: 1px;">CHALLENGE AI OPPONENTS</div>
                 </div>
                 <i data-lucide="chevron-right" size="18" style="margin-left: auto; color: var(--text-dim);"></i>
             </a>
 
             <div class="card">
-                <div class="input-group" style="position:relative; margin-bottom:15px;">
-                    <i data-lucide="user-check" style="position:absolute; left:18px; top:18px; color:var(--primary);" size="18"></i>
+                <div class="input-group">
+                    <i data-lucide="user-check"></i>
                     <input type="text" id="username" placeholder="Candidate Full Name">
                 </div>
-                <div class="input-group" style="position:relative; margin-bottom:20px;">
-                    <i data-lucide="layers" style="position:absolute; left:18px; top:18px; color:var(--primary);" size="18"></i>
+                <div class="input-group">
+                    <i data-lucide="layers"></i>
                     <select id="subject-select"><option>Synchronizing Database...</option></select>
                 </div>
                 <button class="btn-primary" onclick="initSubject()">INITIALIZE SESSION 🚀</button>
@@ -257,7 +321,7 @@
 
         <div id="screen-selection" class="screen hidden">
             <div class="greeting-area">
-                <h2 style="font-weight: 900; margin:0; font-size: 28px;">Select Module 📂</h2>
+                <h2 style="font-weight: 900; margin:0; font-size: 28px; color:#1e293b;">Select Module 📂</h2>
                 <p class="sub-greet">Pick a specialized question set to continue.</p>
             </div>
             <div id="selection-list"></div>
@@ -267,26 +331,33 @@
             <div id="marker-grid" class="marker-scroll"></div>
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0;">
-                <div>
-                    <span id="q-label" style="font-weight: 900; color: var(--primary); font-size: 12px; letter-spacing: 2px;">SEC: 01 / Q: 01</span>
+                <div style="display:flex; flex-direction:column;">
+                    <span id="q-label" style="font-weight: 900; color: var(--blue-main); font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">SEC: 01 / Q: 01</span>
+                    <span style="font-size: 10px; font-weight: 800; color: var(--text-dim); margin-top:2px;">DOUBLE TAP TO CLEAR SELECTION</span>
                 </div>
-                <div id="q-timer-container" style="display:flex; align-items:center; gap:8px; background: var(--primary-soft); padding: 10px 16px; border-radius: 18px; border: 1.5px solid var(--primary);">
-                    <i data-lucide="zap" size="14" style="color:var(--primary);"></i>
-                    <span id="q-timer" style="color: #fff; font-weight: 900; font-family: 'JetBrains Mono'; font-size: 16px;">60s</span>
+                <div id="q-timer-container" style="display:flex; align-items:center; gap:8px; background: #fff; padding: 10px 16px; border-radius: 18px; border: 1.5px solid var(--blue-main); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <i data-lucide="zap" size="14" style="color:var(--blue-main); fill: var(--blue-main);"></i>
+                    <span id="q-timer" style="color: #0f172a; font-weight: 900; font-family: 'JetBrains Mono'; font-size: 16px;">60s</span>
                 </div>
             </div>
 
-            <div class="card" id="q-card" style="border-top: 4px solid var(--primary);">
-                <div id="q-display" style="font-weight: 700; min-height: 100px; font-size: 18px; line-height: 1.6;"></div>
+            <div class="card" id="q-card" style="border-top: 4px solid var(--blue-main); background: #fff;">
+                <div id="q-display" style="font-weight: 700; min-height: 100px; font-size: 18px; line-height: 1.6; color: #1e293b;"></div>
             </div>
             
             <div id="opts-display"></div>
             
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:25px;">
-                <button class="btn-primary" style="background:#1e293b; color:#fff; border: 1px solid var(--border);" onclick="changeQ(-1)">BACK</button>
-                <button class="btn-primary" onclick="changeQ(1)">SKIP</button>
+                <button class="btn-primary" style="background:rgba(255,255,255,0.6); color:#1e293b; border: 1px solid var(--border); backdrop-filter: blur(10px);" onclick="changeQ(-1)">
+                    <i data-lucide="arrow-left-circle"></i> BACK
+                </button>
+                <button class="btn-primary" onclick="changeQ(1)">
+                    SKIP <i data-lucide="arrow-right-circle"></i>
+                </button>
             </div>
-            <button class="btn-primary" style="background:transparent; color:var(--danger); border: 1px solid var(--danger); margin-top:14px;" onclick="submitTest()">FINALIZE EXAM 🏁</button>
+            <button class="btn-primary" style="background:var(--blue-main); color:#fff; margin-top:14px; box-shadow: 0 10px 30px var(--blue-glow);" onclick="submitTest()">
+                FINALIZE EXAM 🏁
+            </button>
 
             <div class="desc-box">
                 <span class="desc-title">💡 Expert Insight</span>
@@ -303,16 +374,21 @@
             const modal = document.getElementById('alert-modal');
             const okBtn = document.getElementById('alert-ok');
             const cancelBtn = document.getElementById('alert-cancel');
+            
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-msg').innerText = msg;
+            
             overlay.style.display = 'flex';
             setTimeout(() => modal.classList.add('active'), 10);
+            
             cancelBtn.style.display = isConfirm ? 'block' : 'none';
+            
             okBtn.onclick = () => {
                 modal.classList.remove('active');
                 setTimeout(() => overlay.style.display = 'none', 300);
                 if(onConfirm) onConfirm();
             };
+            
             cancelBtn.onclick = () => {
                 modal.classList.remove('active');
                 setTimeout(() => overlay.style.display = 'none', 300);
@@ -342,6 +418,7 @@
                 const snap = await database.ref('questions').once('value');
                 const selector = document.getElementById('subject-select');
                 selector.innerHTML = '';
+                
                 const allModules = snap.val() || {};
                 Object.keys(allModules).forEach(k => {
                     if (allModules[k].enabled !== false) {
@@ -353,7 +430,11 @@
             setTimeout(() => {
                 const loader = document.getElementById('app-loader');
                 loader.classList.add('fade-out');
-                setTimeout(() => { loader.style.display = 'none'; }, 800);
+                loader.style.opacity = '0';
+                
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 800);
             }, 3000); 
             
             listenForAdminBroadcasts();
@@ -362,6 +443,7 @@
         function startLiveHeartbeat(name) {
             const studentId = localStorage.getItem('agri_uid') || 'stu_' + Date.now();
             localStorage.setItem('agri_uid', studentId);
+
             const update = () => {
                 database.ref('status/' + studentId).set({
                     name: name,
@@ -385,8 +467,8 @@
 
         function showSystemBroadcast(msg) {
             const bBox = document.createElement('div');
-            bBox.style = `position:fixed; top:20px; left:20px; right:20px; background:#38bdf8; color:#020617; padding:20px; border-radius:20px; z-index:20000; font-weight:800; box-shadow:0 15px 40px rgba(56,189,248,0.4); animation:slideDown 0.5s ease-out;`;
-            bBox.innerHTML = `<div style="font-size:9px; letter-spacing:1px; opacity:0.8; margin-bottom:5px;">SYSTEM NOTIFICATION</div>${msg}`;
+            bBox.style = `position:fixed; top:20px; left:20px; right:20px; background:#0ea5e9; color:white; padding:20px; border-radius:20px; z-index:20000; font-weight:800; box-shadow:0 15px 40px rgba(14,165,233,0.3); animation:slideDown 0.5s ease-out; border: 2px solid rgba(255,255,255,0.2);`;
+            bBox.innerHTML = `<div style="font-size:9px; letter-spacing:1px; opacity:0.8; margin-bottom:5px;">SYSTEM BROADCAST</div>${msg}`;
             document.body.appendChild(bBox);
             setTimeout(() => {
                 bBox.style.animation = "slideUp 0.5s ease-in";
@@ -398,23 +480,30 @@
             const name = document.getElementById('username').value.trim();
             if(!name) return agriPopup("Identification Needed", "Please enter your name.", null, false);
             localStorage.setItem('agriq_user', name);
+
             startLiveHeartbeat(name);
+
             const sub = document.getElementById('subject-select').value;
             const snap = await database.ref(`questions/${sub}`).once('value');
             const val = snap.val();
-            if(!val) return agriPopup("Module Empty", "No data found.", null, false);
+            
+            if(!val) return agriPopup("Module Empty", "No data found for this module.", null, false);
             let rawData = val.data ? val.data : val;
             masterData = Object.values(rawData).filter(q => q && typeof q === 'object' && (q.question || q.q));
+            
+            if(masterData.length === 0) return agriPopup("Module Empty", "This mission set has no valid data.", null, false);
+            
             document.getElementById('screen-login').classList.add('hidden');
             document.getElementById('screen-selection').classList.remove('hidden');
             window.location.hash = "Module-Selection";
+            
             const list = document.getElementById('selection-list');
             list.innerHTML = '';
             for(let i=0; i<masterData.length; i+=200) {
                 const setNum = (i/200)+1;
                 const div = document.createElement('div');
                 div.className = 'set-card';
-                div.innerHTML = `<div><b style="display:block; font-size:17px;">MISSION SET ${setNum}</b><small style="color:var(--text-dim); text-transform:uppercase; font-size:9px;">Core Syllabus Module</small></div><i data-lucide="zap"></i>`;
+                div.innerHTML = `<div><b style="display:block; font-size:17px;">MISSION SET ${setNum < 10 ? '0' + setNum : setNum}</b><small style="color:var(--text-dim); font-weight:800; text-transform:uppercase; font-size:9px;">Targeting High-Yield Core Syllabus</small></div><i data-lucide="zap" style="color:var(--blue-main)"></i>`;
                 div.onclick = () => startTest(i, i+200);
                 list.appendChild(div);
             }
@@ -426,14 +515,18 @@
             document.getElementById('screen-selection').classList.add('hidden');
             document.getElementById('screen-quiz').classList.remove('hidden');
             window.location.hash = "Live-Mock-Exam";
+            
             const grid = document.getElementById('marker-grid');
             grid.innerHTML = '';
             currentQuestions.forEach((_, i) => {
                 const p = document.createElement('div');
-                p.className = 'q-pill'; p.id = `mark-${i}`; p.innerText = i+1;
+                p.className = 'q-pill';
+                p.id = `mark-${i}`;
+                p.innerText = i+1;
                 p.onclick = () => { currentIdx = i; showQ(); };
                 grid.appendChild(p);
             });
+
             timer = setInterval(() => {
                 totalSec++; qSec--;
                 document.getElementById('total-clock').innerText = new Date(totalSec * 1000).toISOString().substr(14, 5);
@@ -448,15 +541,18 @@
             const q = currentQuestions[currentIdx];
             document.getElementById('q-label').innerText = `MOD: 01 / Q: ${currentIdx + 1}`;
             document.getElementById('q-display').innerHTML = q.question;
-            document.getElementById('q-description').innerText = q.description || "Conceptual framework based on standard agricultural protocols.";
+            document.getElementById('q-description').innerText = q.description || "The conceptual framework for this query is based on standard agricultural protocols.";
+
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active', 'done');
                 if(i === currentIdx) p.classList.add('active');
                 if(userChoices[i]) p.classList.add('done');
             });
+
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
             const opts = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
+            
             opts.forEach(o => {
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === o ? 'selected' : ''}`;
@@ -467,8 +563,9 @@
                 };
                 optBox.appendChild(div);
             });
+            
             const activePill = document.getElementById(`mark-${currentIdx}`);
-            if(activePill) activePill.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            if(activePill) activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         }
 
         function changeQ(v) {
@@ -480,7 +577,8 @@
             agriPopup("Deployment Finalization", "Confirm final submission?", async () => {
                 clearInterval(timer);
                 document.getElementById('app-loader').classList.remove('fade-out');
-                let score = 0; let details = [];
+                let score = 0;
+                let details = [];
                 currentQuestions.forEach((q, i) => {
                     const uAns = userChoices[i] || null;
                     if(uAns === q.answer) score++;
@@ -488,7 +586,7 @@
                 });
                 const finalAccuracy = Math.round((score / currentQuestions.length) * 100);
                 localStorage.setItem('agriq_last_result', JSON.stringify({ score, total: currentQuestions.length, accuracy: finalAccuracy, details }));
-                window.location.href = 'coolanalysis.html';
+                window.location.href = 'analysis.html';
             }, true);
         }
     </script>
