@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Elite Leaderboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            /* Midnight Focus Palette */
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --bg: #020617;
+            --surface: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --danger: #f43f5e;
+            --border: #334155;
+            --gold: #fbbf24;
+            --silver: #cbd5e1;
+            --bronze: #94a3b8;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+        /* --- Global Alert Popup --- */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+        .alert-modal.active { animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .alert-btn { width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; border: none; margin-top: 10px; }
+        .btn-main { background: var(--primary); color: #020617; }
+
+        /* LOADER */
+        #leader-loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 0.6s ease; 
+        }
+        #leader-loader.fade-out { opacity: 0; visibility: hidden; }
+        .spinner { width: 50px; height: 50px; border: 3px solid #111; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 20px) 24px 20px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border);
+        }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        .live-tag {
+            font-size: 10px; font-weight: 800; display: flex; align-items: center; gap: 6px;
+            background: rgba(56, 189, 248, 0.1); color: var(--primary);
+            padding: 6px 14px; border-radius: 50px; border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        main { padding: 0 20px; max-width: 500px; margin: 0 auto; }
+
+        /* --- PODIUM DESIGN --- */
+        .podium { 
+            display: flex; justify-content: center; align-items: flex-end; 
+            gap: 12px; margin: 40px 0 50px; padding-top: 20px;
+        }
+        .podium-item { 
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border); border-radius: 24px;
+            padding: 15px 5px; text-align: center; position: relative;
+            flex: 1; transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .podium-1 { 
+            height: 200px; z-index: 2; border-color: var(--gold); 
+            box-shadow: 0 20px 40px -10px rgba(251, 191, 36, 0.1);
+            animation: float 4s ease-in-out infinite;
+        }
+        .podium-2 { height: 160px; border-color: var(--silver); }
+        .podium-3 { height: 140px; border-color: var(--bronze); }
+        
+        .crown { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 28px; filter: drop-shadow(0 0 10px var(--gold)); }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .p-name { font-weight: 800; font-size: 11px; display: block; margin-top: 12px; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; }
+        .p-score { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 16px; margin-top: 4px; display: block; }
+        
+        /* --- RANK CARDS --- */
+        .list-container { display: flex; flex-direction: column; gap: 10px; }
+        .rank-card {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 18px 20px; border-radius: 24px;
+            display: flex; align-items: center; gap: 15px;
+            transition: 0.3s; position: relative; overflow: hidden;
+        }
+
+        .rank-card.is-me { border-color: var(--primary); background: rgba(56, 189, 248, 0.05); }
+        .rank-card.is-me::before {
+            content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--primary);
+        }
+
+        .rank-num { width: 35px; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; color: var(--text-dim); }
+        
+        .user-info { flex: 1; }
+        .user-name { font-weight: 700; font-size: 15px; color: #fff; display: block; margin-bottom: 2px; }
+        .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
+        
+        .user-score { text-align: right; }
+        .score-val { display: block; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 18px; color: var(--primary); }
+        .score-label { font-size: 8px; color: var(--text-dim); font-weight: 800; letter-spacing: 1px; }
+
+        .me-badge { 
+            background: var(--primary); color: #020617; font-size: 8px; font-weight: 900; 
+            padding: 3px 8px; border-radius: 6px; margin-left: 8px; vertical-align: middle;
+        }
+
+        .btn-home {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--text-main); color: #020617; padding: 18px 36px;
+            border-radius: 100px; text-decoration: none; font-weight: 900;
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            z-index: 1001; border: none; cursor: pointer; font-size: 14px; transition: 0.3s;
+        }
+        .btn-home:active { transform: translateX(-50%) scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <h2 id="alert-title" style="margin: 0 0 10px; font-size: 20px;">Return Home?</h2>
+            <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">Ready to exit the rankings?</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="alert-btn" style="background: #1e293b; color: #fff; flex: 1;" onclick="closePopup()">STAY</button>
+                <button class="alert-btn btn-main" style="flex: 2;" id="alert-ok">EXIT NOW</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="leader-loader">
+        <div class="spinner"></div>
+        <p style="font-weight: 800; color: var(--primary); margin-top: 20px; font-size: 10px; letter-spacing: 4px;">SYNCING Leaderboard</p>
+    </div>
+
+    <header>
+        <div class="brand">AGRI<span>Q</span> PRO</div>
+        <div class="live-tag"><div class="dot"></div> LIVE OPS</div>
+    </header>
+
+    <main>
+        <div class="podium" id="podium-area"></div>
+        <div class="list-container" id="leaderboard-list"></div>
+        <div style="height: 120px;"></div>
+    </main>
+
+    <button onclick="handleHome()" class="btn-home">
+        <i data-lucide="layout-grid" size="18"></i>
+        HOME
+    </button>
+
+    <script>
+        function agriPopup(onConfirm) {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.getElementById('alert-ok').onclick = onConfirm;
+        }
+        
+        function closePopup() {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            modal.classList.remove('active');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function handleHome() {
+            agriPopup(() => window.location.href = 'cooling.html');
+        }
+
+        lucide.createIcons();
+
+        if(!localStorage.getItem('agriq_uid')) {
+            localStorage.setItem('agriq_uid', 'u' + Math.random().toString(36).substr(2, 9));
+        }
+        const myUID = localStorage.getItem('agriq_uid');
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        database.ref('leaderboard').orderByChild('score').limitToLast(50).on('value', (snap) => {
+            let data = [];
+            snap.forEach(child => {
+                data.push(child.val());
+            });
+            data.sort((a, b) => b.score - a.score); 
+            renderLeaderboard(data);
+            setTimeout(() => {
+                document.getElementById('leader-loader').classList.add('fade-out');
+            }, 800);
+        });
+
+        function renderLeaderboard(users) {
+            const podiumArea = document.getElementById('podium-area');
+            const listArea = document.getElementById('leaderboard-list');
+            
+            if(users.length >= 1) {
+                podiumArea.innerHTML = `
+                    <div class="podium-item podium-2">
+                        <span style="font-size: 24px;">🥈</span>
+                        <span class="p-name">${users[1]?.name || '---'}</span>
+                        <span class="p-score" style="color:var(--silver)">${users[1]?.score || 0}%</span>
+                    </div>
+                    <div class="podium-item podium-1">
+                        <div class="crown">👑</div>
+                        <span style="font-size: 32px;">🥇</span>
+                        <span class="p-name">${users[0].name}</span>
+                        <span class="p-score" style="color:var(--gold)">${users[0].score}%</span>
+                    </div>
+                    <div class="podium-item podium-3">
+                        <span style="font-size: 20px;">🥉</span>
+                        <span class="p-name">${users[2]?.name || '---'}</span>
+                        <span class="p-score" style="color:var(--bronze)">${users[2]?.score || 0}%</span>
+                    </div>
+                `;
+            }
+
+            listArea.innerHTML = "";
+            users.forEach((u, i) => {
+                const isMe = u.uid === myUID;
+                const emojiRank = i === 0 ? '🏆' : i === 1 ? '⭐' : i === 2 ? '⚡' : null;
+                
+                const card = document.createElement('div');
+                card.className = `rank-card ${isMe ? 'is-me' : ''}`;
+                card.innerHTML = `
+                    <div class="rank-num">${emojiRank ? '<span style="font-size:18px">'+emojiRank+'</span>' : '#'+(i+1)}</div>
+                    <div class="user-info">
+                        <span class="user-name">${u.name}${isMe ? '<span class="me-badge">YOU</span>' : ''}</span>
+                        <span class="user-meta">${u.subject || 'GENERAL'}</span>
+                    </div>
+                    <div class="user-score">
+                        <span class="score-val">${u.score}%</span>
+                        <span class="score-label">ACCURACY</span>
+                    </div>
+                `;
+                listArea.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
