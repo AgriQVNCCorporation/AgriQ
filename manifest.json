@@ -13,7 +13,7 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/install.html",
+  "start_url": "/index.html",
   "background_color": "#000000",
   "display": "standalone",
   "theme_color": "#ff3b3b"
