@@ -586,7 +586,7 @@
                 });
                 const finalAccuracy = Math.round((score / currentQuestions.length) * 100);
                 localStorage.setItem('agriq_last_result', JSON.stringify({ score, total: currentQuestions.length, accuracy: finalAccuracy, details }));
-                window.location.href = 'analysis.html';
+                window.location.href = 'coolanalysis.html';
             }, true);
         }
     </script>
