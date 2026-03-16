@@ -12,63 +12,71 @@
 
     <style>
         :root {
-            /* Midnight Focus Palette */
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --bg: #020617;
-            --surface: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
-            --danger: #f43f5e;
-            --border: #334155;
-            --gold: #fbbf24;
-            --silver: #cbd5e1;
-            --bronze: #94a3b8;
+            /* Sky Blue & White Glass Palette */
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.2);
+            --bg: #f0f9ff;
+            --surface: rgba(255, 255, 255, 0.6);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.5);
+            --gold: #f59e0b;
+            --silver: #94a3b8;
+            --bronze: #b45309;
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+        body { 
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); 
+            margin: 0; 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+        }
 
         /* --- Global Alert Popup --- */
         #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            position: fixed; inset: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px);
             z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .alert-modal {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            background: rgba(255, 255, 255, 0.9); border: 1px solid var(--border); border-radius: 32px;
             width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--card-shadow);
         }
         .alert-modal.active { animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         .alert-btn { width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; border: none; margin-top: 10px; }
-        .btn-main { background: var(--primary); color: #020617; }
+        .btn-main { background: var(--primary); color: #fff; }
 
         /* LOADER */
         #leader-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
+            position: fixed; inset: 0; background: #e0f2fe; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: 0.6s ease; 
         }
         #leader-loader.fade-out { opacity: 0; visibility: hidden; }
-        .spinner { width: 50px; height: 50px; border: 3px solid #111; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(0,0,0,0.05); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         header {
             padding: calc(env(safe-area-inset-top) + 20px) 24px 20px;
-            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px);
             display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border);
         }
-        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; color: #0f172a; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
         .live-tag {
             font-size: 10px; font-weight: 800; display: flex; align-items: center; gap: 6px;
-            background: rgba(56, 189, 248, 0.1); color: var(--primary);
-            padding: 6px 14px; border-radius: 50px; border: 1px solid rgba(56, 189, 248, 0.2);
+            background: #fff; color: var(--primary);
+            padding: 6px 14px; border-radius: 50px; border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
@@ -81,21 +89,22 @@
             gap: 12px; margin: 40px 0 50px; padding-top: 20px;
         }
         .podium-item { 
-            background: rgba(30, 41, 59, 0.5);
+            background: var(--surface);
             backdrop-filter: blur(10px);
             border: 1px solid var(--border); border-radius: 24px;
             padding: 15px 5px; text-align: center; position: relative;
             flex: 1; transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: var(--card-shadow);
         }
         .podium-1 { 
-            height: 200px; z-index: 2; border-color: var(--gold); 
-            box-shadow: 0 20px 40px -10px rgba(251, 191, 36, 0.1);
+            height: 200px; z-index: 2; border-color: var(--primary); 
+            background: #fff;
             animation: float 4s ease-in-out infinite;
         }
-        .podium-2 { height: 160px; border-color: var(--silver); }
-        .podium-3 { height: 140px; border-color: var(--bronze); }
+        .podium-2 { height: 160px; }
+        .podium-3 { height: 140px; }
         
-        .crown { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 28px; filter: drop-shadow(0 0 10px var(--gold)); }
+        .crown { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 28px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }
         
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
@@ -105,13 +114,14 @@
         /* --- RANK CARDS --- */
         .list-container { display: flex; flex-direction: column; gap: 10px; }
         .rank-card {
-            background: var(--surface); border: 1px solid var(--border);
+            background: var(--surface); backdrop-filter: blur(16px); border: 1px solid var(--border);
             padding: 18px 20px; border-radius: 24px;
             display: flex; align-items: center; gap: 15px;
             transition: 0.3s; position: relative; overflow: hidden;
+            box-shadow: var(--card-shadow);
         }
 
-        .rank-card.is-me { border-color: var(--primary); background: rgba(56, 189, 248, 0.05); }
+        .rank-card.is-me { border-color: var(--primary); background: #fff; }
         .rank-card.is-me::before {
             content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--primary);
         }
@@ -119,7 +129,7 @@
         .rank-num { width: 35px; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; color: var(--text-dim); }
         
         .user-info { flex: 1; }
-        .user-name { font-weight: 700; font-size: 15px; color: #fff; display: block; margin-bottom: 2px; }
+        .user-name { font-weight: 700; font-size: 15px; color: #1e293b; display: block; margin-bottom: 2px; }
         .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
         
         .user-score { text-align: right; }
@@ -127,15 +137,15 @@
         .score-label { font-size: 8px; color: var(--text-dim); font-weight: 800; letter-spacing: 1px; }
 
         .me-badge { 
-            background: var(--primary); color: #020617; font-size: 8px; font-weight: 900; 
+            background: var(--primary); color: #fff; font-size: 8px; font-weight: 900; 
             padding: 3px 8px; border-radius: 6px; margin-left: 8px; vertical-align: middle;
         }
 
         .btn-home {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--text-main); color: #020617; padding: 18px 36px;
+            background: #0f172a; color: #fff; padding: 18px 36px;
             border-radius: 100px; text-decoration: none; font-weight: 900;
-            display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             z-index: 1001; border: none; cursor: pointer; font-size: 14px; transition: 0.3s;
         }
         .btn-home:active { transform: translateX(-50%) scale(0.95); }
@@ -145,10 +155,10 @@
 
     <div id="custom-overlay">
         <div class="alert-modal" id="alert-modal">
-            <h2 id="alert-title" style="margin: 0 0 10px; font-size: 20px;">Return Home?</h2>
+            <h2 id="alert-title" style="margin: 0 0 10px; font-size: 20px; color: #1e293b;">Return Home?</h2>
             <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">Ready to exit the rankings?</p>
             <div style="display: flex; gap: 10px;">
-                <button class="alert-btn" style="background: #1e293b; color: #fff; flex: 1;" onclick="closePopup()">STAY</button>
+                <button class="alert-btn" style="background: #f1f5f9; color: #475569; flex: 1;" onclick="closePopup()">STAY</button>
                 <button class="alert-btn btn-main" style="flex: 2;" id="alert-ok">EXIT NOW</button>
             </div>
         </div>
@@ -192,7 +202,7 @@
         }
 
         function handleHome() {
-            agriPopup(() => window.location.href = 'cooling.html');
+            agriPopup(() => window.location.href = 'index.html');
         }
 
         lucide.createIcons();
