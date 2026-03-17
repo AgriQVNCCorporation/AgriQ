@@ -253,18 +253,22 @@
                 setTimeout(() => overlay.style.display = 'none', 300);
             };
         }
+// Updated Firebase Configuration for AgriQ Pro
+const firebaseConfig = {
+    apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+    authDomain: "agri-mcar.firebaseapp.com", // Keep this as the Firebase domain
+    databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+    projectId: "agri-mcar",
+    storageBucket: "agri-mcar.firebasestorage.app",
+    messagingSenderId: "823436752104",
+    appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+};
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
-            authDomain: "agri-mcar.firebaseapp.com",
-            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-            projectId: "agri-mcar",
-            storageBucket: "agri-mcar.firebasestorage.app",
-            messagingSenderId: "823436752104",
-            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
-        };
+// Initialize Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
