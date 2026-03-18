@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Active Terminal Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff3b3b;
+            --primary-glow: rgba(255, 59, 59, 0.4);
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --border: #222222;
+            --danger: #ff3b3b;
+            --success: #22c55e;
+            --warning: #eab308;
+            --glass: rgba(255, 255, 255, 0.03);
+            --transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        body.focused-mode {
+            --primary: #00aaff;
+            --primary-glow: rgba(0, 170, 255, 0.3);
+            --bg: #f0f9ff;
+            --surface: #ffffff;
+            --text-main: #001a2c;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --glass: rgba(0, 170, 255, 0.05);
+        }
+
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; transition: background-color var(--transition); overflow-y: auto; }
+
+        /* MODAL OVERLAY */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); transform: translateY(20px) scale(0.95); opacity: 0;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .alert-modal.active { transform: translateY(0) scale(1); opacity: 1; border-color: var(--danger); }
+        .alert-icon { width: 64px; height: 64px; background: var(--danger); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fff; box-shadow: 0 10px 20px var(--primary-glow); }
+        .alert-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
+        .alert-msg { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 25px; }
+
+        /* PRELOADER SYSTEM */
+        #app-loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s var(--transition), visibility 1s;
+        }
+        #app-loader.fade-out { opacity: 0; visibility: hidden; }
+        .electric-icon { color: var(--primary); animation: electricPulse 2s infinite ease-in-out; margin-bottom: 25px; }
+        @keyframes electricPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 30px var(--primary)) brightness(1.3); opacity: 1; }
+        }
+        .loading-bar-container { width: 140px; height: 2px; background: #111; border-radius: 10px; overflow: hidden; position: relative; }
+        .loading-bar-fill { position: absolute; width: 45%; height: 100%; background: var(--primary); box-shadow: 0 0 15px var(--primary); animation: scan 1.5s infinite ease-in-out; }
+        @keyframes scan { 0% { left: -45%; } 100% { left: 100%; } }
+
+        /* UI COMPONENTS */
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; background: var(--surface); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+        }
+        .timer-badge { background: var(--glass); color: var(--primary); padding: 8px 16px; border-radius: 14px; border: 1px solid var(--border); font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; }
+
+        main { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
+
+        .marker-scroll { 
+            display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px 25px; 
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        }
+        .q-pill { 
+            min-width: 45px; height: 45px; border-radius: 14px; background: var(--surface); border: 1.5px solid var(--border);
+            display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-dim); flex-shrink: 0; cursor: pointer; transition: 0.3s;
+        }
+        .q-pill.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+        .q-pill.done { border-color: var(--success); background: var(--success); color: #fff; }
+
+        .q-card { background: var(--surface); border-radius: 32px; padding: 28px; border: 1px solid var(--border); margin-bottom: 20px; animation: qSlideUp 0.6s var(--transition); }
+        @keyframes qSlideUp { from { opacity: 0; transform: translateY(20px); filter: blur(5px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        
+        .q-text { font-size: 19px; font-weight: 700; margin-bottom: 25px; line-height: 1.6; color: var(--text-main); }
+
+        .opt-box { 
+            background: var(--glass); border: 1.5px solid var(--border); padding: 20px; 
+            border-radius: 22px; margin-bottom: 12px; font-weight: 700; cursor: pointer; 
+            transition: 0.3s; color: var(--text-main); display: flex; align-items: center; gap: 14px;
+        }
+        .opt-box.selected { border-color: var(--primary); background: var(--primary-glow); color: var(--primary); transform: scale(1.02); }
+
+        .controls {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            width: calc(100% - 40px); max-width: 460px; padding: 15px;
+            background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 32px; display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+        }
+        body.focused-mode .controls { background: rgba(255, 255, 255, 0.7); }
+
+        .btn-primary { flex: 2; padding: 16px; border-radius: 22px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; }
+        .btn-sec { flex: 1; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); border-radius: 22px; font-weight: 800; }
+        .btn-finalize { background: var(--danger); color: #fff; width: 100%; padding: 16px; border-radius: 22px; border: none; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <div class="alert-icon"><i data-lucide="shield-alert" size="32"></i></div>
+            <div class="alert-title" id="alert-title">Attention</div>
+            <div class="alert-msg" id="alert-msg">Message...</div>
+            <div class="alert-actions" style="display:flex; gap:10px;">
+                <button class="btn-sec" style="padding:14px; flex:1;" id="alert-cancel">Abort</button>
+                <button class="btn-primary" style="padding:14px; flex:1;" id="alert-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-loader">
+        <div class="electric-icon"><i data-lucide="zap" size="64" stroke-width="3" fill="currentColor"></i></div>
+        <div class="loading-bar-container"><div class="loading-bar-fill"></div></div>
+        <p style="font-size:10px; font-family:'JetBrains Mono'; color:var(--primary); margin-top:15px; letter-spacing:3px; font-weight:800;">ENCRYPTING SEQUENCE</p>
+    </div>
+
+    <header>
+        <div style="font-weight:900; font-size:12px; letter-spacing:1px; text-transform: uppercase;" id="student-tag">ID: LOADING</div>
+        <div id="q-timer" class="timer-badge">00:00</div>
+    </header>
+
+    <main>
+        <div id="marker-grid" class="marker-scroll"></div>
+        <div id="question-area">
+            <div class="q-card"><div id="q-display" class="q-text">Initializing terminal...</div></div>
+            <div id="opts-display"></div>
+        </div>
+    </main>
+
+    <div class="controls">
+        <div style="display:flex; gap:10px;">
+            <button class="btn-sec" onclick="changeQ(-1)">PREV</button>
+            <button class="btn-primary" onclick="changeQ(1)">NEXT</button>
+        </div>
+        <button class="btn-finalize" onclick="submitTest()">FINALIZE EXAM 🏁</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let questions = [], currentIdx = 0, userChoices = {}, timer;
+        let totalSecondsRemaining = 1200; 
+        const moduleKey = new URLSearchParams(window.location.search).get('mod');
+        let studentName = "Candidate";
+        let isSubmitting = false;
+
+        function agriPopup(title, msg, onConfirm, isConfirm = false) {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.getElementById('alert-cancel').style.display = isConfirm ? 'block' : 'none';
+            document.getElementById('alert-ok').onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+                if(onConfirm) onConfirm();
+            };
+        }
+
+        auth.onAuthStateChanged(async user => {
+            if (!user) return window.location.href = 'index.html';
+            
+            const profile = await db.ref(`students/${user.uid}`).once('value');
+            const data = profile.val();
+            studentName = data?.name || user.email.split('@')[0];
+            
+            if (data?.focusedMode) document.body.classList.add('focused-mode');
+            document.getElementById('student-tag').innerText = `ID: ${studentName.toUpperCase()}`;
+
+            loadQuestionsAndConfig();
+            db.ref(`live_sessions/${user.uid}`).onDisconnect().remove();
+        });
+
+        async function loadQuestionsAndConfig() {
+            const configSnap = await db.ref(`questions/${moduleKey}/config`).once('value');
+            const config = configSnap.val();
+            if (config?.timeLimit) totalSecondsRemaining = parseInt(config.timeLimit) * 60;
+
+            const snap = await db.ref(`questions/${moduleKey}/data`).once('value');
+            const data = snap.val();
+            if (!data) return alert("Sequence Data Empty.");
+
+            questions = Object.values(data).sort(() => Math.random() - 0.5).map(q => {
+                let options = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
+                const correct = q.answer || options[q.correctIndex];
+                return { ...q, shuffledOpts: [...options].sort(() => Math.random() - 0.5), actualCorrect: correct };
+            });
+
+            initUI();
+            setTimeout(() => {
+                document.getElementById('app-loader').classList.add('fade-out');
+                startGlobalTimer();
+            }, 2500);
+        }
+
+        function initUI() {
+            const grid = document.getElementById('marker-grid');
+            grid.innerHTML = '';
+            questions.forEach((_, i) => {
+                const p = document.createElement('div');
+                p.className = 'q-pill';
+                p.id = `mark-${i}`;
+                p.innerText = i + 1;
+                p.onclick = () => { currentIdx = i; showQ(); };
+                grid.appendChild(p);
+            });
+            showQ();
+            lucide.createIcons();
+        }
+
+        function showQ() {
+            const q = questions[currentIdx];
+            document.getElementById('q-display').innerText = q.question;
+            document.querySelectorAll('.q-pill').forEach((p, i) => {
+                p.classList.remove('active');
+                if (i === currentIdx) p.classList.add('active');
+                if (userChoices[i]) p.classList.add('done');
+            });
+
+            const optBox = document.getElementById('opts-display');
+            optBox.innerHTML = '';
+            q.shuffledOpts.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
+                div.innerHTML = `<span>${String.fromCharCode(65+idx)}.</span> ${opt}`;
+                div.onclick = () => { userChoices[currentIdx] = opt; showQ(); syncStatus(); };
+                optBox.appendChild(div);
+            });
+            document.getElementById(`mark-${currentIdx}`).scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+
+        async function syncStatus() {
+            const user = auth.currentUser;
+            if(!user || isSubmitting) return;
+            await db.ref(`live_sessions/${user.uid}`).set({
+                name: studentName,
+                current: currentIdx + 1,
+                solved: Object.keys(userChoices).length,
+                timeLeft: formatTime(totalSecondsRemaining),
+                module: moduleKey,
+                lastUpdate: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        function formatTime(s) {
+            return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+        }
+
+        function startGlobalTimer() {
+            timer = setInterval(() => {
+                if (totalSecondsRemaining <= 0) { clearInterval(timer); processFinalResults(); }
+                else { 
+                    totalSecondsRemaining--; 
+                    document.getElementById('q-timer').innerText = formatTime(totalSecondsRemaining);
+                    if (totalSecondsRemaining % 10 === 0) syncStatus();
+                }
+            }, 1000);
+        }
+
+        function changeQ(dir) {
+            let next = currentIdx + dir;
+            if (next >= 0 && next < questions.length) { currentIdx = next; showQ(); }
+        }
+
+        function submitTest() {
+            agriPopup("Finalization", "Deploy sequence for analysis?", processFinalResults, true);
+        }
+
+        async function processFinalResults() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            clearInterval(timer);
+            document.getElementById('app-loader').classList.remove('fade-out');
+            
+            let score = 0;
+            let report = questions.map((q, i) => {
+                const uAns = userChoices[i] || "Unattempted";
+                const correct = (uAns === q.actualCorrect);
+                if(correct) score++;
+                return { question: q.question, user: uAns, actual: q.actualCorrect, isCorrect: correct };
+            });
+
+            const finalData = {
+                name: studentName,
+                module: moduleKey,
+                score: score,
+                total: questions.length,
+                accuracy: Math.round((score/questions.length)*100),
+                details: report,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('agriq_last_result', JSON.stringify(finalData));
+            await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
+            
+            setTimeout(() => window.location.href = 'analysis.html', 1200);
+        }
+    </script>
+</body>
+</html>
