@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Mission Analysis</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff3b3b;
+            --primary-glow: rgba(255, 59, 59, 0.4);
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --danger: #ff3b3b;
+            --success: #22c55e;
+            --border: #222222;
+            --transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        body.focused-mode {
+            --primary: #00aaff;
+            --primary-glow: rgba(0, 170, 255, 0.3);
+            --bg: #f0f9ff;
+            --surface: #ffffff;
+            --text-main: #001a2c;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --glass: rgba(0, 170, 255, 0.05);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; transition: background-color var(--transition); }
+
+        /* --- ELECTRIC PULSE LOADER --- */
+        #analysis-loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s var(--transition), visibility 1s;
+        }
+        #analysis-loader.fade-out { opacity: 0; visibility: hidden; }
+        .electric-icon { color: var(--primary); animation: electricPulse 2s infinite ease-in-out; margin-bottom: 25px; }
+        @keyframes electricPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 30px var(--primary)) brightness(1.3); opacity: 1; }
+        }
+        .loading-bar-container { width: 140px; height: 2px; background: #111; border-radius: 10px; overflow: hidden; position: relative; }
+        .loading-bar-fill { position: absolute; width: 45%; height: 100%; background: var(--primary); box-shadow: 0 0 15px var(--primary); animation: scan 1.5s infinite ease-in-out; }
+        @keyframes scan { 0% { left: -45%; } 100% { left: 100%; } }
+
+        /* --- Custom Alert Popup --- */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            transform: scale(0.9); opacity: 0; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--danger); }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
+            background: var(--surface); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { font-weight: 900; font-size: 16px; letter-spacing: 1px; }
+        .brand span { color: var(--primary); }
+        
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .icon-btn { 
+            background: var(--glass); border: 1px solid var(--border); 
+            color: var(--text-main); padding: 8px; border-radius: 12px; 
+            cursor: pointer; display: flex; align-items: center; transition: 0.3s;
+        }
+        .icon-btn:active { transform: scale(0.9); border-color: var(--primary); }
+
+        main { padding: 24px; max-width: 500px; margin: 0 auto; }
+
+        .quote-box {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 25px; border-radius: 28px; margin-bottom: 30px;
+            text-align: center; animation: slideUp 0.6s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .stat-item { 
+            background: var(--surface); padding: 22px; border-radius: 24px; 
+            text-align: center; border: 1px solid var(--border);
+        }
+        .stat-val { font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; color: var(--text-main); }
+        .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
+        
+        .stat-item.highlight { border-color: var(--primary); background: rgba(255, 59, 59, 0.05); }
+        body.focused-mode .stat-item.highlight { background: rgba(0, 170, 255, 0.05); }
+
+        .analysis-card {
+            background: var(--surface); border-radius: 24px; padding: 24px;
+            margin-bottom: 15px; border: 1px solid var(--border);
+            position: relative; animation: slideUp 0.5s ease backwards;
+        }
+        
+        .status-tag { 
+            position: absolute; top: 24px; right: 24px; font-size: 9px; 
+            font-weight: 900; padding: 4px 10px; border-radius: 50px; text-transform: uppercase;
+        }
+        .tag-correct { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .tag-wrong { background: rgba(255, 59, 59, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+        .q-text { font-weight: 700; font-size: 16px; margin-bottom: 18px; line-height: 1.6; padding-right: 80px; color: var(--text-main); }
+        .ans-row { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 600; margin-top: 10px; padding: 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--border); }
+        
+        .btn-primary { 
+            width: 100%; padding: 20px; border-radius: 24px; border: none;
+            background: var(--primary); color: #fff; font-weight: 900;
+            font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin-top: 15px;
+        }
+        .btn-secondary {
+            width: 100%; padding: 20px; border-radius: 24px; border: 1.5px solid var(--border);
+            background: transparent; color: var(--text-main); font-weight: 800;
+            font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <h2 id="alert-title" style="margin:0 0 10px; font-size: 20px;">Navigation</h2>
+            <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;"></p>
+            <div style="display: flex; gap: 12px;">
+                <button class="alert-btn" id="alert-cancel" style="background:#1a1a1a; color:#fff; border:1px solid #333; flex:1; padding:15px; border-radius:15px; cursor:pointer;">CANCEL</button>
+                <button class="alert-btn" id="alert-ok" style="background:var(--primary); color:#fff; border:none; flex:1; padding:15px; border-radius:15px; font-weight:800; cursor:pointer;">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="analysis-loader">
+        <div class="electric-icon"><i data-lucide="zap" size="64" stroke-width="3" fill="currentColor"></i></div>
+        <div class="loading-bar-container"><div class="loading-bar-fill"></div></div>
+        <p style="font-size:10px; font-family:'JetBrains Mono'; color:var(--primary); margin-top:15px; letter-spacing:3px; font-weight:800;">DECRYPTING ANALYTICS</p>
+    </div>
+
+    <header>
+        <div class="brand">TEST <span>REPORT</span></div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="handleNavigation('leaderboard.html', 'LEADERBOARD')">
+                <i data-lucide="trophy" size="18"></i>
+            </button>
+            <div id="user-display" style="font-size: 10px; font-weight: 900; color: var(--primary); background: rgba(255,59,59,0.1); padding: 5px 12px; border-radius: 50px; border: 1px solid var(--border);">...</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="quote-box">
+            <p style="font-style: italic; font-size: 14px; color: var(--text-dim);" id="inspire-quote">Analyzing crop patterns...</p>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-item highlight">
+                <span class="stat-val" id="stat-accuracy">0%</span>
+                <span class="stat-lbl">Accuracy 🎯</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="stat-score">0/0</span>
+                <span class="stat-lbl">Points 📊</span>
+            </div>
+        </div>
+
+        <h3 style="font-weight: 900; margin-bottom: 20px; color: var(--text-main); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="terminal" size="16"></i> Logic Breakdown
+        </h3>
+        
+        <div id="review-list"></div>
+
+        <button class="btn-primary" onclick="handleNavigation('leaderboard.html', 'LEADERBOARD')">
+            VIEW GLOBAL RANKINGS <i data-lucide="award" size="18"></i>
+        </button>
+
+        <button class="btn-secondary" onclick="handleNavigation('index.html', 'NEW MODULE')">
+            <i data-lucide="refresh-ccw" size="18"></i> RESTART TERMINAL
+        </button>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        function agriPopup(title, msg, onConfirm) {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.getElementById('alert-ok').onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+                if(onConfirm) onConfirm();
+            };
+            document.getElementById('alert-cancel').onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+            };
+        }
+
+        function handleNavigation(url, type) {
+            agriPopup("EXIT ANALYSIS", `Moving to ${type}. Ensure you've reviewed your errors.`, () => {
+                window.location.href = url;
+            });
+        }
+
+        // --- IDENTITY EXTRACTION ---
+        auth.onAuthStateChanged(async user => {
+            if (!user) return window.location.href = 'index.html';
+            
+            // Pull name from profile node (synced with Google login UID)
+            const profile = await db.ref(`students/${user.uid}`).once('value');
+            const data = profile.val();
+            
+            // Set name display
+            const displayName = data?.name || user.email.split('@')[0];
+            document.getElementById('user-display').innerText = displayName.toUpperCase();
+            
+            // Apply Focused Mode preference
+            if (data?.focusedMode) {
+                document.body.classList.add('focused-mode');
+            }
+
+            loadResults(user, displayName);
+        });
+
+        async function loadResults(user, studentName) {
+            // Get local results from test sequence
+            const results = JSON.parse(localStorage.getItem('agriq_last_result'));
+            
+            if (!results) {
+                document.getElementById('review-list').innerHTML = "<p style='text-align:center; color:var(--text-dim)'>No recent test data found.</p>";
+                document.getElementById('analysis-loader').classList.add('fade-out');
+                return;
+            }
+
+            // Set Stats
+            document.getElementById('stat-accuracy').innerText = results.accuracy + "%";
+            document.getElementById('stat-score').innerText = results.score + "/" + results.total;
+
+            // Optional: Auto-push to global leaderboard upon viewing analysis
+            await db.ref('leaderboard').push({
+                uid: user.uid,
+                name: studentName,
+                accuracy: results.accuracy,
+                score: results.score,
+                module: results.module || 'Unknown',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Populate logic breakdown
+            const list = document.getElementById('review-list');
+            results.details.forEach((item, i) => {
+                const isCorrect = item.user === item.actual;
+                const card = document.createElement('div');
+                card.className = 'analysis-card';
+                card.style.animationDelay = (i * 0.05) + 's';
+                card.innerHTML = `
+                    <span class="status-tag ${isCorrect ? 'tag-correct' : 'tag-wrong'}">
+                        ${isCorrect ? 'SUCCESS' : 'FAILURE'}
+                    </span>
+                    <div class="q-text">${item.question}</div>
+                    <div class="ans-row">
+                        <div style="flex:1">
+                            <small style="display:block; font-size:8px; color:var(--text-dim); margin-bottom:4px;">USER INPUT</small>
+                            <span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">${item.user || 'SKIPPED'}</span>
+                        </div>
+                    </div>
+                    ${!isCorrect ? `
+                    <div class="ans-row" style="background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.2); margin-top:8px;">
+                        <div style="flex:1">
+                            <small style="display:block; font-size:8px; color:var(--text-dim); margin-bottom:4px;">REQUIRED DATA</small>
+                            <span style="color:var(--success)">${item.actual}</span>
+                        </div>
+                    </div>` : ''}
+                `;
+                list.appendChild(card);
+            });
+
+            lucide.createIcons();
+            
+            // Fade out preloader once data is rendered
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 2500);
+        }
+    </script>
+</body>
+</html>
