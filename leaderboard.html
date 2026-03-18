@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgriQ Pro | Elite Leaderboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff3b3b;
+            --primary-glow: rgba(255, 59, 59, 0.4);
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --card-bg: #111111;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --danger: #ff3b3b;
+            --border: #222222;
+            --gold: #ffda44;
+            --silver: #e2e2e2;
+            --bronze: #cd7f32;
+            --transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        body.focused-mode {
+            --primary: #00aaff;
+            --primary-glow: rgba(0, 170, 255, 0.3);
+            --bg: #f0f9ff;
+            --surface: #ffffff;
+            --card-bg: #f8fafc;
+            --text-main: #001a2c;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --glass: rgba(0, 170, 255, 0.05);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; overflow-x: hidden; transition: background-color var(--transition); }
+
+        /* --- LOADER --- */
+        #leader-loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s var(--transition), visibility 1s;
+        }
+        #leader-loader.fade-out { opacity: 0; visibility: hidden; }
+        .electric-icon { color: var(--primary); animation: electricPulse 2s infinite ease-in-out; margin-bottom: 25px; }
+        @keyframes electricPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--primary)); opacity: 0.8; }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 30px var(--primary)) brightness(1.3); opacity: 1; }
+        }
+        .loading-bar-container { width: 140px; height: 2px; background: #111; border-radius: 10px; overflow: hidden; position: relative; }
+        .loading-bar-fill { position: absolute; width: 45%; height: 100%; background: var(--primary); box-shadow: 0 0 15px var(--primary); animation: scan 1.5s infinite ease-in-out; }
+        @keyframes scan { 0% { left: -45%; } 100% { left: 100%; } }
+
+        /* --- Global Alert Popup --- */
+        #custom-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .alert-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+        }
+        .alert-modal.active { animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .alert-btn { width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; border: none; margin-top: 10px; transition: 0.3s; }
+        .btn-main { background: var(--primary); color: #fff; }
+
+        header {
+            padding: calc(env(safe-area-inset-top) + 20px) 24px 20px;
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { font-weight: 900; font-size: 16px; letter-spacing: 1px; }
+        .brand span { color: var(--primary); }
+
+        .live-tag {
+            font-size: 9px; font-weight: 900; display: flex; align-items: center; gap: 6px;
+            background: rgba(255, 59, 59, 0.1); color: var(--primary);
+            padding: 6px 14px; border-radius: 50px; border: 1px solid var(--border);
+        }
+        .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        main { padding: 0 20px; max-width: 500px; margin: 0 auto; }
+
+        /* --- PODIUM MIX --- */
+        .podium { 
+            display: flex; justify-content: center; align-items: flex-end; 
+            gap: 10px; margin: 50px 0 40px; padding-top: 20px;
+        }
+        .podium-item { 
+            background: var(--surface); border: 1.5px solid var(--border); border-radius: 24px;
+            padding: 20px 8px; text-align: center; position: relative;
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .podium-1 { 
+            height: 200px; z-index: 2; border-color: var(--gold); 
+            box-shadow: 0 15px 40px -10px rgba(255, 218, 68, 0.15);
+            animation: float 4s ease-in-out infinite;
+        }
+        .podium-2 { height: 165px; border-color: var(--silver); }
+        .podium-3 { height: 145px; border-color: var(--bronze); }
+        
+        .crown { position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 32px; filter: drop-shadow(0 0 10px var(--gold)); }
+        
+        .medal-icon { font-size: 28px; margin-bottom: 10px; }
+        .podium-1 .medal-icon { font-size: 38px; }
+
+        .p-info-mix { width: 100%; margin-top: auto; overflow: hidden; }
+        .p-name { font-weight: 800; font-size: 10px; display: block; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-score { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 16px; margin-top: 2px; display: block; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        .list-container { display: flex; flex-direction: column; gap: 10px; }
+        .rank-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 18px 22px; border-radius: 24px;
+            display: flex; align-items: center; gap: 15px;
+            transition: 0.3s; position: relative;
+        }
+
+        .rank-card.is-me { border-color: var(--primary); background: rgba(255, 59, 59, 0.05); border-width: 1.5px; }
+
+        .rank-num { width: 35px; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; color: var(--text-dim); }
+
+        .user-info { flex: 1; }
+        .user-name { font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; margin-bottom: 2px; }
+        .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .user-score { text-align: right; }
+        .score-val { display: block; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 18px; color: var(--text-main); }
+        .score-label { font-size: 8px; color: var(--text-dim); font-weight: 900; text-transform: uppercase; }
+
+        .me-badge { 
+            background: var(--primary); color: #fff; font-size: 8px; font-weight: 900; 
+            padding: 3px 8px; border-radius: 50px; margin-left: 10px; border: none;
+        }
+
+        .btn-home {
+            position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%);
+            background: var(--text-main); color: var(--bg); padding: 18px 36px;
+            border-radius: 100px; text-decoration: none; font-weight: 900;
+            display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            z-index: 1001; border: none; cursor: pointer; font-size: 13px; letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="leader-loader">
+        <div class="electric-icon"><i data-lucide="zap" size="64" stroke-width="3" fill="currentColor"></i></div>
+        <div class="loading-bar-container"><div class="loading-bar-fill"></div></div>
+        <p style="font-size:10px; font-family:'JetBrains Mono'; color:var(--primary); margin-top:15px; letter-spacing:3px; font-weight:800;">SYNCING GLOBAL ELITE</p>
+    </div>
+
+    <div id="custom-overlay">
+        <div class="alert-modal" id="alert-modal">
+            <h2 id="alert-title" style="margin: 0 0 10px; font-size: 20px; font-weight: 900;">Return Home?</h2>
+            <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">Ready to exit the rankings terminal?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="alert-btn" style="background: var(--glass); color: var(--text-main); flex: 1; border: 1px solid var(--border);" onclick="closePopup()">STAY</button>
+                <button class="alert-btn btn-main" style="flex: 2;" id="alert-ok">EXIT NOW</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="brand">AGRI<span>Q</span> PRO</div>
+        <div class="live-tag"><div class="dot"></div> LIVE OPS</div>
+    </header>
+
+    <main>
+        <div class="podium" id="podium-area"></div>
+        <div class="list-container" id="leaderboard-list"></div>
+        <div style="height: 120px;"></div>
+    </main>
+
+    <button onclick="handleHome()" class="btn-home">
+        <i data-lucide="layout-grid" size="18"></i>
+        DASHBOARD
+    </button>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUserID = null;
+
+        function closePopup() {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            modal.classList.remove('active');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function handleHome() {
+            const overlay = document.getElementById('custom-overlay');
+            const modal = document.getElementById('alert-modal');
+            overlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.getElementById('alert-ok').onclick = () => window.location.href = 'index.html';
+        }
+
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                currentUserID = user.uid;
+                database.ref(`students/${user.uid}`).once('value', snap => {
+                    const profile = snap.val();
+                    if (profile?.focusedMode) document.body.classList.add('focused-mode');
+                });
+            } else {
+                window.location.href = 'index.html';
+            }
+            startLeaderboardListener();
+        });
+
+        function startLeaderboardListener() {
+            database.ref('leaderboard').orderByChild('score').limitToLast(50).on('value', (snap) => {
+                let data = [];
+                snap.forEach(child => {
+                    data.push({ ...child.val(), entryId: child.key });
+                });
+                data.sort((a, b) => (b.score || 0) - (a.score || 0)); 
+                renderLeaderboard(data);
+                setTimeout(() => {
+                    document.getElementById('leader-loader').classList.add('fade-out');
+                }, 1500);
+            });
+        }
+
+        function renderLeaderboard(users) {
+            const podiumArea = document.getElementById('podium-area');
+            const listArea = document.getElementById('leaderboard-list');
+            
+            podiumArea.innerHTML = `
+                <div class="podium-item podium-2">
+                    <div class="medal-icon">🥈</div>
+                    <div class="p-info-mix">
+                        <span class="p-name">${users[1]?.name || '---'}</span>
+                        <span class="p-score" style="color:var(--silver)">${users[1]?.score || 0}</span>
+                    </div>
+                </div>
+                <div class="podium-item podium-1">
+                    <div class="crown">👑</div>
+                    <div class="medal-icon">🥇</div>
+                    <div class="p-info-mix">
+                        <span class="p-name">${users[0]?.name || '---'}</span>
+                        <span class="p-score" style="color:var(--gold)">${users[0]?.score || 0}</span>
+                    </div>
+                </div>
+                <div class="podium-item podium-3">
+                    <div class="medal-icon">🥉</div>
+                    <div class="p-info-mix">
+                        <span class="p-name">${users[2]?.name || '---'}</span>
+                        <span class="p-score" style="color:var(--bronze)">${users[2]?.score || 0}</span>
+                    </div>
+                </div>
+            `;
+
+            listArea.innerHTML = "";
+            users.forEach((u, i) => {
+                const isMe = u.uid === currentUserID;
+                const card = document.createElement('div');
+                card.className = `rank-card ${isMe ? 'is-me' : ''}`;
+                card.style.animation = `slideUp 0.5s ease backwards ${i * 0.05}s`;
+                
+                card.innerHTML = `
+                    <div class="rank-num">#${i + 1}</div>
+                    <div class="user-info">
+                        <span class="user-name">
+                            ${(u.name || 'Anonymous').toUpperCase()}
+                            ${isMe ? '<span class="me-badge">YOU</span>' : ''}
+                        </span>
+                        <span class="user-meta">${u.accuracy || 0}% ACCURACY • ${u.module || 'QUIZ'}</span>
+                    </div>
+                    <div class="user-score">
+                        <span class="score-val">${u.score || 0}</span>
+                        <span class="score-label">POINTS</span>
+                    </div>
+                `;
+                listArea.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
