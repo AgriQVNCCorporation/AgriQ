@@ -1,6 +1,6 @@
 {
   "name": "AgriQ Pro",
-  "short_name": "AgriQ",
+  "short_name": "AgriQ Pro",
   "start_url": "/AgriQ/index.html",
   "display": "standalone",
   "background_color": "#000000",
