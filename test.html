@@ -12,64 +12,32 @@
 
     <style>
         :root {
-            --primary: #ff3b3b; 
-            --primary-glow: rgba(255, 59, 59, 0.4); 
+            --primary: #ff3b3b;
+            --primary-glow: rgba(255, 59, 59, 0.4);
             --bg: #000000;
-            --surface: #0a0a0a; 
-            --text-main: #ffffff; 
+            --surface: #0a0a0a;
+            --text-main: #ffffff;
             --text-dim: #a1a1aa;
-            --border: #222222; 
-            --danger: #ff3b3b; 
+            --border: #222222;
+            --danger: #ff3b3b;
             --success: #22c55e;
-            --glass: rgba(255, 255, 255, 0.03); 
-            --transition: 0.5s ease;
-            --btn-text: #ffffff;
+            --glass: rgba(255, 255, 255, 0.03);
+            --transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        /* ELITE (GOLDEN) MODE */
-        body.elite-mode:not(.focused-mode) {
-            --primary: #ffcc00;
-            --primary-glow: rgba(255, 204, 0, 0.6);
-            --bg: #050500;
-            --surface: #0f0e0a;
-            --text-main: #fffdf0;
-            --border: #443300;
-            --btn-text: #000000;
-        }
-
-        /* FOCUSED (SKY BLUE) MODE - Overrides Elite */
         body.focused-mode {
-            --primary: #00aaff; 
-            --primary-glow: rgba(0, 170, 255, 0.3); 
+            --primary: #00aaff;
+            --primary-glow: rgba(0, 170, 255, 0.3);
             --bg: #f0f9ff;
-            --surface: #ffffff; 
-            --text-main: #001a2c; 
+            --surface: #ffffff;
+            --text-main: #001a2c;
             --text-dim: #64748b;
-            --border: #e2e8f0; 
+            --border: #e2e8f0;
             --glass: rgba(0, 170, 255, 0.05);
-            --btn-text: #ffffff;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        body { 
-            background-color: var(--bg); 
-            margin: 0; 
-            color: var(--text-main); 
-            min-height: 100vh; 
-            transition: var(--transition); 
-            overflow-x: hidden; 
-        }
-
-        /* Gold Animation for Elite Mode */
-        @keyframes goldGlow { 
-            from { box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); } 
-            to { box-shadow: 0 0 25px rgba(255, 204, 0, 0.4); } 
-        }
-        body.elite-mode:not(.focused-mode) .q-card { 
-            border: 2px solid #ffcc00; 
-            animation: goldGlow 3s infinite alternate; 
-        }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; transition: background-color var(--transition); overflow-x: hidden; }
 
         #custom-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
@@ -77,10 +45,10 @@
         }
         .alert-modal {
             background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
-            width: 100%; max-width: 350px; padding: 30px; text-align: center; opacity: 0; transform: scale(0.9);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100%; max-width: 350px; padding: 30px; text-align: center;
+            transform: scale(0.9); opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .alert-modal.active { opacity: 1; transform: scale(1); border-color: var(--primary); }
+        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--primary); }
 
         #app-loader {
             position: fixed; inset: 0; background: #000; z-index: 9999;
@@ -88,62 +56,61 @@
             transition: opacity 0.8s;
         }
         #app-loader.fade-out { opacity: 0; visibility: hidden; }
+        .electric-icon { color: var(--primary); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
 
         header {
-            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
-            background: var(--surface); display: flex; 
-            justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; background: var(--surface);
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
             position: sticky; top: 0; z-index: 1000;
         }
         .timer-badge { background: var(--glass); color: var(--primary); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border); font-family: 'JetBrains Mono'; font-weight: 800; }
 
-        main { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 160px; }
+        main { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
 
         .marker-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: none; }
         .q-pill { 
-            min-width: 45px; height: 45px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border);
+            min-width: 45px; height: 45px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--border);
             display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-dim); flex-shrink: 0;
-            transition: 0.3s;
+            cursor: pointer;
         }
-        .q-pill.active { border-color: var(--primary); background: var(--primary); color: var(--btn-text); }
+        .q-pill.active { border-color: var(--primary); background: var(--primary); color: #fff; }
         .q-pill.done { border-color: var(--success); background: var(--success); color: #fff; }
 
         .q-card { background: var(--surface); border-radius: 24px; padding: 24px; border: 1px solid var(--border); margin-bottom: 20px; }
         .opt-box { 
-            background: var(--glass); border: 1px solid var(--border); padding: 18px; 
+            background: var(--glass); border: 1.5px solid var(--border); padding: 18px; 
             border-radius: 18px; margin-bottom: 10px; font-weight: 700; cursor: pointer; color: var(--text-main);
             transition: 0.2s;
         }
         .opt-box.selected { border-color: var(--primary); background: var(--primary-glow); }
-        body.elite-mode:not(.focused-mode) .opt-box.selected { color: #ffcc00; }
 
         .controls {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
             width: 90%; max-width: 460px; padding: 15px; background: var(--surface);
             backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px;
-            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
-        .btn-primary { flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: var(--btn-text); font-weight: 900; cursor: pointer; }
-        .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); font-weight: 800; cursor: pointer; }
-        .hidden { display: none !important; }
+        .btn-primary { flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; }
+        .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); font-weight: 800; }
     </style>
 </head>
 <body>
 
     <div id="custom-overlay">
         <div class="alert-modal" id="alert-modal">
-            <h3 id="alert-title"></h3>
+            <h3 id="alert-title">Attention</h3>
             <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 20px;"></p>
             <div style="display:flex; gap:10px;">
-                <button class="btn-sec" id="alert-cancel">CANCEL</button>
+                <button class="btn-sec" id="alert-cancel">ABORT</button>
                 <button class="btn-primary" id="alert-ok">CONFIRM</button>
             </div>
         </div>
     </div>
 
     <div id="app-loader">
-        <i data-lucide="zap" size="48" color="#ff3b3b" id="loader-icon"></i>
-        <p style="color: #ff3b3b; font-family: 'JetBrains Mono'; margin-top: 15px; font-weight: 800;" id="loader-text">INITIALIZING TERMINAL...</p>
+        <div class="electric-icon"><i data-lucide="zap" size="48"></i></div>
+        <p style="color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 15px; font-weight: 800;">RANDOMIZING PROTOCOLS...</p>
     </div>
 
     <header>
@@ -153,8 +120,8 @@
 
     <main>
         <div id="marker-grid" class="marker-scroll"></div>
-        <div id="q-card" class="q-card">
-            <div id="q-display" style="font-size: 18px; font-weight: 700; line-height: 1.6;">Loading Protocol...</div>
+        <div class="q-card">
+            <div id="q-display" style="font-size: 18px; font-weight: 700; line-height: 1.6;">Loading Terminal...</div>
         </div>
         <div id="opts-display"></div>
     </main>
@@ -164,7 +131,7 @@
             <button class="btn-sec" onclick="changeQ(-1)">PREV</button>
             <button class="btn-primary" onclick="changeQ(1)">NEXT</button>
         </div>
-        <button class="btn-primary" style="background:var(--danger); color: #fff;" onclick="submitTest()">FINALIZE EXAM 🏁</button>
+        <button class="btn-primary" style="background:var(--danger);" onclick="submitTest()">FINALIZE EXAM 🏁</button>
     </div>
 
     <script>
@@ -185,6 +152,16 @@
         let questions = [], currentIdx = 0, userChoices = {}, timer;
         let totalSecondsRemaining = 7200; 
         const moduleKey = new URLSearchParams(window.location.search).get('mod');
+        let isSubmitting = false;
+
+        // Shuffle Utility Function
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
 
         function agriPopup(title, msg, onConfirm, isConfirm = false) {
             const overlay = document.getElementById('custom-overlay');
@@ -196,66 +173,54 @@
             document.getElementById('alert-cancel').style.display = isConfirm ? 'block' : 'none';
             document.getElementById('alert-ok').onclick = () => {
                 overlay.style.display = 'none';
+                modal.classList.remove('active');
                 if(onConfirm) onConfirm();
             };
-            document.getElementById('alert-cancel').onclick = () => overlay.style.display = 'none';
+            document.getElementById('alert-cancel').onclick = () => {
+                overlay.style.display = 'none';
+                modal.classList.remove('active');
+            };
         }
 
         auth.onAuthStateChanged(async user => {
             if (!user) return window.location.href = 'index.html';
-            
             const profileSnap = await db.ref(`students/${user.uid}`).once('value');
             const userData = profileSnap.val();
-            
             if (userData) {
                 document.getElementById('student-tag').innerText = `ID: ${userData.name.toUpperCase()}`;
-                
-                if (userData.focusedMode) {
-                    document.body.classList.add('focused-mode');
-                    document.getElementById('loader-icon').setAttribute('color', '#00aaff');
-                    document.getElementById('loader-text').style.color = '#00aaff';
-                } else {
-                    await checkEliteStatus(user.uid);
-                }
+                if (userData.focusedMode) document.body.classList.add('focused-mode');
             }
-
             loadQuestions();
         });
-
-        async function checkEliteStatus(uid) {
-            const lbSnap = await db.ref('leaderboard').once('value');
-            const scores = {};
-            lbSnap.forEach(child => {
-                const data = child.val();
-                scores[data.uid] = (scores[data.uid] || 0) + (parseInt(data.score) || 0);
-            });
-
-            const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
-            const rank = sorted.findIndex(x => x[0] === uid) + 1;
-
-            if (rank > 0 && rank <= 3) {
-                document.body.classList.add('elite-mode');
-                document.getElementById('loader-icon').setAttribute('color', '#ffcc00');
-                document.getElementById('loader-text').style.color = '#ffcc00';
-                document.getElementById('loader-text').innerText = "ELITE TERMINAL SYNCING...";
-            }
-        }
 
         async function loadQuestions() {
             const snap = await db.ref(`subjects/${moduleKey}/questions`).once('value');
             const val = snap.val();
+            if (!val || !val.data) {
+                const fallbackSnap = await db.ref(`questions/${moduleKey}/data`).once('value');
+                const fallbackVal = fallbackSnap.val();
+                if(!fallbackVal) return agriPopup("Error", "No questions found.");
+                setupQuestions(fallbackVal);
+            } else {
+                setupQuestions(val.data);
+            }
+        }
 
-            if (!val || !val.data) return agriPopup("Error", "Question database is empty.");
+        function setupQuestions(dataObj) {
+            // Convert to Array
+            let rawQuestions = Object.values(dataObj).filter(q => q && (q.question || q.q));
 
-            if (val.config?.timeLimit) totalSecondsRemaining = parseInt(val.config.timeLimit) * 60;
+            // 1. RANDOMIZE THE QUESTION LIST
+            rawQuestions = shuffleArray(rawQuestions);
 
-            questions = Object.values(val.data).filter(q => q && (q.question || q.q)).map(q => {
+            questions = rawQuestions.map(q => {
                 let options = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
-                return { 
-                    ...q, 
-                    shuffledOpts: [...options].sort(() => Math.random() - 0.5), 
-                    actualCorrect: q.answer || q.ans 
-                };
+                const actualCorrect = q.answer || q.ans;
+                
+                // 2. RANDOMIZE OPTIONS FOR THIS QUESTION
+                const shuffledOpts = shuffleArray([...options]);
+
+                return { ...q, shuffledOpts, actualCorrect };
             });
 
             initUI();
@@ -283,14 +248,11 @@
         function showQ() {
             const q = questions[currentIdx];
             document.getElementById('q-display').innerText = q.question || q.q;
-            
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active');
                 if (i === currentIdx) p.classList.add('active');
-                if (userChoices[i]) p.classList.add('done');
-                else p.classList.remove('done'); // Ensure visual reset if deselected
+                p.classList.toggle('done', !!userChoices[i]);
             });
-
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
             q.shuffledOpts.forEach(opt => {
@@ -298,26 +260,20 @@
                 div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
                 div.innerText = opt;
                 div.onclick = () => { 
-                    // Toggle logic: If already selected, remove choice. Else, set choice.
-                    if (userChoices[currentIdx] === opt) {
-                        delete userChoices[currentIdx];
-                    } else {
-                        userChoices[currentIdx] = opt;
-                    }
+                    userChoices[currentIdx] = (userChoices[currentIdx] === opt) ? null : opt;
                     showQ(); 
                 };
                 optBox.appendChild(div);
             });
-            
             const activeMark = document.getElementById(`mark-${currentIdx}`);
-            if(activeMark) activeMark.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            if(activeMark) activeMark.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
 
         function startGlobalTimer() {
             timer = setInterval(() => {
                 if (totalSecondsRemaining <= 0) { 
                     clearInterval(timer); 
-                    agriPopup("Time Up", "Session timeout. Submitting results...", processFinalResults);
+                    processFinalResults();
                 } else { 
                     totalSecondsRemaining--; 
                     let m = Math.floor(totalSecondsRemaining/60).toString().padStart(2,'0');
@@ -333,19 +289,19 @@
         }
 
         function submitTest() {
-            const answered = Object.keys(userChoices).length;
-            agriPopup("SUBMIT EXAM", `You answered ${answered}/${questions.length} questions. Finalize session?`, processFinalResults, true);
+            agriPopup("SUBMIT EXAM", "Ready to deploy answers?", processFinalResults, true);
         }
 
-        function processFinalResults() {
+        async function processFinalResults() {
+            if(isSubmitting) return;
+            isSubmitting = true;
             clearInterval(timer);
             let score = 0;
             questions.forEach((q, i) => { if(userChoices[i] === q.actualCorrect) score++; });
             localStorage.setItem('agriq_last_result', JSON.stringify({ 
-                score, 
-                total: questions.length,
-                module: moduleKey
+                score, total: questions.length, module: moduleKey, timestamp: new Date().toISOString()
             }));
+            if(auth.currentUser) await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
             window.location.href = 'analysis.html';
         }
     </script>
