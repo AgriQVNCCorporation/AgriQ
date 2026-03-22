@@ -154,7 +154,6 @@
         const moduleKey = new URLSearchParams(window.location.search).get('mod');
         let isSubmitting = false;
 
-        // Shuffle Utility Function
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -207,19 +206,13 @@
         }
 
         function setupQuestions(dataObj) {
-            // Convert to Array
             let rawQuestions = Object.values(dataObj).filter(q => q && (q.question || q.q));
-
-            // 1. RANDOMIZE THE QUESTION LIST
             rawQuestions = shuffleArray(rawQuestions);
 
             questions = rawQuestions.map(q => {
                 let options = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
                 const actualCorrect = q.answer || q.ans;
-                
-                // 2. RANDOMIZE OPTIONS FOR THIS QUESTION
                 const shuffledOpts = shuffleArray([...options]);
-
                 return { ...q, shuffledOpts, actualCorrect };
             });
 
@@ -296,11 +289,32 @@
             if(isSubmitting) return;
             isSubmitting = true;
             clearInterval(timer);
+
             let score = 0;
-            questions.forEach((q, i) => { if(userChoices[i] === q.actualCorrect) score++; });
+            // SYNC FIX: Map the details array so analysis.html can read it
+            const details = questions.map((q, i) => {
+                const userAns = userChoices[i] || "SKIPPED";
+                const isCorrect = userAns === q.actualCorrect;
+                if(isCorrect) score++;
+                return {
+                    question: q.question || q.q,
+                    user: userAns,
+                    actual: q.actualCorrect
+                };
+            });
+
+            const accuracy = Math.round((score / questions.length) * 100);
+
+            // SAVE FULL DATA PACKAGE
             localStorage.setItem('agriq_last_result', JSON.stringify({ 
-                score, total: questions.length, module: moduleKey, timestamp: new Date().toISOString()
+                score, 
+                total: questions.length, 
+                accuracy,
+                module: moduleKey || 'General', 
+                details: details,
+                timestamp: new Date().toISOString()
             }));
+
             if(auth.currentUser) await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
             window.location.href = 'analysis.html';
         }
