@@ -25,8 +25,18 @@
             --text-dim: #a1a1aa;
             --border: #222222;
             --glass: rgba(255, 255, 255, 0.03);
-            --boot-accent: #00aaff;
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            --rank-gradient: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+        }
+
+        body.elite-mode {
+            --primary: #ffcc00;
+            --primary-glow: rgba(255, 204, 0, 0.6);
+            --bg: #050500;
+            --surface: #0f0e0a;
+            --text-main: #fffdf0;
+            --border: #443300;
+            --rank-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
         }
 
         body.focused-mode {
@@ -38,102 +48,125 @@
             --text-dim: #64748b;
             --border: #e2e8f0;
             --glass: rgba(0, 170, 255, 0.05);
+            --rank-gradient: linear-gradient(135deg, #00aaff 0%, #0077ff 100%);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        html { scroll-behavior: smooth; }
-
         body { 
             background-color: var(--bg); 
             margin: 0; 
             color: var(--text-main); 
             min-height: 100vh; 
-            display: flex;
-            flex-direction: column;
+            display: flex; 
+            flex-direction: column; 
             overflow-x: hidden; 
-            transition: background-color var(--transition); 
+            transition: 0.5s ease; 
         }
 
-        header, main { opacity: 0; visibility: hidden; transition: opacity 0.4s ease; }
-        .app-ready header, .app-ready main { opacity: 1; visibility: visible; }
+        header, main, footer { opacity: 0; visibility: hidden; transition: opacity 0.4s ease; }
+        .app-ready header, .app-ready main, .app-ready footer { opacity: 1; visibility: visible; }
 
         #app-loader {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.4s ease, visibility 0.4s; 
         }
-        #app-loader.fade-out { opacity: 0; visibility: hidden; }
-
-        .electric-icon { color: var(--primary); animation: electricPulse 1.2s infinite ease-in-out; margin-bottom: 25px; }
-        @keyframes electricPulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 5px var(--primary)); }
-            50% { transform: scale(1.1); filter: drop-shadow(0 0 20px var(--primary)); opacity: 1; }
-        }
-
-        .loading-bar-container { width: 140px; height: 3px; background: #111; border-radius: 10px; overflow: hidden; position: relative; }
-        .loading-bar-fill { 
-            width: 100%; height: 100%; background: var(--primary); 
-            box-shadow: 0 0 15px var(--primary); 
-            animation: electricFlow 1s infinite linear; 
-            position: absolute; left: -100%;
-        }
-        @keyframes electricFlow {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
+        .fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
 
         header {
-            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; background: var(--surface); backdrop-filter: blur(15px);
-            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
+            background: var(--surface); 
+            backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid var(--border); 
+            position: sticky; top: 0; z-index: 1000;
         }
-        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; text-transform: uppercase; }
-        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; text-transform: uppercase; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; transition: 0.3s; }
         
+        .header-actions { display: flex; align-items: center; gap: 16px; }
+        .icon-btn { cursor: pointer; color: var(--text-dim); transition: var(--transition); display: flex; align-items: center; text-decoration: none; }
+        .icon-btn:hover { color: var(--primary); transform: translateY(-1px); }
+
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
         .auth-card { background: var(--surface); border-radius: 32px; padding: 30px; border: 1px solid var(--border); }
-        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group { position: relative; margin-bottom: 12px; }
         .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); z-index: 5; }
         
         input, select { 
-            width: 100%; padding: 18px 18px 18px 52px; border-radius: 20px; border: 1.5px solid var(--border); 
-            background: var(--glass); color: var(--text-main); font-weight: 600; transition: 0.2s;
+            width: 100%; padding: 16px 16px 16px 52px; border-radius: 18px; border: 1.5px solid var(--border); 
+            background: var(--glass); color: var(--text-main); font-weight: 600; transition: 0.2s; outline: none;
+            appearance: none;
         }
-        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 12px var(--primary-glow); }
+        input:focus { border-color: var(--primary); }
 
         .btn-primary { 
-            width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--primary); color: #fff; 
+            width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--primary); color: #fff; 
             font-weight: 900; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-primary:active { transform: scale(0.98); }
+        .elite-mode:not(.focused-mode) .btn-primary { color: #000; }
 
         .btn-social {
             width: 100%; padding: 16px; border-radius: 18px; border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; gap: 12px;
             font-weight: 800; cursor: pointer; background: #fff; color: #000; transition: 0.2s;
+            margin-top: 15px;
         }
-        .btn-social:active { transform: scale(0.98); opacity: 0.9; }
 
         .rank-card { 
-            background: linear-gradient(135deg, var(--primary) 0%, #000 150%); 
-            border: 1.5px solid var(--primary); padding: 25px; border-radius: 28px; margin-bottom: 20px;
+            background: var(--rank-gradient); 
+            border: 1.5px solid var(--border); padding: 22px; border-radius: 28px; margin-bottom: 18px;
             display: flex; justify-content: space-between; align-items: center; color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: 0.5s;
         }
         
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: var(--glass); border: 1px solid var(--border); padding: 18px; border-radius: 22px; text-align: center; }
-        .stat-val { display: block; font-size: 22px; font-weight: 900; color: var(--primary); }
+        .elite-mode:not(.focused-mode) .rank-card, 
+        .elite-mode:not(.focused-mode) .stat-card { 
+            border: 2px solid #ffcc00; 
+            background: var(--rank-gradient);
+            animation: goldGlow 3s infinite alternate; 
+            color: #000 !important;
+        }
+
+        .elite-mode:not(.focused-mode) .stat-card .stat-val,
+        .elite-mode:not(.focused-mode) .stat-card .stat-label,
+        .elite-mode:not(.focused-mode) .rank-card span,
+        .elite-mode:not(.focused-mode) .rank-card div {
+            color: #000 !important;
+            text-shadow: none !important;
+        }
+
+        @keyframes goldGlow { 
+            from { box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); } 
+            to { box-shadow: 0 0 35px rgba(255, 204, 0, 0.5); } 
+        }
+
+        .progression-bar {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 12px; margin-bottom: 18px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;
+        }
+        .prog-stat { display: flex; flex-direction: column; align-items: center; }
+        .prog-stat i { color: var(--primary); margin-bottom: 4px; }
+        .prog-label { font-size: 8px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+        .prog-val { font-size: 13px; font-weight: 900; color: var(--text-main); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .stat-card { background: var(--glass); border: 1px solid var(--border); padding: 16px; border-radius: 20px; text-align: center; transition: 0.5s; }
+        .stat-val { display: block; font-size: 20px; font-weight: 900; color: var(--primary); }
         .stat-label { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
 
-        .profile-bio {
-            background: var(--glass); border: 1px solid var(--border); border-radius: 22px;
-            padding: 18px; margin-bottom: 25px; font-size: 13px; line-height: 1.6; color: var(--text-dim);
+        .status-badge {
+            font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;
+            background: rgba(255,255,255,0.1); color: var(--text-dim); display: inline-block; margin-bottom: 8px;
         }
+        .elite-mode:not(.focused-mode) .status-badge { background: #000; color: #ffcc00; }
 
         .toggle-container {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 15px 20px; background: var(--glass); border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--border);
+            padding: 15px 20px; background: var(--glass); border-radius: 20px; margin-bottom: 18px; border: 1px solid var(--border);
         }
 
         .switch { position: relative; width: 44px; height: 24px; }
@@ -143,103 +176,150 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .hidden { display: none !important; }
-
-        #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        .instruction-post {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-top: 20px;
         }
-        .alert-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 32px; width: 100%; max-width: 350px; padding: 30px; text-align: center; }
+        .instruction-post h3 { margin: 0 0 15px; font-size: 13px; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; font-weight: 900; }
+        .instruction-post ul { padding: 0; margin: 0; list-style: none; }
+        .instruction-post li { margin-bottom: 10px; font-size: 12px; color: var(--text-dim); display: flex; gap: 10px; line-height: 1.4; font-weight: 600; }
+        .instruction-post li::before { content: "›"; color: var(--primary); font-weight: 900; font-size: 16px; line-height: 1; }
+
+        #custom-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px;
+            border-radius: 28px; padding: 30px; text-align: center;
+        }
+        .modal-icon { color: var(--primary); margin-bottom: 15px; }
+        .modal-title { font-weight: 900; font-size: 18px; margin-bottom: 10px; text-transform: uppercase; }
+        .modal-text { font-size: 13px; color: var(--text-dim); margin-bottom: 25px; font-weight: 600; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-btn { 
+            flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; font-size: 12px;
+        }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-cancel { background: var(--border); color: var(--text-dim); }
+
+        footer {
+            padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); margin-top: 20px; background: var(--surface);
+        }
+        .copy-text { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; font-weight: 800; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="custom-overlay">
-        <div class="alert-modal">
-            <div id="alert-title" style="font-weight:900; margin-bottom:10px;">Attention</div>
-            <div id="alert-msg" style="color:var(--text-dim); font-size:14px; margin-bottom:20px;"></div>
-            <button class="btn-primary" id="alert-ok">UNDERSTOOD</button>
-        </div>
-    </div>
-
     <div id="app-loader">
-        <div class="electric-icon"><i data-lucide="zap" size="64" fill="currentColor"></i></div>
-        <div class="loading-bar-container"><div class="loading-bar-fill"></div></div>
+        <div id="loader-icon" style="color:var(--primary);"><i data-lucide="zap" size="64" fill="currentColor"></i></div>
         <p id="loader-status" style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;">System Booting...</p>
     </div>
 
-      <header id="main-header">
+    <div id="custom-modal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modal-icon-container"><i data-lucide="alert-triangle" size="40"></i></div>
+            <div class="modal-title" id="modal-title">System Alert</div>
+            <div class="modal-text" id="modal-text">Action required to proceed.</div>
+            <div class="modal-actions" id="modal-actions">
+                <button class="modal-btn btn-cancel" id="modal-cancel-btn">CANCEL</button>
+                <button class="modal-btn btn-confirm" id="modal-confirm-btn">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <header id="main-header">
         <div class="brand">AGRI<span>Q</span> PRO</div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="admin.html" style="color: var(--text-dim); display: flex; align-items: center; text-decoration: none;">
-                <i data-lucide="shield-check" style="cursor:pointer; width: 20px;"></i>
-            </a>
+        <div class="header-actions">
+            <a href="admin.html" class="icon-btn" title="Admin Panel"><i data-lucide="shield-check" size="20"></i></a>
             
-            <i data-lucide="log-out" id="logout-btn" class="hidden" style="cursor:pointer; color:var(--text-dim);" onclick="confirmLogout()"></i>
-            <span id="reg-count-badge" style="font-size: 10px; font-weight: 800; background: var(--border); padding: 4px 8px; border-radius: 8px; color: var(--primary);">0</span>
+            <a href="leaderboard.html" class="icon-btn" title="Leaderboard"><i data-lucide="trophy" size="20"></i></a>
+            <i data-lucide="log-out" id="logout-btn" class="icon-btn hidden" onclick="confirmLogout()"></i>
+            <span id="reg-count-badge" style="font-size: 9px; font-weight: 900; background: var(--border); padding: 4px 8px; border-radius: 6px; color: var(--primary);">0</span>
         </div>
     </header>
+
     <main>
         <div id="screen-auth" class="auth-card hidden">
-            <h2 style="font-weight: 900; margin-top: 0;">Access Portal</h2>
+            <h2 style="font-weight: 900; margin-top: 0; font-size: 24px;">Access Portal</h2>
             <form onsubmit="handleAuth(event)">
                 <div class="input-group"><i data-lucide="mail"></i><input type="email" id="email" placeholder="Email" required></div>
                 <div class="input-group"><i data-lucide="lock"></i><input type="password" id="password" placeholder="Password" required></div>
                 <button type="submit" class="btn-primary" id="auth-btn">SIGN IN <i data-lucide="arrow-right"></i></button>
             </form>
-            
-            <div style="margin: 20px 0; text-align: center; color: var(--text-dim); font-size: 10px; font-weight: 800;">SOCIAL GATEWAY</div>
+            <div style="margin: 20px 0; text-align: center; color: var(--text-dim); font-size: 10px; font-weight: 900; letter-spacing: 1px;">SOCIAL GATEWAY</div>
             <button class="btn-social" onclick="handleSocialLogin()">
-                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Google Account
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="16"> Google Account
             </button>
-
-            <p style="text-align:center; font-size:12px; margin-top:20px; color:var(--text-dim);">
+            <p style="text-align:center; font-size:12px; margin-top:20px;">
                 <a href="javascript:void(0)" onclick="toggleAuthMode()" id="auth-toggle-text" style="color:var(--primary); text-decoration:none; font-weight:800;">Register New Account</a>
             </p>
         </div>
 
         <div id="screen-dash" class="hidden">
-            <div class="toggle-container">
-                <span style="font-weight:800; font-size:12px;">FOCUSED MODE</span>
-                <label class="switch"><input type="checkbox" id="focus-toggle" onchange="toggleFocusedMode()"><span class="slider"></span></label>
-            </div>
-
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
-                <div id="user-initial" style="width:50px; height:50px; background:var(--primary); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:20px;">U</div>
+                <div id="user-initial" style="width:48px; height:48px; background:var(--primary); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#000; font-size:20px;">U</div>
                 <div>
-                    <h2 id="user-display-name" style="margin:0; font-weight:900; font-size:18px;">STUDENT</h2>
-                    <p id="user-email-label" style="margin:0; font-size:11px; color:var(--text-dim);"></p>
+                    <div id="elite-status-label" class="status-badge">STANDARD ACCOUNT</div>
+                    <h2 id="user-display-name" style="margin:0; font-weight:900; font-size:18px; letter-spacing: -0.5px;">STUDENT</h2>
                 </div>
-            </div>
-
-            <div class="profile-bio">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; color:var(--primary); font-weight:800; font-size:11px;">
-                    <i data-lucide="award" size="14"></i> OFFICIAL AGRI-PROFILE
-                </div>
-                Academic profile synced with <b>AgriQ Terminal</b>. Performance metrics are recorded in real-time to optimize your ICAR/MCAER JRF examination trajectory.
             </div>
 
             <div class="rank-card">
-                <div>
-                    <span class="stat-label" style="color:rgba(255,255,255,0.7);">Current Rank</span>
-                    <div style="font-size:32px; font-weight:900;">#<span id="rank-val">--</span></div>
+                <div style="flex: 1;">
+                    <span class="status-badge" style="margin-bottom: 5px; opacity: 0.8; font-size: 8px; border: 1px solid rgba(255,255,255,0.2);">GLOBAL STANDING</span>
+                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                        <span style="font-size: 42px; font-weight: 900; line-height: 1;">#<span id="rank-val">--</span></span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span id="total-points-display" style="font-size: 15px; font-weight: 900; color: var(--primary);">0 PTS</span>
+                        </div>
+                    </div>
                 </div>
-                <i data-lucide="crown" id="rank-icon" size="35"></i>
+                <i data-lucide="crown" id="rank-icon" size="40"></i>
+            </div>
+
+            <div class="progression-bar">
+                <div class="prog-stat"><i data-lucide="zap" size="14"></i><span class="prog-label">Streak</span><span class="prog-val" id="streak-val">1 Day</span></div>
+                <div class="prog-stat" style="border-left:1px solid var(--border); border-right:1px solid var(--border);"><i data-lucide="trending-up" size="14"></i><span class="prog-label">Level</span><span class="prog-val" id="level-val">Lvl 1</span></div>
+                <div class="prog-stat"><i data-lucide="award" size="14"></i><span class="prog-label">Popularity</span><span class="prog-val" id="pop-val">Rookie</span></div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card"><span class="stat-val" id="tests-taken">0</span><span class="stat-label">Solved</span></div>
-                <div class="stat-card"><span class="stat-val" id="avg-accuracy">0%</span><span class="stat-label">Accuracy</span></div>
+                <div class="stat-card"><span class="stat-val" id="tests-taken">0</span><span class="stat-label">SOLVED</span></div>
+                <div class="stat-card accuracy-highlight"><span class="stat-val" id="avg-accuracy">0%</span><span class="stat-label">ACCURACY</span></div>
             </div>
 
             <div class="input-group">
                 <i data-lucide="layers"></i>
-                <select id="module-selector"><option value="">SELECT MODULE</option></select>
+                <select id="module-selector">
+                    <option value="">SELECT MODULE</option>
+                </select>
             </div>
 
-            <button class="btn-primary" onclick="startTest()" style="padding:22px; font-size:16px; margin-bottom: 40px;"><i data-lucide="play"></i> START TEST SEQUENCE</button>
+            <button class="btn-primary" onclick="startTest()" style="padding:20px; font-size:15px; margin-bottom: 18px;"><i data-lucide="play" fill="currentColor"></i> START SEQUENCE</button>
+            
+            <div class="toggle-container">
+                <span style="font-weight:800; font-size:11px; letter-spacing: 0.5px;">OPTIMIZED FOCUS MODE</span>
+                <label class="switch"><input type="checkbox" id="focus-toggle" onchange="toggleFocusedMode()"><span class="slider"></span></label>
+            </div>
+
+            <div class="instruction-post">
+                <h3><i data-lucide="terminal" size="14"></i> Protocol Instructions</h3>
+                <ul>
+                    <li>Select a specialized module to initialize the assessment.</li>
+                    <li>Maintaining a Daily Streak increases your XP multiplier.</li>
+                    <li>85%+ accuracy significantly boosts your Global Popularity.</li>
+                    <li>Top 3 rankers unlock the Gold Elite Terminal interface.</li>
+                </ul>
+            </div>
         </div>
     </main>
+
+    <footer>
+        <div class="copy-text">© 2026 AGRIQ PRO TERMINAL. ALL RIGHTS RESERVED.</div>
+    </footer>
 
     <script>
         const firebaseConfig = {
@@ -257,91 +337,108 @@
         const db = firebase.database();
         let isLoginMode = true;
 
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        function showModal(title, text, type = 'confirm', onConfirm = null) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const textEl = document.getElementById('modal-text');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
 
-        function agriAlert(title, msg) {
-            const overlay = document.getElementById('custom-overlay');
-            document.getElementById('alert-title').innerText = title;
-            document.getElementById('alert-msg').innerText = msg;
-            overlay.style.display = 'flex';
-            document.getElementById('alert-ok').onclick = () => overlay.style.display = 'none';
+            titleEl.innerText = title;
+            textEl.innerText = text;
+            modal.style.display = 'flex';
+
+            if (type === 'alert') {
+                cancelBtn.classList.add('hidden');
+                confirmBtn.innerText = "ACKNOWLEDGE";
+            } else {
+                cancelBtn.classList.remove('hidden');
+                confirmBtn.innerText = "CONFIRM";
+            }
+
+            confirmBtn.onclick = () => {
+                modal.style.display = 'none';
+                if (onConfirm) onConfirm();
+            };
+            cancelBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
         }
 
         auth.onAuthStateChanged(async (user) => {
             const screenAuth = document.getElementById('screen-auth');
             const screenDash = document.getElementById('screen-dash');
-            const logoutBtn = document.getElementById('logout-btn');
-            const statusLabel = document.getElementById('loader-status');
             const appLoader = document.getElementById('app-loader');
 
-            appLoader.classList.remove('fade-out');
-
             if (user) {
-                statusLabel.innerText = "Syncing Data...";
                 screenAuth.classList.add('hidden');
                 await syncUser(user);
-                await setupDash(user);
+                setupDash(user);
+                listenToLiveLobby();
                 screenDash.classList.remove('hidden');
-                logoutBtn.classList.remove('hidden');
-                statusLabel.innerText = "Ready";
+                document.getElementById('logout-btn').classList.remove('hidden');
             } else {
                 screenDash.classList.add('hidden');
                 screenAuth.classList.remove('hidden');
-                logoutBtn.classList.add('hidden');
-                statusLabel.innerText = "Portal Access";
+                document.getElementById('logout-btn').classList.add('hidden');
             }
-
             document.body.classList.add('app-ready');
-            setTimeout(() => {
-                appLoader.classList.add('fade-out');
-                lucide.createIcons();
-            }, 600);
+            setTimeout(() => { appLoader.classList.add('fade-out'); lucide.createIcons(); }, 800);
         });
+
+        function listenToLiveLobby() {
+            db.ref('live_sessions').on('value', snap => {
+                const countBadge = document.getElementById('reg-count-badge');
+                if (countBadge) countBadge.innerText = snap.numChildren();
+            });
+        }
 
         async function syncUser(user) {
             const ref = db.ref(`students/${user.uid}`);
             const snap = await ref.once('value');
+            const now = Date.now();
+            
             if (!snap.exists()) {
                 await ref.set({
                     uid: user.uid,
                     name: (user.displayName || user.email.split('@')[0]).toUpperCase(),
                     email: user.email,
+                    focusedMode: false,
+                    streak: 1,
+                    lastActive: now,
                     testsTaken: 0,
-                    avgAccuracy: 0,
-                    focusedMode: true,
-                    lastActive: Date.now()
+                    avgAccuracy: 0
                 });
+            } else {
+                const data = snap.val();
+                const lastLogin = data.lastActive || now;
+                const hoursDiff = (now - lastLogin) / (1000 * 60 * 60);
+                let updatedStreak = data.streak || 1;
+                if (hoursDiff > 24 && hoursDiff < 48) updatedStreak += 1;
+                else if (hoursDiff >= 48) updatedStreak = 1;
+                await ref.update({ lastActive: now, streak: updatedStreak });
             }
         }
 
-        async function setupDash(user) {
-            const name = (user.displayName || user.email.split('@')[0]).toUpperCase();
-            document.getElementById('user-display-name').innerText = name;
-            document.getElementById('user-email-label').innerText = user.email;
-            document.getElementById('user-initial').innerText = name[0];
-
+        function setupDash(user) {
             db.ref(`students/${user.uid}`).on('value', snap => {
                 const d = snap.val();
                 if(!d) return;
-                document.getElementById('tests-taken').innerText = d.testsTaken || 0;
-                document.getElementById('avg-accuracy').innerText = (d.avgAccuracy || 0) + '%';
+                document.getElementById('user-display-name').innerText = d.name;
+                document.getElementById('user-initial').innerText = d.name[0];
                 document.getElementById('focus-toggle').checked = d.focusedMode;
                 document.body.classList.toggle('focused-mode', d.focusedMode);
-                calculateRank(user.uid);
+                document.getElementById('streak-val').innerText = `${d.streak || 1} Day${(d.streak > 1 ? 's' : '')}`;
+                calculateStats(user.uid);
             });
 
-            // FIXED: Corrected to listen directly to 'subjects' list items
             db.ref('subjects').on('value', snap => {
                 const sel = document.getElementById('module-selector');
                 sel.innerHTML = '<option value="">SELECT MODULE</option>';
-                
                 if(!snap.exists()) return;
-
                 snap.forEach(moduleNode => {
                     const moduleData = moduleNode.val();
                     const moduleKey = moduleNode.key;
-                    
-                    // Filter: Only show modules enabled in Admin
                     if (moduleData.enabled === true) {
                         const opt = document.createElement('option');
                         opt.value = moduleKey; 
@@ -352,36 +449,74 @@
             });
         }
 
+        function calculateStats(uid) {
+            db.ref('leaderboard').on('value', (snap) => {
+                const aggregated = {};
+                let userTotalAcc = 0;
+                let userCount = 0;
+
+                snap.forEach(child => {
+                    const entry = child.val();
+                    const eUid = entry.uid;
+                    if (!aggregated[eUid]) aggregated[eUid] = { score: 0 };
+                    aggregated[eUid].score += (parseInt(entry.score) || 0);
+
+                    if(eUid === uid) {
+                        userTotalAcc += (parseFloat(entry.accuracy) || 0);
+                        userCount++;
+                    }
+                });
+
+                const lbArray = Object.entries(aggregated)
+                    .map(([id, data]) => ({ uid: id, score: data.score }))
+                    .sort((a, b) => b.score - a.score);
+
+                const myRank = lbArray.findIndex(x => x.uid === uid) + 1;
+                const myScore = aggregated[uid] ? aggregated[uid].score : 0;
+                const avgAcc = userCount > 0 ? Math.round(userTotalAcc / userCount) : 0;
+
+                document.getElementById('rank-val').innerText = myRank > 0 ? myRank : "--";
+                document.getElementById('total-points-display').innerText = myScore + " PTS";
+                document.getElementById('avg-accuracy').innerText = avgAcc + "%";
+                document.getElementById('tests-taken').innerText = userCount; 
+
+                const level = Math.floor(Math.sqrt(myScore / 50)) + 1;
+                document.getElementById('level-val').innerText = `Lvl ${level}`;
+
+                let popularity = "Rookie";
+                if(myScore > 5000) popularity = "Legend";
+                else if(myScore > 500) popularity = "Pro";
+                document.getElementById('pop-val').innerText = popularity;
+                
+                const eliteLabel = document.getElementById('elite-status-label');
+                
+                if (myRank > 0 && myRank <= 3) {
+                    document.body.classList.add('elite-mode');
+                    eliteLabel.innerText = myRank === 1 ? "🏆 GLOBAL CHAMPION" : "⭐ TOP 3 ELITE";
+                } else {
+                    document.body.classList.remove('elite-mode');
+                    eliteLabel.innerText = "STANDARD ACCOUNT";
+                }
+                if(window.lucide) lucide.createIcons();
+            });
+        }
+
         async function handleAuth(e) {
             e.preventDefault();
-            const btn = document.getElementById('auth-btn');
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            const statusLabel = document.getElementById('loader-status');
-            const appLoader = document.getElementById('app-loader');
-
-            btn.disabled = true; btn.innerText = "VERIFYING...";
-            
             try {
                 if (isLoginMode) await auth.signInWithEmailAndPassword(email, pass);
                 else await auth.createUserWithEmailAndPassword(email, pass);
-                statusLabel.innerText = "Authenticating...";
-                appLoader.classList.remove('fade-out');
-            } catch (err) {
-                agriAlert("Error", err.message);
-                btn.disabled = false; btn.innerText = isLoginMode ? "SIGN IN" : "CREATE ACCOUNT";
-            }
+            } catch (err) { showModal("AUTH ERROR", err.message, "alert"); }
         }
 
         async function handleSocialLogin() {
-            const appLoader = document.getElementById('app-loader');
-            const statusLabel = document.getElementById('loader-status');
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                await auth.signInWithPopup(provider);
-                statusLabel.innerText = "Authenticating...";
-                appLoader.classList.remove('fade-out');
-            } catch (err) { agriAlert("Social Auth Error", err.message); }
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try { await auth.signInWithPopup(provider); } 
+            catch (err) {
+                if (err.code !== 'auth/popup-closed-by-user') await auth.signInWithRedirect(provider);
+            }
         }
 
         function toggleAuthMode() {
@@ -390,50 +525,23 @@
             document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Register New Account" : "Back to Login";
         }
 
-        function calculateRank(uid) {
-            db.ref('students').once('value', snap => {
-                let s = [];
-                snap.forEach(c => s.push({id: c.key, ...c.val()}));
-                document.getElementById('reg-count-badge').innerText = snap.numChildren();
-                s.sort((a,b) => (b.avgAccuracy || 0) - (a.avgAccuracy || 0));
-                const rank = s.findIndex(x => x.id === uid) + 1;
-                document.getElementById('rank-val').innerText = rank || "--";
+        function toggleFocusedMode() {
+            const isChecked = document.getElementById('focus-toggle').checked;
+            db.ref(`students/${auth.currentUser.uid}`).update({ focusedMode: isChecked });
+        }
+
+        function confirmLogout() { 
+            showModal("LOGOUT SEQUENCE", "Are you sure you want to terminate this session?", "confirm", () => {
+                auth.signOut().then(() => window.location.reload());
             });
         }
-
-        function toggleFocusedMode() {
-            const isFocused = document.getElementById('focus-toggle').checked;
-            db.ref(`students/${auth.currentUser.uid}`).update({ focusedMode: isFocused });
-        }
-
-        function confirmLogout() {
-            const overlay = document.getElementById('custom-overlay');
-            const okBtn = document.getElementById('alert-ok');
-            
-            document.getElementById('alert-title').innerText = "TERMINATE SESSION";
-            document.getElementById('alert-msg').innerText = "Are you sure you want to log out of the AgriQ Terminal?";
-            
-            const originalText = okBtn.innerText;
-            okBtn.innerText = "CONFIRM LOGOUT";
-            overlay.style.display = 'flex';
-            
-            okBtn.onclick = () => {
-                overlay.style.display = 'none';
-                okBtn.innerText = originalText;
-                auth.signOut().then(() => window.location.reload());
-            };
-
-            overlay.onclick = (e) => {
-                if(e.target === overlay) {
-                    overlay.style.display = 'none';
-                    okBtn.innerText = originalText;
-                }
-            };
-        }
-
+        
         function startTest() {
             const m = document.getElementById('module-selector').value;
-            if(!m) return agriAlert("Required", "Select a module.");
+            if(!m) {
+                showModal("MODULE ERROR", "Protocol failure: You must select a specialized module to initialize the assessment.", "alert");
+                return;
+            }
             window.location.href = `test.html?mod=${encodeURIComponent(m)}`;
         }
     </script>
