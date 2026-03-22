@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <title>AgriQ Pro | Active Terminal Test</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -22,8 +27,23 @@
             --danger: #ff3b3b;
             --success: #22c55e;
             --glass: rgba(255, 255, 255, 0.03);
-            --transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
+
+        /* --- GOLDEN THEME FOR TOP 3 --- */
+        body.golden-mode {
+            --primary: #ffd700;
+            --primary-glow: rgba(255, 215, 0, 0.3);
+            --bg: #0a0900;
+            --surface: #141200;
+            --text-main: #fffbeb;
+            --text-dim: #bdae6d;
+            --border: #3d3600;
+            --glass: rgba(255, 215, 0, 0.05);
+        }
+        body.golden-mode header { border-bottom: 1px solid #ffd70044; }
+        body.golden-mode .timer-badge { border-color: #ffd70088; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+        /* ----------------------------- */
 
         body.focused-mode {
             --primary: #00aaff;
@@ -37,101 +57,157 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; transition: background-color var(--transition); overflow-x: hidden; }
-
-        #custom-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
-            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
+        
+        body { 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden; 
+            transition: 0.5s ease; 
         }
-        .alert-modal {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 32px;
-            width: 100%; max-width: 350px; padding: 30px; text-align: center;
-            transform: scale(0.9); opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .alert-modal.active { transform: scale(1); opacity: 1; border-color: var(--primary); }
 
         #app-loader {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.8s;
         }
-        #app-loader.fade-out { opacity: 0; visibility: hidden; }
-        .electric-icon { color: var(--primary); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        #app-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+        
+        .loader-status {
+            font-family: 'JetBrains Mono';
+            font-size: 10px;
+            color: var(--primary);
+            margin-top: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        #custom-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px;
+            border-radius: 28px; padding: 30px; text-align: center;
+        }
+        .modal-icon { color: var(--primary); margin-bottom: 15px; }
+        .modal-title { font-weight: 900; font-size: 18px; margin-bottom: 10px; text-transform: uppercase; }
+        .modal-text { font-size: 13px; color: var(--text-dim); margin-bottom: 25px; font-weight: 600; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; font-size: 12px; }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-cancel { background: var(--border); color: var(--text-dim); }
 
         header {
-            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; background: var(--surface);
-            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
+            background: var(--surface); 
+            backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid var(--border); 
             position: sticky; top: 0; z-index: 1000;
         }
-        .timer-badge { background: var(--glass); color: var(--primary); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border); font-family: 'JetBrains Mono'; font-weight: 800; }
 
-        main { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
+        .timer-badge { 
+            background: var(--glass); 
+            color: var(--primary); 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            font-family: 'JetBrains Mono'; 
+            font-weight: 800; 
+            font-size: 14px;
+        }
 
-        .marker-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 20px; scrollbar-width: none; }
+        main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 180px; }
+
+        .marker-scroll { 
+            display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 20px 0; 
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .marker-scroll::-webkit-scrollbar { display: none; }
+        
         .q-pill { 
             min-width: 45px; height: 45px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--border);
             display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-dim); flex-shrink: 0;
-            cursor: pointer;
+            cursor: pointer; transition: 0.2s; font-size: 14px;
         }
-        .q-pill.active { border-color: var(--primary); background: var(--primary); color: #fff; }
-        .q-pill.done { border-color: var(--success); background: var(--success); color: #fff; }
+        .q-pill.active { border-color: var(--primary); background: var(--primary-glow); color: var(--primary); }
+        .q-pill.done { border-color: var(--success); color: var(--success); }
 
-        .q-card { background: var(--surface); border-radius: 24px; padding: 24px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .q-card { background: var(--surface); border-radius: 28px; padding: 26px; border: 1px solid var(--border); margin-bottom: 20px; }
+        
         .opt-box { 
             background: var(--glass); border: 1.5px solid var(--border); padding: 18px; 
-            border-radius: 18px; margin-bottom: 10px; font-weight: 700; cursor: pointer; color: var(--text-main);
-            transition: 0.2s;
+            border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; color: var(--text-main);
+            transition: 0.2s; font-size: 14px; line-height: 1.4;
         }
-        .opt-box.selected { border-color: var(--primary); background: var(--primary-glow); }
+        .opt-box.selected { border-color: var(--primary); background: var(--primary); color: #fff; }
 
         .controls {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 460px; padding: 15px; background: var(--surface);
-            backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px;
-            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            width: 92%; max-width: 460px; padding: 18px; background: var(--surface);
+            backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 30px;
+            display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            z-index: 1001;
         }
-        .btn-primary { flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; }
-        .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); font-weight: 800; }
+
+        .btn-row { display: flex; gap: 10px; }
+        .btn-primary { 
+            flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); 
+            color: #fff; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-sec { 
+            flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); 
+            color: var(--text-main); border: 1px solid var(--border); font-weight: 800; cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="custom-overlay">
-        <div class="alert-modal" id="alert-modal">
-            <h3 id="alert-title">Attention</h3>
-            <p id="alert-msg" style="color: var(--text-dim); font-size: 14px; margin-bottom: 20px;"></p>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-sec" id="alert-cancel">ABORT</button>
-                <button class="btn-primary" id="alert-ok">CONFIRM</button>
+    <div id="app-loader">
+        <div id="loader-icon" style="color:var(--primary);"><i data-lucide="zap" size="64" fill="currentColor"></i></div>
+        <p class="loader-status">Initializing Terminal...</p>
+    </div>
+
+    <div id="custom-modal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modal-icon-container"><i data-lucide="alert-triangle" size="40"></i></div>
+            <div class="modal-title" id="modal-title">System Alert</div>
+            <div class="modal-text" id="modal-text">Action required to proceed.</div>
+            <div class="modal-actions" id="modal-actions">
+                <button class="modal-btn btn-cancel" id="modal-cancel-btn">CANCEL</button>
+                <button class="modal-btn btn-confirm" id="modal-confirm-btn">CONFIRM</button>
             </div>
         </div>
     </div>
 
-    <div id="app-loader">
-        <div class="electric-icon"><i data-lucide="zap" size="48"></i></div>
-        <p style="color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 15px; font-weight: 800;">RANDOMIZING PROTOCOLS...</p>
-    </div>
-
     <header>
-        <div id="student-tag" style="font-weight: 900; font-size: 11px; letter-spacing: 1px;">ID: LOADING</div>
+        <div id="student-tag" style="font-weight: 900; font-size: 11px; letter-spacing: 1px; font-family: 'JetBrains Mono'; color: var(--text-dim);">TERMINAL: LOADING</div>
         <div id="q-timer" class="timer-badge">00:00</div>
     </header>
 
     <main>
         <div id="marker-grid" class="marker-scroll"></div>
         <div class="q-card">
-            <div id="q-display" style="font-size: 18px; font-weight: 700; line-height: 1.6;">Loading Terminal...</div>
+            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6;">Synchronizing with Database...</div>
         </div>
         <div id="opts-display"></div>
     </main>
 
     <div class="controls">
-        <div style="display:flex; gap:10px;">
-            <button class="btn-sec" onclick="changeQ(-1)">PREV</button>
-            <button class="btn-primary" onclick="changeQ(1)">NEXT</button>
+        <div class="btn-row">
+            <button class="btn-sec" onclick="changeQ(-1)">PREVIOUS</button>
+            <button class="btn-primary" onclick="changeQ(1)">NEXT <i data-lucide="chevron-right" size="18"></i></button>
         </div>
-        <button class="btn-primary" style="background:var(--danger);" onclick="submitTest()">FINALIZE EXAM 🏁</button>
+        <button class="btn-primary" style="background:var(--danger); box-shadow: 0 4px 15px var(--primary-glow);" onclick="submitTest()">
+            SUBMIT TEST <i data-lucide="check-circle" size="18"></i>
+        </button>
     </div>
 
     <script>
@@ -154,6 +230,34 @@
         const moduleKey = new URLSearchParams(window.location.search).get('mod');
         let isSubmitting = false;
 
+        function showModal(title, text, type = 'confirm', onConfirm = null) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const textEl = document.getElementById('modal-text');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+
+            titleEl.innerText = title;
+            textEl.innerText = text;
+            modal.style.display = 'flex';
+
+            if (type === 'alert') {
+                cancelBtn.classList.add('hidden');
+                confirmBtn.innerText = "ACKNOWLEDGE";
+            } else {
+                cancelBtn.classList.remove('hidden');
+                confirmBtn.innerText = "CONFIRM";
+            }
+
+            confirmBtn.onclick = () => {
+                modal.style.display = 'none';
+                if (onConfirm) onConfirm();
+            };
+            cancelBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+        }
+
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -162,46 +266,45 @@
             return array;
         }
 
-        function agriPopup(title, msg, onConfirm, isConfirm = false) {
-            const overlay = document.getElementById('custom-overlay');
-            const modal = document.getElementById('alert-modal');
-            document.getElementById('alert-title').innerText = title;
-            document.getElementById('alert-msg').innerText = msg;
-            overlay.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-            document.getElementById('alert-cancel').style.display = isConfirm ? 'block' : 'none';
-            document.getElementById('alert-ok').onclick = () => {
-                overlay.style.display = 'none';
-                modal.classList.remove('active');
-                if(onConfirm) onConfirm();
-            };
-            document.getElementById('alert-cancel').onclick = () => {
-                overlay.style.display = 'none';
-                modal.classList.remove('active');
-            };
-        }
-
         auth.onAuthStateChanged(async user => {
             if (!user) return window.location.href = 'index.html';
+            
             const profileSnap = await db.ref(`students/${user.uid}`).once('value');
             const userData = profileSnap.val();
             if (userData) {
-                document.getElementById('student-tag').innerText = `ID: ${userData.name.toUpperCase()}`;
-                if (userData.focusedMode) document.body.classList.add('focused-mode');
+                document.getElementById('student-tag').innerText = `TERMINAL: ${userData.name.toUpperCase()}`;
+                
+                // --- RANK CHECK FOR GOLDEN THEME ---
+                if (userData.rank && userData.rank <= 3) {
+                    document.body.classList.add('golden-mode');
+                } else if (userData.focusedMode) {
+                    document.body.classList.add('focused-mode');
+                }
+                // -----------------------------------
             }
             loadQuestions();
         });
 
         async function loadQuestions() {
-            const snap = await db.ref(`subjects/${moduleKey}/questions`).once('value');
-            const val = snap.val();
-            if (!val || !val.data) {
-                const fallbackSnap = await db.ref(`questions/${moduleKey}/data`).once('value');
-                const fallbackVal = fallbackSnap.val();
-                if(!fallbackVal) return agriPopup("Error", "No questions found.");
-                setupQuestions(fallbackVal);
-            } else {
-                setupQuestions(val.data);
+            try {
+                const snap = await db.ref(`subjects/${moduleKey}/questions`).once('value');
+                const val = snap.val();
+                
+                if (!val || !val.data) {
+                    const fallbackSnap = await db.ref(`questions/${moduleKey}/data`).once('value');
+                    const fallbackVal = fallbackSnap.val();
+                    if(!fallbackVal) {
+                        showModal("TERMINAL ERROR", "No sequence data found for this module.", "alert", () => {
+                            window.location.href = 'index.html';
+                        });
+                        return;
+                    }
+                    setupQuestions(fallbackVal);
+                } else {
+                    setupQuestions(val.data);
+                }
+            } catch (e) {
+                showModal("SYNC ERROR", "Failed to connect to the central hub.", "alert");
             }
         }
 
@@ -220,7 +323,8 @@
             setTimeout(() => {
                 document.getElementById('app-loader').classList.add('fade-out');
                 startGlobalTimer();
-            }, 1500);
+                lucide.createIcons();
+            }, 1200);
         }
 
         function initUI() {
@@ -235,19 +339,21 @@
                 grid.appendChild(p);
             });
             showQ();
-            lucide.createIcons();
         }
 
         function showQ() {
             const q = questions[currentIdx];
             document.getElementById('q-display').innerText = q.question || q.q;
+            
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active');
                 if (i === currentIdx) p.classList.add('active');
                 p.classList.toggle('done', !!userChoices[i]);
             });
+
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
+            
             q.shuffledOpts.forEach(opt => {
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
@@ -258,6 +364,7 @@
                 };
                 optBox.appendChild(div);
             });
+
             const activeMark = document.getElementById(`mark-${currentIdx}`);
             if(activeMark) activeMark.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
@@ -278,11 +385,14 @@
 
         function changeQ(dir) {
             let next = currentIdx + dir;
-            if (next >= 0 && next < questions.length) { currentIdx = next; showQ(); }
+            if (next >= 0 && next < questions.length) { 
+                currentIdx = next; 
+                showQ(); 
+            }
         }
 
         function submitTest() {
-            agriPopup("SUBMIT EXAM", "Ready to deploy answers?", processFinalResults, true);
+            showModal("DEVIATION CHECK", "Are you ready to submit your finalized responses?", "confirm", processFinalResults);
         }
 
         async function processFinalResults() {
@@ -291,7 +401,6 @@
             clearInterval(timer);
 
             let score = 0;
-            // SYNC FIX: Map the details array so analysis.html can read it
             const details = questions.map((q, i) => {
                 const userAns = userChoices[i] || "SKIPPED";
                 const isCorrect = userAns === q.actualCorrect;
@@ -305,7 +414,6 @@
 
             const accuracy = Math.round((score / questions.length) * 100);
 
-            // SAVE FULL DATA PACKAGE
             localStorage.setItem('agriq_last_result', JSON.stringify({ 
                 score, 
                 total: questions.length, 
@@ -315,7 +423,10 @@
                 timestamp: new Date().toISOString()
             }));
 
-            if(auth.currentUser) await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
+            if(auth.currentUser) {
+                await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
+            }
+            
             window.location.href = 'analysis.html';
         }
     </script>
