@@ -210,11 +210,11 @@
         });
 
         async function loadQuestionsAndConfig() {
-            const configSnap = await db.ref(`questions/${moduleKey}/config`).once('value');
+            const configSnap = await db.ref(`questions/config`).once('value');
             const config = configSnap.val();
             if (config?.timeLimit) totalSecondsRemaining = parseInt(config.timeLimit) * 60;
 
-            const snap = await db.ref(`questions/${moduleKey}/data`).once('value');
+            const snap = await db.ref(`questions).once('value');
             const data = snap.val();
             if (!data) return alert("Sequence Data Empty.");
 
