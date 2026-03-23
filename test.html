@@ -30,20 +30,14 @@
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* --- GOLDEN THEME FOR TOP 3 --- */
-        body.golden-mode {
-            --primary: #ffd700;
-            --primary-glow: rgba(255, 215, 0, 0.3);
-            --bg: #0a0900;
-            --surface: #141200;
-            --text-main: #fffbeb;
-            --text-dim: #bdae6d;
-            --border: #3d3600;
-            --glass: rgba(255, 215, 0, 0.05);
+        body.elite-mode {
+            --primary: #ffcc00;
+            --primary-glow: rgba(255, 204, 0, 0.6);
+            --bg: #050500;
+            --surface: #0f0e0a;
+            --text-main: #fffdf0;
+            --border: #443300;
         }
-        body.golden-mode header { border-bottom: 1px solid #ffd70044; }
-        body.golden-mode .timer-badge { border-color: #ffd70088; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
-        /* ----------------------------- */
 
         body.focused-mode {
             --primary: #00aaff;
@@ -53,7 +47,6 @@
             --text-main: #001a2c;
             --text-dim: #64748b;
             --border: #e2e8f0;
-            --glass: rgba(0, 170, 255, 0.05);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -75,32 +68,7 @@
         }
         #app-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
         
-        .loader-status {
-            font-family: 'JetBrains Mono';
-            font-size: 10px;
-            color: var(--primary);
-            margin-top: 15px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-weight: 800;
-        }
-
-        #custom-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px;
-            backdrop-filter: blur(10px);
-        }
-        .modal-content {
-            background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px;
-            border-radius: 28px; padding: 30px; text-align: center;
-        }
-        .modal-icon { color: var(--primary); margin-bottom: 15px; }
-        .modal-title { font-weight: 900; font-size: 18px; margin-bottom: 10px; text-transform: uppercase; }
-        .modal-text { font-size: 13px; color: var(--text-dim); margin-bottom: 25px; font-weight: 600; line-height: 1.5; }
-        .modal-actions { display: flex; gap: 12px; }
-        .modal-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; font-size: 12px; }
-        .btn-confirm { background: var(--primary); color: white; }
-        .btn-cancel { background: var(--border); color: var(--text-dim); }
+        .loader-status { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
@@ -112,22 +80,46 @@
         }
 
         .timer-badge { 
-            background: var(--glass); 
-            color: var(--primary); 
-            padding: 8px 16px; 
-            border-radius: 12px; 
-            border: 1px solid var(--border); 
-            font-family: 'JetBrains Mono'; 
-            font-weight: 800; 
-            font-size: 14px;
+            background: var(--glass); color: var(--primary); padding: 8px 16px; 
+            border-radius: 12px; border: 1px solid var(--border); 
+            font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px;
         }
+
+        .profile-container { position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
+        
+        #user-initial {
+            width: 40px; height: 40px; background: var(--surface); border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 900; color: var(--primary); font-size: 16px;
+            background-size: cover; background-position: center;
+            position: relative; z-index: 2; border: 2px solid var(--bg);
+        }
+
+        .conqueror-frame {
+            position: absolute; inset: 0; border-radius: 14px;
+            background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fcf6ba 75%, #aa771c 100%);
+            background-size: 400% 400%; animation: goldShine 3s linear infinite; z-index: 1;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .normal-frame { position: absolute; inset: 2px; border-radius: 12px; border: 1.5px solid var(--border); z-index: 1; }
+
+        .conqueror-crown {
+            position: absolute; top: -10px; right: -4px; z-index: 10;
+            filter: drop-shadow(0 0 3px rgba(255, 204, 0, 0.8));
+            color: #ffcc00; transform: rotate(15deg);
+        }
+
+        @keyframes goldShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .name-wrapper { display: flex; flex-direction: column; }
+        .edit-name-btn { cursor: pointer; color: var(--text-dim); transition: 0.2s; margin-left: 5px; }
+        .edit-name-btn:hover { color: var(--primary); }
 
         main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 180px; }
 
-        .marker-scroll { 
-            display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 20px 0; 
-            scrollbar-width: none; -ms-overflow-style: none;
-        }
+        .marker-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 20px 0; scrollbar-width: none; }
         .marker-scroll::-webkit-scrollbar { display: none; }
         
         .q-pill { 
@@ -139,7 +131,6 @@
         .q-pill.done { border-color: var(--success); color: var(--success); }
 
         .q-card { background: var(--surface); border-radius: 28px; padding: 26px; border: 1px solid var(--border); margin-bottom: 20px; }
-        
         .opt-box { 
             background: var(--glass); border: 1.5px solid var(--border); padding: 18px; 
             border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; color: var(--text-main);
@@ -156,15 +147,11 @@
         }
 
         .btn-row { display: flex; gap: 10px; }
-        .btn-primary { 
-            flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); 
-            color: #fff; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-sec { 
-            flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); 
-            color: var(--text-main); border: 1px solid var(--border); font-weight: 800; cursor: pointer;
-        }
+        .btn-primary { flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); font-weight: 800; cursor: pointer; }
 
+        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(10px); }
+        .modal-content { background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px; border-radius: 28px; padding: 30px; text-align: center; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -177,25 +164,36 @@
 
     <div id="custom-modal">
         <div class="modal-content">
-            <div class="modal-icon" id="modal-icon-container"><i data-lucide="alert-triangle" size="40"></i></div>
-            <div class="modal-title" id="modal-title">System Alert</div>
-            <div class="modal-text" id="modal-text">Action required to proceed.</div>
-            <div class="modal-actions" id="modal-actions">
-                <button class="modal-btn btn-cancel" id="modal-cancel-btn">CANCEL</button>
-                <button class="modal-btn btn-confirm" id="modal-confirm-btn">CONFIRM</button>
+            <div id="modal-title" style="font-weight:900; margin-bottom:10px;">ALERT</div>
+            <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:20px;">Text here.</div>
+            <div class="modal-actions" style="display:flex; gap:10px;">
+                <button class="btn-sec" id="modal-cancel-btn">CANCEL</button>
+                <button class="btn-primary" id="modal-confirm-btn">CONFIRM</button>
             </div>
         </div>
     </div>
 
     <header>
-        <div id="student-tag" style="font-weight: 900; font-size: 11px; letter-spacing: 1px; font-family: 'JetBrains Mono'; color: var(--text-dim);">TERMINAL: LOADING</div>
+        <div class="header-left">
+            <div class="profile-container" id="profile-container">
+                <div id="rank-frame" class="normal-frame"></div>
+                <div id="user-initial">U</div>
+            </div>
+            <div class="name-wrapper">
+                <div id="student-tag" style="font-weight: 900; font-size: 10px; letter-spacing: 1px; font-family: 'JetBrains Mono'; color: var(--primary);">TERMINAL ACTIVE</div>
+                <div style="display:flex; align-items:center;">
+                    <span id="user-display-name" style="font-weight:800; font-size:14px;">STUDENT</span>
+                    <i data-lucide="edit-3" id="name-edit-icon" size="12" class="edit-name-btn hidden" onclick="editProfileName()"></i>
+                </div>
+            </div>
+        </div>
         <div id="q-timer" class="timer-badge">00:00</div>
     </header>
 
     <main>
         <div id="marker-grid" class="marker-scroll"></div>
         <div class="q-card">
-            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6;">Synchronizing with Database...</div>
+            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6;">Synchronizing...</div>
         </div>
         <div id="opts-display"></div>
     </main>
@@ -232,30 +230,13 @@
 
         function showModal(title, text, type = 'confirm', onConfirm = null) {
             const modal = document.getElementById('custom-modal');
-            const titleEl = document.getElementById('modal-title');
-            const textEl = document.getElementById('modal-text');
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            const confirmBtn = document.getElementById('modal-confirm-btn');
-
-            titleEl.innerText = title;
-            textEl.innerText = text;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
             modal.style.display = 'flex';
-
-            if (type === 'alert') {
-                cancelBtn.classList.add('hidden');
-                confirmBtn.innerText = "ACKNOWLEDGE";
-            } else {
-                cancelBtn.classList.remove('hidden');
-                confirmBtn.innerText = "CONFIRM";
-            }
-
-            confirmBtn.onclick = () => {
-                modal.style.display = 'none';
-                if (onConfirm) onConfirm();
-            };
-            cancelBtn.onclick = () => {
-                modal.style.display = 'none';
-            };
+            const cb = document.getElementById('modal-cancel-btn');
+            if(type === 'alert') cb.classList.add('hidden'); else cb.classList.remove('hidden');
+            document.getElementById('modal-confirm-btn').onclick = () => { modal.style.display = 'none'; if(onConfirm) onConfirm(); };
+            cb.onclick = () => modal.style.display = 'none';
         }
 
         function shuffleArray(array) {
@@ -269,62 +250,93 @@
         auth.onAuthStateChanged(async user => {
             if (!user) return window.location.href = 'index.html';
             
-            const profileSnap = await db.ref(`students/${user.uid}`).once('value');
-            const userData = profileSnap.val();
-            if (userData) {
-                document.getElementById('student-tag').innerText = `TERMINAL: ${userData.name.toUpperCase()}`;
-                
-                // --- RANK CHECK FOR GOLDEN THEME ---
-                if (userData.rank && userData.rank <= 3) {
-                    document.body.classList.add('golden-mode');
-                } else if (userData.focusedMode) {
-                    document.body.classList.add('focused-mode');
+            db.ref(`students/${user.uid}`).on('value', snap => {
+                const userData = snap.val();
+                if (userData) {
+                    document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
+                    
+                    const editIcon = document.getElementById('name-edit-icon');
+                    if (userData.nameEdited) editIcon.classList.add('hidden');
+                    else editIcon.classList.remove('hidden');
+
+                    const initialBox = document.getElementById('user-initial');
+                    if (userData.profilePic) {
+                        initialBox.style.backgroundImage = `url(${userData.profilePic})`;
+                        initialBox.innerText = "";
+                    } else {
+                        initialBox.style.backgroundImage = "none";
+                        initialBox.innerText = userData.name[0];
+                    }
+
+                    db.ref('leaderboard').once('value', lbSnap => {
+                        const aggregated = {};
+                        lbSnap.forEach(c => {
+                            const e = c.val();
+                            if(!aggregated[e.uid]) aggregated[e.uid] = 0;
+                            aggregated[e.uid] += (parseInt(e.score) || 0);
+                        });
+                        const lbArr = Object.entries(aggregated).sort((a,b) => b[1]-a[1]);
+                        const myRank = lbArr.findIndex(x => x[0] === user.uid) + 1;
+
+                        const rankFrame = document.getElementById('rank-frame');
+                        const profContainer = document.getElementById('profile-container');
+                        const existingCrown = document.getElementById('frame-crown');
+                        if(existingCrown) existingCrown.remove();
+
+                        if (myRank > 0 && myRank <= 3) {
+                            document.body.classList.add('elite-mode');
+                            rankFrame.className = 'conqueror-frame';
+                            const crown = document.createElement('div');
+                            crown.id = 'frame-crown';
+                            crown.innerHTML = `<i data-lucide="crown" size="14" class="conqueror-crown"></i>`;
+                            profContainer.appendChild(crown);
+                        } else {
+                            rankFrame.className = 'normal-frame';
+                            if(userData.focusedMode) document.body.classList.add('focused-mode');
+                        }
+                        lucide.createIcons();
+                    });
                 }
-                // -----------------------------------
-            }
+            });
             loadQuestions();
         });
+
+        function editProfileName() {
+            showModal("PERMANENT IDENTITY", "You can only update your terminal name ONCE. Confirm?", "confirm", () => {
+                const currentName = document.getElementById('user-display-name').innerText;
+                const newName = prompt("Enter Final Terminal Name:", currentName);
+                if (newName && newName.trim() !== "" && newName.toUpperCase() !== currentName) {
+                    db.ref(`students/${auth.currentUser.uid}`).update({ 
+                        name: newName.toUpperCase().trim(),
+                        nameEdited: true 
+                    });
+                }
+            });
+        }
 
         async function loadQuestions() {
             try {
                 const snap = await db.ref(`subjects/${moduleKey}/questions`).once('value');
                 const val = snap.val();
+                const dataToUse = (val && val.data) ? val.data : (await db.ref(`questions/${moduleKey}/data`).once('value')).val();
                 
-                if (!val || !val.data) {
-                    const fallbackSnap = await db.ref(`questions/${moduleKey}/data`).once('value');
-                    const fallbackVal = fallbackSnap.val();
-                    if(!fallbackVal) {
-                        showModal("TERMINAL ERROR", "No sequence data found for this module.", "alert", () => {
-                            window.location.href = 'index.html';
-                        });
-                        return;
-                    }
-                    setupQuestions(fallbackVal);
-                } else {
-                    setupQuestions(val.data);
+                if(!dataToUse) {
+                    showModal("TERMINAL ERROR", "No data found.", "alert", () => window.location.href = 'index.html');
+                    return;
                 }
-            } catch (e) {
-                showModal("SYNC ERROR", "Failed to connect to the central hub.", "alert");
-            }
+                setupQuestions(dataToUse);
+            } catch (e) { showModal("SYNC ERROR", "Connection failed.", "alert"); }
         }
 
         function setupQuestions(dataObj) {
             let rawQuestions = Object.values(dataObj).filter(q => q && (q.question || q.q));
             rawQuestions = shuffleArray(rawQuestions);
-
             questions = rawQuestions.map(q => {
                 let options = q.options || [q.A, q.B, q.C, q.D].filter(Boolean);
-                const actualCorrect = q.answer || q.ans;
-                const shuffledOpts = shuffleArray([...options]);
-                return { ...q, shuffledOpts, actualCorrect };
+                return { ...q, shuffledOpts: shuffleArray([...options]), actualCorrect: q.answer || q.ans };
             });
-
             initUI();
-            setTimeout(() => {
-                document.getElementById('app-loader').classList.add('fade-out');
-                startGlobalTimer();
-                lucide.createIcons();
-            }, 1200);
+            setTimeout(() => { document.getElementById('app-loader').classList.add('fade-out'); startGlobalTimer(); }, 1200);
         }
 
         function initUI() {
@@ -344,37 +356,28 @@
         function showQ() {
             const q = questions[currentIdx];
             document.getElementById('q-display').innerText = q.question || q.q;
-            
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active');
                 if (i === currentIdx) p.classList.add('active');
                 p.classList.toggle('done', !!userChoices[i]);
             });
-
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
-            
             q.shuffledOpts.forEach(opt => {
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
                 div.innerText = opt;
-                div.onclick = () => { 
-                    userChoices[currentIdx] = (userChoices[currentIdx] === opt) ? null : opt;
-                    showQ(); 
-                };
+                div.onclick = () => { userChoices[currentIdx] = (userChoices[currentIdx] === opt) ? null : opt; showQ(); };
                 optBox.appendChild(div);
             });
-
             const activeMark = document.getElementById(`mark-${currentIdx}`);
             if(activeMark) activeMark.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
 
         function startGlobalTimer() {
             timer = setInterval(() => {
-                if (totalSecondsRemaining <= 0) { 
-                    clearInterval(timer); 
-                    processFinalResults();
-                } else { 
+                if (totalSecondsRemaining <= 0) { clearInterval(timer); processFinalResults(); }
+                else { 
                     totalSecondsRemaining--; 
                     let m = Math.floor(totalSecondsRemaining/60).toString().padStart(2,'0');
                     let s = (totalSecondsRemaining%60).toString().padStart(2,'0');
@@ -385,48 +388,42 @@
 
         function changeQ(dir) {
             let next = currentIdx + dir;
-            if (next >= 0 && next < questions.length) { 
-                currentIdx = next; 
-                showQ(); 
-            }
+            if (next >= 0 && next < questions.length) { currentIdx = next; showQ(); }
         }
 
-        function submitTest() {
-            showModal("DEVIATION CHECK", "Are you ready to submit your finalized responses?", "confirm", processFinalResults);
-        }
+        function submitTest() { showModal("SUBMISSION", "Finalize responses?", "confirm", processFinalResults); }
 
         async function processFinalResults() {
             if(isSubmitting) return;
             isSubmitting = true;
             clearInterval(timer);
-
             let score = 0;
+            const now = Date.now(); // Numerical timestamp for cooldown check
+            
             const details = questions.map((q, i) => {
                 const userAns = userChoices[i] || "SKIPPED";
                 const isCorrect = userAns === q.actualCorrect;
                 if(isCorrect) score++;
-                return {
-                    question: q.question || q.q,
-                    user: userAns,
-                    actual: q.actualCorrect
-                };
+                return { question: q.question || q.q, user: userAns, actual: q.actualCorrect };
             });
 
-            const accuracy = Math.round((score / questions.length) * 100);
-
-            localStorage.setItem('agriq_last_result', JSON.stringify({ 
+            const resultData = { 
+                uid: auth.currentUser.uid,
                 score, 
                 total: questions.length, 
-                accuracy,
+                accuracy: Math.round((score / questions.length) * 100),
                 module: moduleKey || 'General', 
-                details: details,
-                timestamp: new Date().toISOString()
-            }));
+                timestamp: now,
+                date: new Date().toISOString()
+            };
 
-            if(auth.currentUser) {
-                await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
-            }
+            // Push to Firebase Leaderboard
+            await db.ref('leaderboard').push(resultData);
+
+            // Save locally for analysis
+            localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
             
+            if(auth.currentUser) await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
             window.location.href = 'analysis.html';
         }
     </script>
