@@ -10,6 +10,7 @@
     <title>AgriQ Pro | Hall of Champions</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -25,48 +26,25 @@
             --text-dim: #a1a1aa;
             --border: #222222;
             --gold: #ffda44;
-            --gold-glow: rgba(255, 218, 68, 0.4);
             --silver: #cbd5e1;
             --bronze: #d97706;
             --glass: rgba(255, 255, 255, 0.03);
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        body.focused-mode {
-            --primary: #00aaff;
-            --primary-glow: rgba(0, 170, 255, 0.3);
-            --bg: #f0f9ff;
-            --surface: #ffffff;
-            --text-main: #001a2c;
-            --text-dim: #64748b;
-            --border: #e2e8f0;
-            --glass: rgba(0, 170, 255, 0.05);
-        }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
-            background-color: var(--bg); 
-            margin: 0; 
-            color: var(--text-main); 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow-x: hidden; 
-            transition: 0.5s ease; 
+            background-color: var(--bg); margin: 0; color: var(--text-main); 
+            min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; 
         }
 
-        /* --- Unified Preloader --- */
         #leader-loader {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
         }
         #leader-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
-        
-        .loader-status {
-            font-family: 'JetBrains Mono'; font-size: 10px; color: var(--primary);
-            margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;
-        }
 
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
@@ -86,115 +64,83 @@
 
         main { padding: 0 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
-        /* --- THE PODIUM (Synced Visuals) --- */
-        .podium { 
-            display: flex; justify-content: center; align-items: flex-end; 
-            gap: 10px; margin: 50px 0 30px;
-        }
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; margin: 60px 0 30px; }
         .podium-item { 
             background: var(--surface); border: 1.5px solid var(--border); border-radius: 28px;
-            padding: 20px 10px; text-align: center; position: relative;
-            flex: 1; display: flex; flex-direction: column; align-items: center;
-            transition: var(--transition); min-width: 0;
+            padding: 20px 10px; text-align: center; position: relative; flex: 1;
+            display: flex; flex-direction: column; align-items: center; min-width: 0;
+            transition: var(--transition);
         }
         .podium-1 { 
-            height: 220px; z-index: 5; border-color: var(--gold); 
+            height: 240px; border-color: var(--gold); 
             background: linear-gradient(180deg, rgba(255, 218, 68, 0.1) 0%, var(--surface) 100%);
-            box-shadow: 0 15px 35px -10px var(--gold-glow);
-            transform: scale(1.05);
+            transform: scale(1.1); z-index: 2;
         }
-        .podium-1 .crown-icon {
-            position: absolute; top: -35px; font-size: 40px;
-            filter: drop-shadow(0 0 10px var(--gold));
-            animation: float 3s ease-in-out infinite;
-        }
+        .podium-1 .crown { position: absolute; top: -35px; font-size: 40px; animation: float 3s ease-in-out infinite; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-        .podium-2 { height: 180px; border-color: var(--silver); }
-        .podium-3 { height: 160px; border-color: var(--bronze); }
-
-        .avatar-ring {
-            width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border);
-            display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
-            background: var(--glass); font-weight: 900; font-size: 16px; font-family: 'JetBrains Mono';
+        .avatar-box {
+            width: 54px; height: 54px; border-radius: 50%; border: 2.5px solid var(--border);
+            margin-bottom: 12px; overflow: hidden; background: var(--bg);
+            display: flex; align-items: center; justify-content: center; font-weight: 900;
+            position: relative; background-size: cover; background-position: center;
         }
-        .podium-1 .avatar-ring { border-color: var(--gold); width: 56px; height: 56px; font-size: 20px; border-width: 3px; }
-        
-        .p-name { 
-            font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; 
-            margin-bottom: 4px; color: var(--text-dim); width: 100%; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .podium-1 .p-name { color: var(--gold); }
-        .p-score { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; color: var(--text-main); }
+        .podium-1 .avatar-box { width: 75px; height: 75px; border-color: var(--gold); border-width: 4px; }
 
-        /* --- RANKING LIST --- */
+        .p-name { font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-dim); width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+        .podium-1 .p-name { color: var(--gold); font-size: 12px; }
+        .p-score { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; }
+
         .rank-card {
             background: var(--surface); border: 1.5px solid var(--border);
-            padding: 18px 20px; border-radius: 24px;
-            display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
-            transition: var(--transition); position: relative;
-            animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+            padding: 14px 16px; border-radius: 20px;
+            display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+            transition: 0.2s; position: relative;
         }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
         .rank-card.is-me { 
             border-color: var(--primary); 
-            background: linear-gradient(90deg, var(--primary-glow), transparent);
+            background: rgba(255, 59, 59, 0.08);
+            box-shadow: 0 0 20px rgba(255, 59, 59, 0.1);
         }
-
-        .rank-num { 
-            width: 35px; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; 
-            color: var(--text-dim); flex-shrink: 0; text-align: center;
-        }
-        .rank-num.gold-txt { color: var(--gold); }
-
-        .user-info { flex: 1; min-width: 0; }
-        .user-name { font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
-        .user-name span { overflow: hidden; text-overflow: ellipsis; }
-        .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 800; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
         
-        .user-score { text-align: right; flex-shrink: 0; }
-        .score-val { display: block; font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; color: var(--primary); }
-        .score-label { font-size: 7px; color: var(--text-dim); font-weight: 900; text-transform: uppercase; }
+        .rank-1 { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 218, 68, 0.15); }
+        .rank-2 { border-color: var(--silver); }
+        .rank-3 { border-color: var(--bronze); }
 
-        .me-badge { 
-            background: var(--primary); color: #fff; font-size: 8px; font-weight: 900; 
-            padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;
+        .list-img {
+            width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--border);
+            overflow: hidden; display: flex; align-items: center; justify-content: center; 
+            font-weight: 800; background: var(--bg); background-size: cover; background-position: center;
         }
 
-        footer { padding: 40px 24px; text-align: center; }
-        .status-tag { font-family: 'JetBrains Mono'; font-size: 9px; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
+        .rank-num { width: 22px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--text-dim); font-size: 13px; text-align: center; }
+        .user-info { flex: 1; min-width: 0; }
+        .user-name { font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text-main); }
+        .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+        .score-val { font-family: 'JetBrains Mono'; font-weight: 900; color: var(--primary); font-size: 16px; }
+        .me-badge { 
+            background: var(--primary); color: white; font-size: 8px; 
+            padding: 2px 8px; border-radius: 6px; font-weight: 900;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
     </style>
 </head>
 <body>
 
     <div id="leader-loader">
-        <div class="loader-logo" style="color:var(--primary);"><i data-lucide="award" size="64" fill="currentColor"></i></div>
-        <p class="loader-status">Fetching Elite Records...</p>
+        <div style="color:var(--primary);"><i data-lucide="award" class="animate-bounce" size="48"></i></div>
+        <p style="font-family:'JetBrains Mono'; font-size:10px; margin-top:15px; letter-spacing:2px; font-weight:800;">SYNCING IDENTITY...</p>
     </div>
 
     <header>
         <div class="brand">HALL OF <span>CHAMPIONS</span></div>
-        <button onclick="window.location.href='index.html'" class="btn-icon">
-            <i data-lucide="layout-dashboard" size="22"></i>
-        </button>
+        <button onclick="window.location.href='index.html'" class="btn-icon" aria-label="Dashboard"><i data-lucide="layout-dashboard" size="20"></i></button>
     </header>
 
     <main>
         <div class="podium" id="podium-area"></div>
-        
-        <div style="margin: 20px 0 20px; font-size: 10px; font-weight: 900; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
-            <i data-lucide="database" size="14" style="color:var(--primary)"></i> 
-            Global Rank Logs
-        </div>
-
         <div id="leaderboard-list"></div>
     </main>
-
-    <footer>
-        <div class="status-tag">SYSTEM_ENCRYPTED // LEADERBOARD_V3.0</div>
-    </footer>
 
     <script>
         const firebaseConfig = {
@@ -208,114 +154,140 @@
         };
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
         const auth = firebase.auth();
 
-        let currentUserID = null;
+        let currentUid = null;
+        let studentsData = {};
+        let cachedScores = null;
 
-        auth.onAuthStateChanged(async user => {
+        auth.onAuthStateChanged(user => {
             if (user) {
-                currentUserID = user.uid;
-                
-                // Load user theme preference
-                const snap = await database.ref(`students/${user.uid}`).once('value');
-                if(snap.val()?.focusedMode) document.body.classList.add('focused-mode');
-                
-                startLeaderboardListener();
+                currentUid = user.uid;
+                initGlobalSync();
             } else {
                 window.location.href = 'index.html';
             }
         });
 
-        function startLeaderboardListener() {
-            database.ref('leaderboard').on('value', (snap) => {
-                const aggregated = {};
-                snap.forEach(child => {
-                    const entry = child.val();
-                    const uid = entry.uid;
-                    if (!aggregated[uid]) {
-                        aggregated[uid] = { uid, name: entry.name || "Anon", score: 0, accuracy: 0, count: 0 };
-                    }
-                    aggregated[uid].score += (parseInt(entry.score) || 0);
-                    aggregated[uid].accuracy += (parseFloat(entry.accuracy) || 0);
-                    aggregated[uid].count++;
-                });
+        function initGlobalSync() {
+            db.ref('students').on('value', (snap) => {
+                studentsData = snap.val() || {};
+                if (cachedScores) processData(cachedScores);
+            });
 
-                const users = Object.values(aggregated).map(u => ({
-                    ...u,
-                    avgAccuracy: Math.round(u.accuracy / u.count)
-                })).sort((a, b) => b.score - a.score);
-
-                renderLeaderboard(users);
-                
-                // Release preloader
-                setTimeout(() => {
-                    document.getElementById('leader-loader').classList.add('fade-out');
-                }, 1000);
+            db.ref('leaderboard').on('value', (snap) => {
+                cachedScores = snap.val() || {};
+                processData(cachedScores);
             });
         }
 
-        function renderLeaderboard(users) {
+        function processData(rawData) {
+            const aggregated = {};
+
+            Object.values(rawData).forEach(entry => {
+                if (!entry.uid) return;
+                if (!aggregated[entry.uid]) {
+                    aggregated[entry.uid] = { 
+                        uid: entry.uid, 
+                        score: 0, 
+                        acc: 0, 
+                        count: 0,
+                        originalName: entry.name // Store the name present in the leaderboard entry
+                    };
+                }
+                aggregated[entry.uid].score += (parseInt(entry.score) || 0);
+                aggregated[entry.uid].acc += (parseFloat(entry.accuracy) || 0);
+                aggregated[entry.uid].count++;
+            });
+
+            const sorted = Object.values(aggregated).map(u => {
+                const profile = studentsData[u.uid] || {};
+                
+                // HYBRID IDENTITY LOGIC:
+                // 1. Priority: Profile Name (Updated name like ZENETSU)
+                // 2. Fallback: Original Name (Name recorded at quiz time)
+                // 3. Final Fallback: "CHAMPION"
+                const finalName = profile.name || u.originalName || "CHAMPION";
+                
+                const finalPhoto = profile.profilePic || profile.photoURL || null;
+
+                return {
+                    ...u,
+                    displayName: finalName.toUpperCase(),
+                    photo: finalPhoto,
+                    avgAcc: Math.round(u.acc / u.count)
+                };
+            }).sort((a, b) => b.score - a.score);
+
+            renderUI(sorted);
+            const loader = document.getElementById('leader-loader');
+            if(loader) loader.classList.add('fade-out');
+        }
+
+        function renderUI(users) {
             const podium = document.getElementById('podium-area');
             const list = document.getElementById('leaderboard-list');
-            const getInitials = (name) => name ? name.substring(0, 1).toUpperCase() : '?';
 
-            // Render Podium
-            podium.innerHTML = `
-                <div class="podium-item podium-2">
-                    <div class="avatar-ring" style="color:var(--silver); border-color:var(--silver)">${getInitials(users[1]?.name)}</div>
-                    <span class="p-name">${users[1]?.name || '---'}</span>
-                    <span class="p-score">${users[1]?.score || 0}</span>
-                </div>
-                <div class="podium-item podium-1">
-                    <div class="crown-icon">👑</div>
-                    <div class="avatar-ring" style="color:var(--gold)">${getInitials(users[0]?.name)}</div>
-                    <span class="p-name">${users[0]?.name || '---'}</span>
-                    <span class="p-score">${users[0]?.score || 0}</span>
-                </div>
-                <div class="podium-item podium-3">
-                    <div class="avatar-ring" style="color:var(--bronze); border-color:var(--bronze)">${getInitials(users[2]?.name)}</div>
-                    <span class="p-name">${users[2]?.name || '---'}</span>
-                    <span class="p-score">${users[2]?.score || 0}</span>
-                </div>
-            `;
+            const getAvatarHtml = (u, borderColor) => {
+                if (!u) return `<div class="avatar-box" style="border-color:${borderColor}">?</div>`;
+                const style = u.photo ? `background-image:url('${u.photo}'); border-color:${borderColor};` : `border-color:${borderColor};`;
+                return `<div class="avatar-box" style="${style}">${u.photo ? '' : u.displayName[0]}</div>`;
+            };
 
-            // Render Remaining List
-            list.innerHTML = "";
-            users.forEach((u, i) => {
-                const isMe = u.uid === currentUserID;
-                const card = document.createElement('div');
-                card.className = `rank-card ${isMe ? 'is-me' : ''}`;
-                card.style.animationDelay = `${i * 0.05}s`;
-                
-                card.innerHTML = `
-                    <div class="rank-num ${i < 3 ? 'gold-txt' : ''}">${i + 1}</div>
-                    <div class="user-info">
-                        <div class="user-name">
-                            <span>${u.name.toUpperCase()}</span>
-                            ${isMe ? '<span class="me-badge">YOU</span>' : ''}
-                        </div>
-                        <div class="user-meta">${u.avgAccuracy}% ACCURACY • RANK: ${getLevel(u.score)}</div>
+            if (users.length >= 1) {
+                podium.innerHTML = `
+                    <div class="podium-item podium-2">
+                        ${getAvatarHtml(users[1], 'var(--silver)')}
+                        <span class="p-name">${users[1]?.displayName || '---'}</span>
+                        <span class="p-score">${users[1]?.score || 0}</span>
                     </div>
-                    <div class="user-score">
-                        <span class="score-val">${u.score}</span>
-                        <span class="score-label">TOTAL XP</span>
+                    <div class="podium-item podium-1">
+                        <div class="crown">👑</div>
+                        ${getAvatarHtml(users[0], 'var(--gold)')}
+                        <span class="p-name">${users[0]?.displayName || '---'}</span>
+                        <span class="p-score">${users[0]?.score || 0}</span>
+                    </div>
+                    <div class="podium-item podium-3">
+                        ${getAvatarHtml(users[2], 'var(--bronze)')}
+                        <span class="p-name">${users[2]?.displayName || '---'}</span>
+                        <span class="p-score">${users[2]?.score || 0}</span>
                     </div>
                 `;
-                list.appendChild(card);
-            });
+            }
+
+            list.innerHTML = users.map((u, i) => {
+                const rank = i + 1;
+                const isMe = u.uid === currentUid;
+                const imgStyle = u.photo ? `background-image:url('${u.photo}');` : '';
+                
+                return `
+                    <div class="rank-card ${isMe ? 'is-me' : ''} ${rank <= 3 ? 'rank-'+rank : ''}">
+                        <div class="rank-num">${rank}</div>
+                        <div class="list-img" style="${imgStyle} ${rank <= 3 ? 'border-color:var(--primary);' : ''}">
+                            ${u.photo ? '' : u.displayName[0]}
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                <span>${u.displayName}</span>
+                                ${isMe ? '<span class="me-badge">YOU</span>' : ''}
+                                ${rank <= 3 ? '<i data-lucide="shield-check" size="12" style="color:var(--gold);"></i>' : ''}
+                            </div>
+                            <div class="user-meta">${u.avgAcc}% ACC • ${getLevel(u.score)}</div>
+                        </div>
+                        <div class="score-val">${u.score}</div>
+                    </div>
+                `;
+            }).join('');
+
             if(window.lucide) lucide.createIcons();
         }
 
         function getLevel(score) {
-            if (score > 10000) return "LEGEND";
-            if (score > 5000) return "ELITE";
-            if (score > 2000) return "SPECIALIST";
-            if (score > 500) return "VETERAN";
-            return "NOVICE";
+            if (score > 5000) return "ELITE SQUAD";
+            if (score > 2000) return "PRO HUNTER";
+            return "ASPIRANT";
         }
-
-        lucide.createIcons();
     </script>
 </body>
 </html>
