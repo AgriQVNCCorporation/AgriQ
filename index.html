@@ -106,7 +106,7 @@
             width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--primary); color: #fff; 
             font-weight: 900; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .elite-mode:not(.focused-mode) .btn-primary { color: #000; }
+        .btn-primary:disabled { background: #1a1a1a; color: #666; cursor: not-allowed; border: 1px solid #222; opacity: 0.7; }
 
         .btn-social {
             width: 100%; padding: 16px; border-radius: 18px; border: 1px solid var(--border);
@@ -122,27 +122,36 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             transition: 0.5s;
         }
+
+        .profile-container { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
         
-        .elite-mode:not(.focused-mode) .rank-card, 
-        .elite-mode:not(.focused-mode) .stat-card { 
-            border: 2px solid #ffcc00; 
-            background: var(--rank-gradient);
-            animation: goldGlow 3s infinite alternate; 
-            color: #000 !important;
+        #user-initial {
+            width: 58px; height: 58px; background: var(--surface); border-radius: 16px; 
+            display: flex; align-items: center; justify-content: center; font-weight: 900; 
+            color: var(--primary); font-size: 24px; background-size: cover; background-position: center;
+            cursor: pointer; position: relative; z-index: 2; border: 2px solid var(--bg); 
         }
 
-        .elite-mode:not(.focused-mode) .stat-card .stat-val,
-        .elite-mode:not(.focused-mode) .stat-card .stat-label,
-        .elite-mode:not(.focused-mode) .rank-card span,
-        .elite-mode:not(.focused-mode) .rank-card div {
-            color: #000 !important;
-            text-shadow: none !important;
+        .conqueror-frame {
+            position: absolute; inset: 0; border-radius: 20px;
+            background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fcf6ba 75%, #aa771c 100%);
+            background-size: 400% 400%; animation: goldShine 3s linear infinite; z-index: 1;
+            box-shadow: 0 0 20px var(--primary-glow);
         }
 
-        @keyframes goldGlow { 
-            from { box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); } 
-            to { box-shadow: 0 0 35px rgba(255, 204, 0, 0.5); } 
+        .normal-frame { position: absolute; inset: 4px; border-radius: 18px; border: 2px solid var(--border); z-index: 1; }
+
+        .conqueror-crown {
+            position: absolute; top: -14px; right: -5px; z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.8));
+            color: #ffcc00; transform: rotate(15deg);
         }
+
+        @keyframes goldShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .name-wrapper { display: flex; align-items: center; gap: 8px; }
+        .edit-name-btn { cursor: pointer; color: var(--text-dim); transition: 0.2s; }
+        .edit-name-btn:hover { color: var(--primary); }
 
         .progression-bar {
             background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 12px; margin-bottom: 18px;
@@ -158,17 +167,9 @@
         .stat-val { display: block; font-size: 20px; font-weight: 900; color: var(--primary); }
         .stat-label { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
 
-        .status-badge {
-            font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;
-            background: rgba(255,255,255,0.1); color: var(--text-dim); display: inline-block; margin-bottom: 8px;
-        }
-        .elite-mode:not(.focused-mode) .status-badge { background: #000; color: #ffcc00; }
+        .status-badge { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.1); color: var(--text-dim); display: inline-block; margin-bottom: 8px; }
 
-        .toggle-container {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 15px 20px; background: var(--glass); border-radius: 20px; margin-bottom: 18px; border: 1px solid var(--border);
-        }
-
+        .toggle-container { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: var(--glass); border-radius: 20px; margin-bottom: 18px; border: 1px solid var(--border); }
         .switch { position: relative; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 34px; }
@@ -176,38 +177,30 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .instruction-post {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-top: 20px;
+        /* --- Custom Modal Styling --- */
+        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(10px); }
+        .modal-content { background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px; border-radius: 28px; padding: 30px; text-align: center; transform: scale(0.9); transition: 0.3s; }
+        #custom-modal.active .modal-content { transform: scale(1); }
+        
+        /* --- Toast Notification Styling --- */
+        #toast-container {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 10001; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px;
+            pointer-events: none;
         }
-        .instruction-post h3 { margin: 0 0 15px; font-size: 13px; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; font-weight: 900; }
-        .instruction-post ul { padding: 0; margin: 0; list-style: none; }
-        .instruction-post li { margin-bottom: 10px; font-size: 12px; color: var(--text-dim); display: flex; gap: 10px; line-height: 1.4; font-weight: 600; }
-        .instruction-post li::before { content: "›"; color: var(--primary); font-weight: 900; font-size: 16px; line-height: 1; }
+        .toast {
+            background: var(--surface); border: 1px solid var(--border); padding: 12px 20px;
+            border-radius: 16px; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transform: translateY(100px);
+            opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto; border-left: 4px solid var(--primary);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast i { color: var(--primary); }
+        .toast-msg { font-size: 12px; font-weight: 700; color: var(--text-main); }
 
-        #custom-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px;
-            backdrop-filter: blur(10px);
-        }
-        .modal-content {
-            background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px;
-            border-radius: 28px; padding: 30px; text-align: center;
-        }
-        .modal-icon { color: var(--primary); margin-bottom: 15px; }
-        .modal-title { font-weight: 900; font-size: 18px; margin-bottom: 10px; text-transform: uppercase; }
-        .modal-text { font-size: 13px; color: var(--text-dim); margin-bottom: 25px; font-weight: 600; line-height: 1.5; }
-        .modal-actions { display: flex; gap: 12px; }
-        .modal-btn { 
-            flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; font-size: 12px;
-        }
-        .btn-confirm { background: var(--primary); color: white; }
-        .btn-cancel { background: var(--border); color: var(--text-dim); }
-
-        footer {
-            padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); margin-top: 20px; background: var(--surface);
-        }
+        footer { padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); margin-top: 20px; background: var(--surface); }
         .copy-text { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; font-weight: 800; }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -215,17 +208,20 @@
 
     <div id="app-loader">
         <div id="loader-icon" style="color:var(--primary);"><i data-lucide="zap" size="64" fill="currentColor"></i></div>
-        <p id="loader-status" style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;">System Booting...</p>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;">System Booting...</p>
     </div>
+
+    <div id="toast-container"></div>
+
+    <input type="file" id="profile-upload" accept="image/*" class="hidden" onchange="uploadProfilePic(this)">
 
     <div id="custom-modal">
         <div class="modal-content">
-            <div class="modal-icon" id="modal-icon-container"><i data-lucide="alert-triangle" size="40"></i></div>
-            <div class="modal-title" id="modal-title">System Alert</div>
-            <div class="modal-text" id="modal-text">Action required to proceed.</div>
-            <div class="modal-actions" id="modal-actions">
-                <button class="modal-btn btn-cancel" id="modal-cancel-btn">CANCEL</button>
-                <button class="modal-btn btn-confirm" id="modal-confirm-btn">CONFIRM</button>
+            <div id="modal-title" style="font-weight:900; text-transform:uppercase; margin-bottom:10px;">Alert</div>
+            <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:25px;">Message</div>
+            <div class="modal-actions" style="display:flex; gap:12px;">
+                <button class="modal-btn" id="modal-cancel-btn" style="flex:1; padding:14px; border-radius:14px; border:none; background:var(--border); color:var(--text-dim); font-weight:800; cursor:pointer;">CANCEL</button>
+                <button class="modal-btn" id="modal-confirm-btn" style="flex:1; padding:14px; border-radius:14px; border:none; background:var(--primary); color:white; font-weight:900; cursor:pointer;">CONFIRM</button>
             </div>
         </div>
     </div>
@@ -233,11 +229,9 @@
     <header id="main-header">
         <div class="brand">AGRI<span>Q</span> PRO</div>
         <div class="header-actions">
-            <a href="admin.html" class="icon-btn" title="Admin Panel"><i data-lucide="shield-check" size="20"></i></a>
-            
-            <a href="leaderboard.html" class="icon-btn" title="Leaderboard"><i data-lucide="trophy" size="20"></i></a>
+            <a href="admin.html" class="icon-btn"><i data-lucide="shield-check" size="20"></i></a>
+            <a href="leaderboard.html" class="icon-btn"><i data-lucide="trophy" size="20"></i></a>
             <i data-lucide="log-out" id="logout-btn" class="icon-btn hidden" onclick="confirmLogout()"></i>
-            <span id="reg-count-badge" style="font-size: 9px; font-weight: 900; background: var(--border); padding: 4px 8px; border-radius: 6px; color: var(--primary);">0</span>
         </div>
     </header>
 
@@ -259,25 +253,29 @@
         </div>
 
         <div id="screen-dash" class="hidden">
-            <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
-                <div id="user-initial" style="width:48px; height:48px; background:var(--primary); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#000; font-size:20px;">U</div>
+            <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
+                <div class="profile-container" id="profile-container">
+                    <div id="rank-frame" class="normal-frame"></div>
+                    <div id="user-initial" onclick="document.getElementById('profile-upload').click()">U</div>
+                </div>
                 <div>
                     <div id="elite-status-label" class="status-badge">STANDARD ACCOUNT</div>
-                    <h2 id="user-display-name" style="margin:0; font-weight:900; font-size:18px; letter-spacing: -0.5px;">STUDENT</h2>
+                    <div class="name-wrapper">
+                        <h2 id="user-display-name" style="margin:0; font-weight:900; font-size:18px;">STUDENT</h2>
+                        <i data-lucide="edit-3" id="name-edit-icon" size="14" class="edit-name-btn hidden" onclick="editProfileName()"></i>
+                    </div>
                 </div>
             </div>
 
             <div class="rank-card">
                 <div style="flex: 1;">
-                    <span class="status-badge" style="margin-bottom: 5px; opacity: 0.8; font-size: 8px; border: 1px solid rgba(255,255,255,0.2);">GLOBAL STANDING</span>
+                    <span style="font-size: 8px; font-weight: 800; opacity: 0.8;">GLOBAL STANDING</span>
                     <div style="display: flex; align-items: baseline; gap: 8px;">
                         <span style="font-size: 42px; font-weight: 900; line-height: 1;">#<span id="rank-val">--</span></span>
-                        <div style="display: flex; flex-direction: column;">
-                            <span id="total-points-display" style="font-size: 15px; font-weight: 900; color: var(--primary);">0 PTS</span>
-                        </div>
+                        <span id="total-points-display" style="font-size: 15px; font-weight: 900; color: var(--primary);">0 PTS</span>
                     </div>
                 </div>
-                <i data-lucide="crown" id="rank-icon" size="40"></i>
+                <i data-lucide="crown" size="40"></i>
             </div>
 
             <div class="progression-bar">
@@ -288,38 +286,24 @@
 
             <div class="stats-grid">
                 <div class="stat-card"><span class="stat-val" id="tests-taken">0</span><span class="stat-label">SOLVED</span></div>
-                <div class="stat-card accuracy-highlight"><span class="stat-val" id="avg-accuracy">0%</span><span class="stat-label">ACCURACY</span></div>
+                <div class="stat-card"><span class="stat-val" id="avg-accuracy">0%</span><span class="stat-label">ACCURACY</span></div>
             </div>
 
             <div class="input-group">
                 <i data-lucide="layers"></i>
-                <select id="module-selector">
-                    <option value="">SELECT MODULE</option>
-                </select>
+                <select id="module-selector" onchange="handleModuleSelection()"><option value="">SELECT MODULE</option></select>
             </div>
 
-            <button class="btn-primary" onclick="startTest()" style="padding:20px; font-size:15px; margin-bottom: 18px;"><i data-lucide="play" fill="currentColor"></i> START SEQUENCE</button>
+            <button class="btn-primary" id="start-btn" onclick="startTest()" style="padding:20px; font-size:15px; margin-bottom: 18px;"><i data-lucide="play" fill="currentColor"></i> START SEQUENCE</button>
             
             <div class="toggle-container">
-                <span style="font-weight:800; font-size:11px; letter-spacing: 0.5px;">OPTIMIZED FOCUS MODE</span>
+                <span style="font-weight:800; font-size:11px;">OPTIMIZED FOCUS MODE</span>
                 <label class="switch"><input type="checkbox" id="focus-toggle" onchange="toggleFocusedMode()"><span class="slider"></span></label>
-            </div>
-
-            <div class="instruction-post">
-                <h3><i data-lucide="terminal" size="14"></i> Protocol Instructions</h3>
-                <ul>
-                    <li>Select a specialized module to initialize the assessment.</li>
-                    <li>Maintaining a Daily Streak increases your XP multiplier.</li>
-                    <li>85%+ accuracy significantly boosts your Global Popularity.</li>
-                    <li>Top 3 rankers unlock the Gold Elite Terminal interface.</li>
-                </ul>
             </div>
         </div>
     </main>
 
-    <footer>
-        <div class="copy-text">© 2026 AGRIQ PRO TERMINAL. ALL RIGHTS RESERVED.</div>
-    </footer>
+    <footer><div class="copy-text">© 2026 AGRIQ PRO TERMINAL.</div></footer>
 
     <script>
         const firebaseConfig = {
@@ -336,68 +320,95 @@
         const auth = firebase.auth();
         const db = firebase.database();
         let isLoginMode = true;
+        let moduleCooldowns = {}; 
+        let lockRefreshInterval = null;
+        let notifiedModules = new Set(); 
 
+        // --- Custom Alert System (Modal) ---
         function showModal(title, text, type = 'confirm', onConfirm = null) {
             const modal = document.getElementById('custom-modal');
-            const titleEl = document.getElementById('modal-title');
-            const textEl = document.getElementById('modal-text');
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            const confirmBtn = document.getElementById('modal-confirm-btn');
-
-            titleEl.innerText = title;
-            textEl.innerText = text;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
             modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            
+            const cb = document.getElementById('modal-cancel-btn');
+            if(type === 'alert') cb.classList.add('hidden'); else cb.classList.remove('hidden');
+            
+            document.getElementById('modal-confirm-btn').onclick = () => { 
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300); 
+                if(onConfirm) onConfirm(); 
+            };
+            cb.onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+            };
+        }
 
-            if (type === 'alert') {
-                cancelBtn.classList.add('hidden');
-                confirmBtn.innerText = "ACKNOWLEDGE";
-            } else {
-                cancelBtn.classList.remove('hidden');
-                confirmBtn.innerText = "CONFIRM";
+        // --- Custom Toast System ---
+        function showToast(message, icon = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i data-lucide="${icon}" size="18"></i><span class="toast-msg">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        }
+
+        // --- Notification System ---
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) return;
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
             }
+        }
 
-            confirmBtn.onclick = () => {
-                modal.style.display = 'none';
-                if (onConfirm) onConfirm();
-            };
-            cancelBtn.onclick = () => {
-                modal.style.display = 'none';
-            };
+        function triggerMissionAlert(moduleName) {
+            const cleanName = moduleName.toUpperCase().replace(/_/g, ' ');
+            // Native Push
+            if (Notification.permission === "granted") {
+                new Notification("MISSION RELOADED ⚡", {
+                    body: `${cleanName} is now available. Time to conquer!`,
+                    icon: "https://img.icons8.com/neon/96/lightning-bolt.png"
+                });
+            }
+            // In-app Toast
+            showToast(`${cleanName} Access Restored!`, 'zap');
         }
 
         auth.onAuthStateChanged(async (user) => {
             const screenAuth = document.getElementById('screen-auth');
             const screenDash = document.getElementById('screen-dash');
-            const appLoader = document.getElementById('app-loader');
-
             if (user) {
                 screenAuth.classList.add('hidden');
                 await syncUser(user);
                 setupDash(user);
-                listenToLiveLobby();
                 screenDash.classList.remove('hidden');
                 document.getElementById('logout-btn').classList.remove('hidden');
+                requestNotificationPermission();
+                
+                if(lockRefreshInterval) clearInterval(lockRefreshInterval);
+                lockRefreshInterval = setInterval(checkModuleLock, 60000);
             } else {
                 screenDash.classList.add('hidden');
                 screenAuth.classList.remove('hidden');
                 document.getElementById('logout-btn').classList.add('hidden');
+                if(lockRefreshInterval) clearInterval(lockRefreshInterval);
             }
             document.body.classList.add('app-ready');
-            setTimeout(() => { appLoader.classList.add('fade-out'); lucide.createIcons(); }, 800);
+            setTimeout(() => { document.getElementById('app-loader').classList.add('fade-out'); lucide.createIcons(); }, 800);
         });
-
-        function listenToLiveLobby() {
-            db.ref('live_sessions').on('value', snap => {
-                const countBadge = document.getElementById('reg-count-badge');
-                if (countBadge) countBadge.innerText = snap.numChildren();
-            });
-        }
 
         async function syncUser(user) {
             const ref = db.ref(`students/${user.uid}`);
             const snap = await ref.once('value');
-            const now = Date.now();
-            
             if (!snap.exists()) {
                 await ref.set({
                     uid: user.uid,
@@ -405,18 +416,11 @@
                     email: user.email,
                     focusedMode: false,
                     streak: 1,
-                    lastActive: now,
+                    lastActive: Date.now(),
                     testsTaken: 0,
-                    avgAccuracy: 0
+                    avgAccuracy: 0,
+                    nameEdited: false
                 });
-            } else {
-                const data = snap.val();
-                const lastLogin = data.lastActive || now;
-                const hoursDiff = (now - lastLogin) / (1000 * 60 * 60);
-                let updatedStreak = data.streak || 1;
-                if (hoursDiff > 24 && hoursDiff < 48) updatedStreak += 1;
-                else if (hoursDiff >= 48) updatedStreak = 1;
-                await ref.update({ lastActive: now, streak: updatedStreak });
             }
         }
 
@@ -424,25 +428,31 @@
             db.ref(`students/${user.uid}`).on('value', snap => {
                 const d = snap.val();
                 if(!d) return;
+                localStorage.setItem('agri_user_name', d.name);
                 document.getElementById('user-display-name').innerText = d.name;
-                document.getElementById('user-initial').innerText = d.name[0];
+                const editIcon = document.getElementById('name-edit-icon');
+                if (d.nameEdited) editIcon.classList.add('hidden');
+                else editIcon.classList.remove('hidden');
+                const initialBox = document.getElementById('user-initial');
+                if (d.profilePic) {
+                    initialBox.style.backgroundImage = `url(${d.profilePic})`;
+                    initialBox.innerText = "";
+                } else {
+                    initialBox.style.backgroundImage = "none";
+                    initialBox.innerText = d.name[0];
+                }
                 document.getElementById('focus-toggle').checked = d.focusedMode;
                 document.body.classList.toggle('focused-mode', d.focusedMode);
-                document.getElementById('streak-val').innerText = `${d.streak || 1} Day${(d.streak > 1 ? 's' : '')}`;
                 calculateStats(user.uid);
             });
 
             db.ref('subjects').on('value', snap => {
                 const sel = document.getElementById('module-selector');
                 sel.innerHTML = '<option value="">SELECT MODULE</option>';
-                if(!snap.exists()) return;
-                snap.forEach(moduleNode => {
-                    const moduleData = moduleNode.val();
-                    const moduleKey = moduleNode.key;
-                    if (moduleData.enabled === true) {
+                snap.forEach(node => {
+                    if (node.val().enabled) {
                         const opt = document.createElement('option');
-                        opt.value = moduleKey; 
-                        opt.innerText = moduleKey.toUpperCase().replace(/_/g, ' ');
+                        opt.value = node.key; opt.innerText = node.key.toUpperCase().replace(/_/g, ' ');
                         sel.appendChild(opt);
                     }
                 });
@@ -452,71 +462,118 @@
         function calculateStats(uid) {
             db.ref('leaderboard').on('value', (snap) => {
                 const aggregated = {};
-                let userTotalAcc = 0;
-                let userCount = 0;
+                let userTotalAcc = 0, userCount = 0;
+                moduleCooldowns = {};
 
                 snap.forEach(child => {
                     const entry = child.val();
-                    const eUid = entry.uid;
-                    if (!aggregated[eUid]) aggregated[eUid] = { score: 0 };
-                    aggregated[eUid].score += (parseInt(entry.score) || 0);
-
-                    if(eUid === uid) {
-                        userTotalAcc += (parseFloat(entry.accuracy) || 0);
-                        userCount++;
+                    if (!aggregated[entry.uid]) aggregated[entry.uid] = { score: 0 };
+                    aggregated[entry.uid].score += (parseInt(entry.score) || 0);
+                    
+                    if(entry.uid === uid) { 
+                        userTotalAcc += (parseFloat(entry.accuracy) || 0); 
+                        userCount++; 
+                        if(entry.module && entry.timestamp) {
+                            const ts = parseInt(entry.timestamp);
+                            if(!moduleCooldowns[entry.module] || ts > moduleCooldowns[entry.module]) {
+                                moduleCooldowns[entry.module] = ts;
+                            }
+                        }
                     }
                 });
-
-                const lbArray = Object.entries(aggregated)
-                    .map(([id, data]) => ({ uid: id, score: data.score }))
-                    .sort((a, b) => b.score - a.score);
-
-                const myRank = lbArray.findIndex(x => x.uid === uid) + 1;
-                const myScore = aggregated[uid] ? aggregated[uid].score : 0;
-                const avgAcc = userCount > 0 ? Math.round(userTotalAcc / userCount) : 0;
-
+                
+                const lbArray = Object.entries(aggregated).sort((a, b) => b[1].score - a[1].score);
+                const myRank = lbArray.findIndex(x => x[0] === uid) + 1;
                 document.getElementById('rank-val').innerText = myRank > 0 ? myRank : "--";
-                document.getElementById('total-points-display').innerText = myScore + " PTS";
-                document.getElementById('avg-accuracy').innerText = avgAcc + "%";
-                document.getElementById('tests-taken').innerText = userCount; 
+                document.getElementById('total-points-display').innerText = (aggregated[uid]?.score || 0) + " PTS";
+                document.getElementById('avg-accuracy').innerText = (userCount > 0 ? Math.round(userTotalAcc / userCount) : 0) + "%";
+                document.getElementById('tests-taken').innerText = userCount;
 
-                const level = Math.floor(Math.sqrt(myScore / 50)) + 1;
-                document.getElementById('level-val').innerText = `Lvl ${level}`;
-
-                let popularity = "Rookie";
-                if(myScore > 5000) popularity = "Legend";
-                else if(myScore > 500) popularity = "Pro";
-                document.getElementById('pop-val').innerText = popularity;
-                
-                const eliteLabel = document.getElementById('elite-status-label');
-                
+                const rankFrame = document.getElementById('rank-frame');
+                const profContainer = document.getElementById('profile-container');
+                const existingCrown = document.getElementById('frame-crown');
+                if (existingCrown) existingCrown.remove();
                 if (myRank > 0 && myRank <= 3) {
                     document.body.classList.add('elite-mode');
-                    eliteLabel.innerText = myRank === 1 ? "🏆 GLOBAL CHAMPION" : "⭐ TOP 3 ELITE";
+                    rankFrame.className = 'conqueror-frame';
+                    const crown = document.createElement('div');
+                    crown.id = 'frame-crown';
+                    crown.innerHTML = `<i data-lucide="crown" size="22" class="conqueror-crown"></i>`;
+                    profContainer.appendChild(crown);
+                    document.getElementById('elite-status-label').innerText = "ELITE CHAMPION";
                 } else {
                     document.body.classList.remove('elite-mode');
-                    eliteLabel.innerText = "STANDARD ACCOUNT";
+                    rankFrame.className = 'normal-frame';
+                    document.getElementById('elite-status-label').innerText = "STANDARD ACCOUNT";
                 }
-                if(window.lucide) lucide.createIcons();
+                checkModuleLock();
+                lucide.createIcons();
             });
+        }
+
+        function handleModuleSelection() {
+            const m = document.getElementById('module-selector').value;
+            if(m) showToast(`Selected: ${m.toUpperCase().replace(/_/g, ' ')}`, 'layers');
+            checkModuleLock();
+        }
+
+        function checkModuleLock() {
+            const sel = document.getElementById('module-selector');
+            const btn = document.getElementById('start-btn');
+            const mod = sel.value;
+            const cd = 24 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            Object.keys(moduleCooldowns).forEach(mKey => {
+                const diff = now - moduleCooldowns[mKey];
+                if (diff >= cd && !notifiedModules.has(mKey)) {
+                    triggerMissionAlert(mKey);
+                    notifiedModules.add(mKey);
+                } else if (diff < cd) {
+                    notifiedModules.delete(mKey);
+                }
+            });
+
+            if (mod && moduleCooldowns[mod]) {
+                const diff = now - moduleCooldowns[mod];
+                if (diff < cd) {
+                    const rem = cd - diff;
+                    const h = Math.floor(rem / 3600000);
+                    const m = Math.floor((rem % 3600000) / 60000);
+                    btn.disabled = true;
+                    btn.innerHTML = `<i data-lucide="clock"></i> LOCK: ${h}h ${m}m`;
+                    lucide.createIcons();
+                    return;
+                }
+            }
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="play" fill="currentColor"></i> START SEQUENCE`;
+            lucide.createIcons();
+        }
+
+        function startTest() {
+            const m = document.getElementById('module-selector').value;
+            if(!m) return showModal("ERROR", "Please select a terminal module first.", "alert");
+            if(moduleCooldowns[m] && (Date.now() - moduleCooldowns[m] < 24*60*60*1000)) {
+                return showModal("LOCKED", "This module is currently on a 24-hour mission cooldown.", "alert");
+            }
+            window.location.href = `test.html?mod=${encodeURIComponent(m)}`;
         }
 
         async function handleAuth(e) {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            try {
-                if (isLoginMode) await auth.signInWithEmailAndPassword(email, pass);
-                else await auth.createUserWithEmailAndPassword(email, pass);
+            const email = document.getElementById('email').value, pass = document.getElementById('password').value;
+            try { 
+                if (isLoginMode) await auth.signInWithEmailAndPassword(email, pass); 
+                else await auth.createUserWithEmailAndPassword(email, pass); 
+                showToast("Session Authorized", "shield-check");
             } catch (err) { showModal("AUTH ERROR", err.message, "alert"); }
         }
 
         async function handleSocialLogin() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            try { await auth.signInWithPopup(provider); } 
-            catch (err) {
-                if (err.code !== 'auth/popup-closed-by-user') await auth.signInWithRedirect(provider);
-            }
+            try { await auth.signInWithPopup(provider); showToast("Google Auth Success", "check-circle"); } 
+            catch (err) { if (err.code !== 'auth/popup-closed-by-user') await auth.signInWithRedirect(provider); }
         }
 
         function toggleAuthMode() {
@@ -525,24 +582,41 @@
             document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Register New Account" : "Back to Login";
         }
 
-        function toggleFocusedMode() {
-            const isChecked = document.getElementById('focus-toggle').checked;
-            db.ref(`students/${auth.currentUser.uid}`).update({ focusedMode: isChecked });
-        }
-
-        function confirmLogout() { 
-            showModal("LOGOUT SEQUENCE", "Are you sure you want to terminate this session?", "confirm", () => {
-                auth.signOut().then(() => window.location.reload());
-            });
+        function toggleFocusedMode() { 
+            const state = document.getElementById('focus-toggle').checked;
+            db.ref(`students/${auth.currentUser.uid}`).update({ focusedMode: state }); 
+            showToast(state ? "Focus Mode Enabled" : "Standard Mode Restored", "zap");
         }
         
-        function startTest() {
-            const m = document.getElementById('module-selector').value;
-            if(!m) {
-                showModal("MODULE ERROR", "Protocol failure: You must select a specialized module to initialize the assessment.", "alert");
-                return;
+        function confirmLogout() { 
+            showModal("LOGOUT", "Terminate current secure session?", "confirm", () => {
+                showToast("Terminating Session...", "log-out");
+                auth.signOut().then(() => { localStorage.clear(); window.location.reload(); });
+            });
+        }
+
+        function editProfileName() {
+            showModal("PERMANENT IDENTITY", "You can only update your terminal name ONCE. Proceed?", "confirm", () => {
+                const cur = document.getElementById('user-display-name').innerText;
+                const n = prompt("Enter Final Terminal Name:", cur);
+                if (n && n.trim() !== "" && n.toUpperCase() !== cur) {
+                    db.ref(`students/${auth.currentUser.uid}`).update({ name: n.toUpperCase().trim(), nameEdited: true }).then(() => {
+                        showToast("Identity Registered", "user-check");
+                        location.reload();
+                    });
+                }
+            });
+        }
+
+        function uploadProfilePic(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    db.ref(`students/${auth.currentUser.uid}`).update({ profilePic: e.target.result })
+                    .then(() => showToast("Avatar Synchronized", "image"));
+                };
+                reader.readAsDataURL(input.files[0]);
             }
-            window.location.href = `test.html?mod=${encodeURIComponent(m)}`;
         }
     </script>
 </body>
