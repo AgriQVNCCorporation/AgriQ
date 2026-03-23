@@ -51,6 +51,12 @@
             --glass: rgba(0, 170, 255, 0.05);
         }
 
+        /* Combined Elite + Focus adjustment for visibility */
+        body.elite-mode.focused-mode {
+            --primary: #d4af37; 
+            --border: #cbd5e1;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
@@ -275,6 +281,9 @@
                     const existingCrown = document.getElementById('frame-crown');
                     if(existingCrown) existingCrown.remove();
 
+                    // --- THEME LOGIC START ---
+                    document.body.classList.remove('elite-mode', 'focused-mode');
+
                     if (myRank > 0 && myRank <= 3) {
                         document.body.classList.add('elite-mode');
                         rankFrame.className = 'conqueror-frame';
@@ -284,8 +293,13 @@
                         profContainer.appendChild(crown);
                     } else {
                         rankFrame.className = 'normal-frame';
-                        if(userData.focusedMode) document.body.classList.add('focused-mode');
                     }
+
+                    if(userData.focusedMode) {
+                        document.body.classList.add('focused-mode');
+                    }
+                    // --- THEME LOGIC END ---
+
                     if(window.lucide) lucide.createIcons();
                 }
             });
@@ -335,12 +349,10 @@
             });
 
             try {
-                // Ensure we use the exact timestamp sent from test.html for the database key
                 const sessionKey = resultData.timestamp || Date.now();
                 const studentSnap = await db.ref(`students/${uid}`).once('value');
                 const sName = studentSnap.val()?.name || "STUDENT";
 
-                // Save data to Firebase Leaderboard using consistent keys
                 await db.ref(`leaderboard/${uid}_${sessionKey}`).set({
                     uid: uid,
                     name: sName,
@@ -352,7 +364,6 @@
                     date: resultData.date || new Date().toISOString()
                 });
 
-                // Update the student's personal test count
                 await db.ref(`students/${uid}`).update({
                     testsTaken: firebase.database.ServerValue.increment(1)
                 });
