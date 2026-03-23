@@ -131,6 +131,7 @@
             color: var(--primary); font-size: 24px; background-size: cover; background-position: center;
             cursor: pointer; position: relative; z-index: 2; border: 2px solid var(--bg); 
         }
+        #user-initial.no-click { cursor: default; }
 
         .conqueror-frame {
             position: absolute; inset: 0; border-radius: 20px;
@@ -256,7 +257,7 @@
             <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
                 <div class="profile-container" id="profile-container">
                     <div id="rank-frame" class="normal-frame"></div>
-                    <div id="user-initial" onclick="document.getElementById('profile-upload').click()">U</div>
+                    <div id="user-initial" onclick="handleProfileClick()">U</div>
                 </div>
                 <div>
                     <div id="elite-status-label" class="status-badge">STANDARD ACCOUNT</div>
@@ -323,6 +324,7 @@
         let moduleCooldowns = {}; 
         let lockRefreshInterval = null;
         let notifiedModules = new Set(); 
+        let isPhotoSet = false;
 
         // --- Custom Alert System (Modal) ---
         function showModal(title, text, type = 'confirm', onConfirm = null) {
@@ -419,7 +421,8 @@
                     lastActive: Date.now(),
                     testsTaken: 0,
                     avgAccuracy: 0,
-                    nameEdited: false
+                    nameEdited: false,
+                    photoLocked: false
                 });
             }
         }
@@ -433,13 +436,18 @@
                 const editIcon = document.getElementById('name-edit-icon');
                 if (d.nameEdited) editIcon.classList.add('hidden');
                 else editIcon.classList.remove('hidden');
+                
                 const initialBox = document.getElementById('user-initial');
+                isPhotoSet = d.photoLocked || !!d.profilePic;
+
                 if (d.profilePic) {
                     initialBox.style.backgroundImage = `url(${d.profilePic})`;
                     initialBox.innerText = "";
+                    initialBox.classList.add('no-click');
                 } else {
                     initialBox.style.backgroundImage = "none";
                     initialBox.innerText = d.name[0];
+                    initialBox.classList.remove('no-click');
                 }
                 document.getElementById('focus-toggle').checked = d.focusedMode;
                 document.body.classList.toggle('focused-mode', d.focusedMode);
@@ -608,12 +616,26 @@
             });
         }
 
+        function handleProfileClick() {
+            if (isPhotoSet) {
+                showModal("LOCKED", "Your terminal avatar is permanently registered and cannot be changed.", "alert");
+            } else {
+                showModal("UPLOAD AVATAR", "You can only set your profile photo ONCE. Make sure it's the correct one. Proceed?", "confirm", () => {
+                    document.getElementById('profile-upload').click();
+                });
+            }
+        }
+
         function uploadProfilePic(input) {
+            if (isPhotoSet) return;
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = e => {
-                    db.ref(`students/${auth.currentUser.uid}`).update({ profilePic: e.target.result })
-                    .then(() => showToast("Avatar Synchronized", "image"));
+                    db.ref(`students/${auth.currentUser.uid}`).update({ 
+                        profilePic: e.target.result,
+                        photoLocked: true 
+                    })
+                    .then(() => showToast("Avatar Permanently Synchronized", "image"));
                 };
                 reader.readAsDataURL(input.files[0]);
             }
