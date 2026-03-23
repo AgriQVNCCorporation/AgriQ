@@ -49,6 +49,12 @@
             --border: #e2e8f0;
         }
 
+        /* Combined Elite + Focus adjustment */
+        body.elite-mode.focused-mode {
+            --primary: #d4af37; /* A more readable gold for light mode */
+            --border: #cbd5e1;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
@@ -283,6 +289,11 @@
                         const existingCrown = document.getElementById('frame-crown');
                         if(existingCrown) existingCrown.remove();
 
+                        // THEME LOGIC START
+                        // Reset classes first
+                        document.body.classList.remove('elite-mode', 'focused-mode');
+
+                        // Check for Elite Status
                         if (myRank > 0 && myRank <= 3) {
                             document.body.classList.add('elite-mode');
                             rankFrame.className = 'conqueror-frame';
@@ -292,8 +303,14 @@
                             profContainer.appendChild(crown);
                         } else {
                             rankFrame.className = 'normal-frame';
-                            if(userData.focusedMode) document.body.classList.add('focused-mode');
                         }
+
+                        // Apply Focus Mode independently (Elite users can also have Focus mode active)
+                        if(userData.focusedMode) {
+                            document.body.classList.add('focused-mode');
+                        }
+                        // THEME LOGIC END
+
                         lucide.createIcons();
                     });
                 }
@@ -398,7 +415,7 @@
             isSubmitting = true;
             clearInterval(timer);
             let score = 0;
-            const now = Date.now(); // Numerical timestamp for cooldown check
+            const now = Date.now(); 
             
             const details = questions.map((q, i) => {
                 const userAns = userChoices[i] || "SKIPPED";
@@ -417,12 +434,8 @@
                 date: new Date().toISOString()
             };
 
-            // Push to Firebase Leaderboard
             await db.ref('leaderboard').push(resultData);
-
-            // Save locally for analysis
             localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
-            
             if(auth.currentUser) await db.ref(`live_sessions/${auth.currentUser.uid}`).remove();
             window.location.href = 'analysis.html';
         }
