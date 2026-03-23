@@ -31,6 +31,15 @@
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
+        body.elite-mode {
+            --primary: #ffcc00;
+            --primary-glow: rgba(255, 204, 0, 0.6);
+            --bg: #050500;
+            --surface: #0f0e0a;
+            --text-main: #fffdf0;
+            --border: #443300;
+        }
+
         body.focused-mode {
             --primary: #00aaff;
             --primary-glow: rgba(0, 170, 255, 0.3);
@@ -55,7 +64,6 @@
             transition: 0.5s ease; 
         }
 
-        /* --- Sync Preloader --- */
         #analysis-loader {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -75,7 +83,36 @@
             position: sticky; top: 0; z-index: 100;
         }
         
-        .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .profile-container { position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+        
+        #user-initial {
+            width: 32px; height: 32px; background: var(--surface); border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 900; color: var(--primary); font-size: 14px;
+            background-size: cover; background-position: center;
+            position: relative; z-index: 2; border: 2px solid var(--bg);
+        }
+
+        .conqueror-frame {
+            position: absolute; inset: 0; border-radius: 12px;
+            background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fcf6ba 75%, #aa771c 100%);
+            background-size: 400% 400%; animation: goldShine 3s linear infinite; z-index: 1;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .normal-frame { position: absolute; inset: 2px; border-radius: 10px; border: 1.5px solid var(--border); z-index: 1; }
+
+        .conqueror-crown {
+            position: absolute; top: -8px; right: -4px; z-index: 10;
+            filter: drop-shadow(0 0 3px rgba(255, 204, 0, 0.8));
+            color: #ffcc00; transform: rotate(15deg);
+        }
+
+        @keyframes goldShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .brand { font-weight: 900; font-size: 16px; letter-spacing: -0.5px; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
         .header-actions { display: flex; align-items: center; gap: 10px; }
@@ -86,7 +123,6 @@
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
-        /* --- Hero Stats --- */
         .stat-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .stat-card { 
             background: var(--surface); border: 1.5px solid var(--border); 
@@ -96,7 +132,6 @@
         .stat-val { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; display: block; color: var(--primary); }
         .stat-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
 
-        /* --- Analysis Cards --- */
         .analysis-card {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: 28px; padding: 24px; margin-bottom: 16px;
@@ -120,7 +155,6 @@
         }
         .data-label { font-family: 'JetBrains Mono'; font-size: 9px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
 
-        /* --- Action Controls --- */
         .btn-group { margin-top: 30px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
         .btn-action { 
             padding: 20px; border-radius: 22px; border: none; font-weight: 900; 
@@ -131,9 +165,7 @@
         .btn-action.outline { background: var(--glass); border: 1px solid var(--border); color: var(--text-main); }
         .btn-action:active { transform: scale(0.98); }
 
-        footer {
-            padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); background: var(--surface);
-        }
+        footer { padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); background: var(--surface); }
         .copy-text { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; font-weight: 800; }
     </style>
 </head>
@@ -145,7 +177,13 @@
     </div>
 
     <header>
-        <div class="brand">AgriQ PRO <span>ANALYSIS</span></div>
+        <div class="header-left">
+            <div class="profile-container" id="profile-container">
+                <div id="rank-frame" class="normal-frame"></div>
+                <div id="user-initial">U</div>
+            </div>
+            <div class="brand">AgriQ PRO <span>REPORT</span></div>
+        </div>
         <div class="header-actions">
             <button class="icon-btn" onclick="window.location.href='leaderboard.html'">
                 <i data-lucide="trophy" size="18"></i>
@@ -208,17 +246,54 @@
         auth.onAuthStateChanged(async user => {
             if (!user) return window.location.href = 'index.html';
             
-            const snap = await db.ref(`students/${user.uid}`).once('value');
-            const userData = snap.val();
-            if(userData) {
-                document.getElementById('user-tag').innerText = userData.name.toUpperCase();
-                if(userData.focusedMode) document.body.classList.add('focused-mode');
-            }
+            db.ref(`students/${user.uid}`).on('value', async snap => {
+                const userData = snap.val();
+                if(userData) {
+                    document.getElementById('user-tag').innerText = userData.name.toUpperCase();
+                    
+                    const initialBox = document.getElementById('user-initial');
+                    if (userData.profilePic) {
+                        initialBox.style.backgroundImage = `url(${userData.profilePic})`;
+                        initialBox.innerText = "";
+                    } else {
+                        initialBox.style.backgroundImage = "none";
+                        initialBox.innerText = userData.name[0];
+                    }
 
-            loadStoredAnalysis(user.uid, userData?.name || "STUDENT");
+                    const lbSnap = await db.ref('leaderboard').once('value');
+                    const aggregated = {};
+                    lbSnap.forEach(c => {
+                        const e = c.val();
+                        if(!aggregated[e.uid]) aggregated[e.uid] = 0;
+                        aggregated[e.uid] += (parseInt(e.score) || 0);
+                    });
+                    const lbArr = Object.entries(aggregated).sort((a,b) => b[1]-a[1]);
+                    const myRank = lbArr.findIndex(x => x[0] === user.uid) + 1;
+
+                    const rankFrame = document.getElementById('rank-frame');
+                    const profContainer = document.getElementById('profile-container');
+                    const existingCrown = document.getElementById('frame-crown');
+                    if(existingCrown) existingCrown.remove();
+
+                    if (myRank > 0 && myRank <= 3) {
+                        document.body.classList.add('elite-mode');
+                        rankFrame.className = 'conqueror-frame';
+                        const crown = document.createElement('div');
+                        crown.id = 'frame-crown';
+                        crown.innerHTML = `<i data-lucide="crown" size="12" class="conqueror-crown"></i>`;
+                        profContainer.appendChild(crown);
+                    } else {
+                        rankFrame.className = 'normal-frame';
+                        if(userData.focusedMode) document.body.classList.add('focused-mode');
+                    }
+                    if(window.lucide) lucide.createIcons();
+                }
+            });
+
+            loadStoredAnalysis(user.uid);
         });
 
-        async function loadStoredAnalysis(uid, studentName) {
+        async function loadStoredAnalysis(uid) {
             const resultData = JSON.parse(localStorage.getItem('agriq_last_result'));
             
             if (!resultData) {
@@ -260,31 +335,31 @@
             });
 
             try {
-                const sessionID = Date.now();
-                await db.ref(`leaderboard/${uid}_${sessionID}`).set({
+                // Ensure we use the exact timestamp sent from test.html for the database key
+                const sessionKey = resultData.timestamp || Date.now();
+                const studentSnap = await db.ref(`students/${uid}`).once('value');
+                const sName = studentSnap.val()?.name || "STUDENT";
+
+                // Save data to Firebase Leaderboard using consistent keys
+                await db.ref(`leaderboard/${uid}_${sessionKey}`).set({
                     uid: uid,
-                    name: studentName,
+                    name: sName,
                     score: resultData.score,
                     total: resultData.total,
                     accuracy: resultData.accuracy,
                     module: resultData.module,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                    timestamp: sessionKey,
+                    date: resultData.date || new Date().toISOString()
                 });
 
-                const studentRef = db.ref(`students/${uid}`);
-                const studentSnap = await studentRef.once('value');
-                const currentData = studentSnap.val();
-                
-                if (currentData) {
-                    await studentRef.update({
-                        testsTaken: (currentData.testsTaken || 0) + 1
-                    });
-                }
+                // Update the student's personal test count
+                await db.ref(`students/${uid}`).update({
+                    testsTaken: firebase.database.ServerValue.increment(1)
+                });
             } catch (error) {
                 console.error("Sync Failed", error);
             }
 
-            if(window.lucide) lucide.createIcons();
             setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 1200);
         }
     </script>
