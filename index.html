@@ -360,9 +360,7 @@
         const auth = firebase.auth();
         const db = firebase.database();
         let isLoginMode = true;
-        let moduleCooldowns = {}; 
         let lockRefreshInterval = null;
-        let notifiedModules = new Set(); 
         let isPhotoSet = false;
 
         function showModal(title, text, type = 'confirm', onConfirm = null) {
@@ -399,7 +397,6 @@
             const screenAuth = document.getElementById('screen-auth');
             const screenDash = document.getElementById('screen-dash');
             if (user) {
-                // Persistent Focus Mode Logic
                 const userRef = db.ref(`students/${user.uid}`);
                 userRef.once('value').then(snap => {
                     if (snap.exists() && snap.val().focusedMode) {
@@ -415,7 +412,7 @@
                 document.getElementById('logout-btn').classList.remove('hidden');
                 
                 if(lockRefreshInterval) clearInterval(lockRefreshInterval);
-                lockRefreshInterval = setInterval(checkModuleLock, 60000);
+                lockRefreshInterval = setInterval(checkModuleLock, 30000); // Check lock every 30s
             } else {
                 screenDash.classList.add('hidden');
                 screenAuth.classList.remove('hidden');
@@ -471,7 +468,6 @@
                     initialBox.classList.remove('no-click');
                 }
                 
-                // Keep toggle synced with DB
                 document.getElementById('focus-toggle').checked = d.focusedMode;
                 document.body.classList.toggle('focused-mode', d.focusedMode);
                 calculateStats(user.uid);
@@ -494,7 +490,6 @@
             db.ref('leaderboard').on('value', (snap) => {
                 const aggregated = {};
                 let userTotalAcc = 0, userCount = 0;
-                moduleCooldowns = {};
 
                 snap.forEach(child => {
                     const entry = child.val();
@@ -532,6 +527,70 @@
             });
         }
 
+        // --- MODULE LOCK LOGIC ---
+        function formatTimeLeft(ms) {
+            const hours = Math.floor(ms / (1000 * 60 * 60));
+            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            return `${hours}h ${minutes}m`;
+        }
+
+        async function checkModuleLock() {
+            const module = document.getElementById('module-selector').value;
+            const startBtn = document.getElementById('start-btn');
+            const user = auth.currentUser;
+
+            if (!module || !user) {
+                startBtn.disabled = false;
+                startBtn.innerHTML = `<i data-lucide="play" fill="currentColor"></i> START TEST`;
+                lucide.createIcons();
+                return false;
+            }
+
+            const lockRef = db.ref(`module_locks/${user.uid}/${module}`);
+            const snap = await lockRef.once('value');
+
+            if (snap.exists()) {
+                const lastCompletion = snap.val().timestamp;
+                const cooldown = 12 * 60 * 60 * 1000; // 12 Hours
+                const now = Date.now();
+                const timePassed = now - lastCompletion;
+
+                if (timePassed < cooldown) {
+                    const timeLeft = cooldown - timePassed;
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = `<i data-lucide="lock"></i> LOCKED (${formatTimeLeft(timeLeft)})`;
+                    lucide.createIcons();
+                    return true;
+                }
+            }
+
+            startBtn.disabled = false;
+            startBtn.innerHTML = `<i data-lucide="play" fill="currentColor"></i> START TEST`;
+            lucide.createIcons();
+            return false;
+        }
+
+        function handleModuleSelection() {
+            const m = document.getElementById('module-selector').value;
+            if(m) {
+                showToast(`Selected: ${m.toUpperCase().replace(/_/g, ' ')}`, 'layers');
+                checkModuleLock();
+            }
+        }
+
+        async function startTest() {
+            const m = document.getElementById('module-selector').value;
+            if(!m) return showModal("ERROR", "Please select a terminal module first.", "alert");
+            
+            const isLocked = await checkModuleLock();
+            if(isLocked) {
+                showModal("LOCKED", "This module is in cooldown. Please wait 12 hours between attempts.", "alert");
+                return;
+            }
+            window.location.href = `test.html?mod=${encodeURIComponent(m)}`;
+        }
+        // --- END LOCK LOGIC ---
+
         function toggleFocusedMode() { 
             const state = document.getElementById('focus-toggle').checked;
             document.body.classList.toggle('focused-mode', state);
@@ -559,20 +618,6 @@
             isLoginMode = !isLoginMode;
             document.getElementById('auth-btn').innerText = isLoginMode ? "SIGN IN" : "CREATE ACCOUNT";
             document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Register New Account" : "Back to Login";
-        }
-
-        function handleModuleSelection() {
-            const m = document.getElementById('module-selector').value;
-            if(m) showToast(`Selected: ${m.toUpperCase().replace(/_/g, ' ')}`, 'layers');
-            checkModuleLock();
-        }
-
-        function checkModuleLock() { /* Lock logic remains consistent */ }
-
-        function startTest() {
-            const m = document.getElementById('module-selector').value;
-            if(!m) return showModal("ERROR", "Please select a terminal module first.", "alert");
-            window.location.href = `test.html?mod=${encodeURIComponent(m)}`;
         }
 
         function confirmLogout() { 
