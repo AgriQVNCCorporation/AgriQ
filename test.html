@@ -320,36 +320,41 @@
 
         async function loadQuestions() {
             try {
-                // FIXED: Direct access to the path where your admin.html pushes data
-                const snap = await db.ref(`subjects/${moduleKey}`).once('value');
-                const moduleData = snap.val();
+                const snapNew = await db.ref(`subjects/${moduleKey}`).once('value');
+                let rawData = null;
                 
-                if(!moduleData || !moduleData.questions) {
-                    showModal("TERMINAL ERROR", "No data found in this module.", "alert", () => window.location.href = 'index.html');
+                if(snapNew.exists()) {
+                    const moduleData = snapNew.val();
+                    rawData = moduleData.questions;
+                    if(moduleData.config && moduleData.config.timeLimit) {
+                        totalSecondsRemaining = moduleData.config.timeLimit;
+                    }
+                } else {
+                    const snapOld = await db.ref(`questions/${moduleKey}`).once('value');
+                    if(snapOld.exists()){
+                        const oldData = snapOld.val();
+                        rawData = oldData.questions || oldData.data || oldData;
+                    }
+                }
+
+                if(!rawData || (Array.isArray(rawData) && rawData.length === 0)) {
+                    showModal("TERMINAL ERROR", "No module data found in legacy or new systems.", "alert", () => window.location.href = 'index.html');
                     return;
                 }
 
-                // Handle custom time limit if set in admin
-                if(moduleData.config && moduleData.config.timeLimit) {
-                    totalSecondsRemaining = moduleData.config.timeLimit;
-                }
-
-                setupQuestions(moduleData.questions);
+                setupQuestions(rawData);
             } catch (e) { 
                 console.error(e);
                 showModal("SYNC ERROR", "Connection failed.", "alert"); 
             }
         }
 
-        function setupQuestions(dataArray) {
-            // Filter out any null entries and ensure question content exists
+        function setupQuestions(dataInput) {
+            let dataArray = Array.isArray(dataInput) ? dataInput : Object.values(dataInput);
             let rawQuestions = dataArray.filter(q => q && (q.q || q.question));
-            
-            // Randomize the order of questions for active recall
             rawQuestions = shuffleArray(rawQuestions);
             
             questions = rawQuestions.map(q => {
-                // Extract options regardless of key style (A/B/C/D or options array)
                 let options = q.options || [q.a, q.b, q.c, q.d].filter(Boolean);
                 if (options.length === 0) options = [q.A, q.B, q.C, q.D].filter(Boolean);
 
@@ -431,13 +436,21 @@
             showModal("SUBMISSION", "Finalize responses and end terminal session?", "confirm", processFinalResults); 
         }
 
+        // --- UPDATED SYNCHRONIZED LOGIC ---
         async function processFinalResults() {
             if(isSubmitting) return;
             isSubmitting = true;
             clearInterval(timer);
+
+            const user = auth.currentUser;
+            if(!user) {
+                alert("Session lost. Please log in again.");
+                return;
+            }
+
+            // 1. Calculate Score
             let score = 0;
             const now = Date.now(); 
-            
             const details = questions.map((q, i) => {
                 const userAns = userChoices[i] || "SKIPPED";
                 const isCorrect = userAns === q.actualCorrect;
@@ -450,7 +463,7 @@
             });
 
             const resultData = { 
-                uid: auth.currentUser.uid,
+                uid: user.uid,
                 score, 
                 total: questions.length, 
                 accuracy: Math.round((score / questions.length) * 100),
@@ -459,9 +472,32 @@
                 date: new Date().toISOString()
             };
 
-            await db.ref('leaderboard').push(resultData);
-            localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
-            window.location.href = 'analysis.html';
+            try {
+                // 2. Execute both writes and WAIT for them to finish
+                // Lock module for 24h
+                const lockPromise = moduleKey ? 
+                    db.ref(`module_locks/${user.uid}/${moduleKey}`).set({ 
+                        timestamp: firebase.database.ServerValue.TIMESTAMP 
+                    }) : 
+                    Promise.resolve();
+
+                // Save score to leaderboard
+                const leadPromise = db.ref('leaderboard').push(resultData);
+
+                // Wait for BOTH before proceeding
+                await Promise.all([lockPromise, leadPromise]);
+
+                // 3. Save to local storage for analysis
+                localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
+
+                // 4. Redirect
+                window.location.href = 'analysis.html';
+
+            } catch (error) {
+                console.error("Critical Sync Error:", error);
+                alert("Failed to save results. Check your connection.");
+                isSubmitting = false; 
+            }
         }
 
         function editProfileName() {
