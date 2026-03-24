@@ -47,12 +47,13 @@
             --text-main: #001a2c;
             --text-dim: #64748b;
             --border: #e2e8f0;
+            --glass: rgba(0, 170, 255, 0.05);
         }
 
-        /* Combined Elite + Focus adjustment */
         body.elite-mode.focused-mode {
-            --primary: #d4af37; /* A more readable gold for light mode */
+            --primary: #d4af37;
             --border: #cbd5e1;
+            --bg: #f8fafc;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -123,7 +124,7 @@
         .edit-name-btn { cursor: pointer; color: var(--text-dim); transition: 0.2s; margin-left: 5px; }
         .edit-name-btn:hover { color: var(--primary); }
 
-        main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 180px; }
+        main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 180px; overflow-y: auto; }
 
         .marker-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 20px 0; scrollbar-width: none; }
         .marker-scroll::-webkit-scrollbar { display: none; }
@@ -196,7 +197,7 @@
         <div id="q-timer" class="timer-badge">00:00</div>
     </header>
 
-    <main>
+    <main id="main-content">
         <div id="marker-grid" class="marker-scroll"></div>
         <div class="q-card">
             <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6;">Synchronizing...</div>
@@ -256,11 +257,19 @@
         auth.onAuthStateChanged(async user => {
             if (!user) return window.location.href = 'index.html';
             
+            // IMMEDIATE PRE-FETCH FOR THEME (Like index page)
+            const userRef = db.ref(`students/${user.uid}`);
+            userRef.once('value').then(snap => {
+                const userData = snap.val();
+                if (userData && userData.focusedMode) {
+                    document.body.classList.add('focused-mode');
+                }
+            });
+
             db.ref(`students/${user.uid}`).on('value', snap => {
                 const userData = snap.val();
                 if (userData) {
                     document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
-                    
                     const editIcon = document.getElementById('name-edit-icon');
                     if (userData.nameEdited) editIcon.classList.add('hidden');
                     else editIcon.classList.remove('hidden');
@@ -289,11 +298,9 @@
                         const existingCrown = document.getElementById('frame-crown');
                         if(existingCrown) existingCrown.remove();
 
-                        // THEME LOGIC START
-                        // Reset classes first
-                        document.body.classList.remove('elite-mode', 'focused-mode');
+                        // INDEPENDENT THEME LOGIC
+                        document.body.classList.remove('elite-mode');
 
-                        // Check for Elite Status
                         if (myRank > 0 && myRank <= 3) {
                             document.body.classList.add('elite-mode');
                             rankFrame.className = 'conqueror-frame';
@@ -304,12 +311,9 @@
                         } else {
                             rankFrame.className = 'normal-frame';
                         }
-
-                        // Apply Focus Mode independently (Elite users can also have Focus mode active)
-                        if(userData.focusedMode) {
-                            document.body.classList.add('focused-mode');
-                        }
-                        // THEME LOGIC END
+                        
+                        // Focus Mode is handled by the pre-fetch and data listener
+                        document.body.classList.toggle('focused-mode', !!userData.focusedMode);
 
                         lucide.createIcons();
                     });
@@ -353,7 +357,10 @@
                 return { ...q, shuffledOpts: shuffleArray([...options]), actualCorrect: q.answer || q.ans };
             });
             initUI();
-            setTimeout(() => { document.getElementById('app-loader').classList.add('fade-out'); startGlobalTimer(); }, 1200);
+            setTimeout(() => { 
+                document.getElementById('app-loader').classList.add('fade-out'); 
+                startGlobalTimer(); 
+            }, 1200);
         }
 
         function initUI() {
