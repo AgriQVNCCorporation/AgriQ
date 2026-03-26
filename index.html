@@ -17,38 +17,48 @@
 
     <style>
         :root {
-            --primary: #ff3b3b;
-            --primary-glow: rgba(255, 59, 59, 0.4);
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --text-main: #ffffff;
-            --text-dim: #a1a1aa;
-            --border: #222222;
+            /* Cool Blue Theme Base */
+            --primary: #00d2ff;
+            --primary-glow: rgba(0, 210, 255, 0.4);
+            --bg: #020617; /* Very Deep Navy */
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #1e293b;
             --glass: rgba(255, 255, 255, 0.03);
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            --rank-gradient: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+            --rank-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
         }
 
+        /* Top 3 Rank - Deep Space Cyan/Indigo Mode */
         body.elite-mode {
-            --primary: #ffcc00;
-            --primary-glow: rgba(255, 204, 0, 0.6);
-            --bg: #050500;
-            --surface: #0f0e0a;
-            --text-main: #fffdf0;
-            --border: #443300;
-            --rank-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            --primary: #22d3ee;
+            --primary-glow: rgba(34, 211, 238, 0.6);
+            --bg: #010409;
+            --surface: #0d1117;
+            --text-main: #e6edf3;
+            --border: #30363d;
+            --rank-gradient: linear-gradient(135deg, #0891b2, #0e7490, #1e40af, #3b82f6);
+            background-size: 400% 400%;
+            animation: nebulaFlow 10s ease infinite;
+        }
+
+        @keyframes nebulaFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         body.focused-mode {
-            --primary: #00aaff;
-            --primary-glow: rgba(0, 170, 255, 0.3);
-            --bg: #f0f9ff;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.3);
+            --bg: #f8fafc;
             --surface: #ffffff;
-            --text-main: #001a2c;
+            --text-main: #0f172a;
             --text-dim: #64748b;
             --border: #e2e8f0;
-            --glass: rgba(0, 170, 255, 0.05);
-            --rank-gradient: linear-gradient(135deg, #00aaff 0%, #0077ff 100%);
+            --glass: rgba(59, 130, 246, 0.05);
+            --rank-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -68,7 +78,7 @@
         .app-ready header, .app-ready main, .app-ready footer { opacity: 1; visibility: visible; }
 
         #app-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
+            position: fixed; inset: 0; background: #020617; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -100,13 +110,13 @@
             background: var(--glass); color: var(--text-main); font-weight: 600; transition: 0.2s; outline: none;
             appearance: none;
         }
-        input:focus { border-color: var(--primary); }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
 
         .btn-primary { 
-            width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--primary); color: #fff; 
+            width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--primary); color: #000; 
             font-weight: 900; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-primary:disabled { background: #1a1a1a; color: #666; cursor: not-allowed; border: 1px solid #222; opacity: 0.7; }
+        .btn-primary:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.7; }
 
         .btn-social {
             width: 100%; padding: 16px; border-radius: 18px; border: 1px solid var(--border);
@@ -135,8 +145,8 @@
 
         .conqueror-frame {
             position: absolute; inset: 0; border-radius: 20px;
-            background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fcf6ba 75%, #aa771c 100%);
-            background-size: 400% 400%; animation: goldShine 3s linear infinite; z-index: 1;
+            background: linear-gradient(135deg, #22d3ee, #3b82f6, #0ea5e9, #67e8f9);
+            background-size: 400% 400%; animation: blueShine 3s linear infinite; z-index: 1;
             box-shadow: 0 0 20px var(--primary-glow);
         }
 
@@ -144,15 +154,11 @@
 
         .conqueror-crown {
             position: absolute; top: -14px; right: -5px; z-index: 10;
-            filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.8));
-            color: #ffcc00; transform: rotate(15deg);
+            filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.8));
+            color: var(--primary); transform: rotate(15deg);
         }
 
-        @keyframes goldShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-        .name-wrapper { display: flex; align-items: center; gap: 8px; }
-        .edit-name-btn { cursor: pointer; color: var(--text-dim); transition: 0.2s; }
-        .edit-name-btn:hover { color: var(--primary); }
+        @keyframes blueShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
         .progression-bar {
             background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 12px; margin-bottom: 18px;
@@ -168,34 +174,19 @@
         .stat-val { display: block; font-size: 20px; font-weight: 900; color: var(--primary); }
         .stat-label { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
 
-        .status-badge { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.1); color: var(--text-dim); display: inline-block; margin-bottom: 8px; }
+        .status-badge { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; background: rgba(0, 210, 255, 0.1); color: var(--primary); display: inline-block; margin-bottom: 8px; border: 1px solid rgba(0, 210, 255, 0.2); }
 
         .toggle-container { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: var(--glass); border-radius: 20px; margin-bottom: 18px; border: 1px solid var(--border); }
         .switch { position: relative; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #1e293b; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- Sliding Info Window --- */
-        #info-drawer {
-            position: fixed; bottom: -100%; left: 0; right: 0;
-            background: var(--surface); border-top: 2px solid var(--border);
-            padding: 24px; border-top-left-radius: 32px; border-top-right-radius: 32px;
-            transition: 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 2000;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
-        }
-        #info-drawer.open { bottom: 0; }
-        .drawer-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
-        .drawer-item { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; }
-        .drawer-item i { color: var(--primary); margin-top: 2px; }
-        .drawer-item div p { margin: 0; font-size: 11px; color: var(--text-dim); line-height: 1.4; }
-        .drawer-item div h4 { margin: 0 0 4px 0; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-
         #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(10px); }
         .modal-content { background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px; border-radius: 28px; padding: 30px; text-align: center; transform: scale(0.9); transition: 0.3s; }
-        #custom-modal.active .modal-content { transform: scale(1); }
+        #custom-modal.active .modal-content { transform: scale(1); border-color: var(--primary); }
         
         #toast-container {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -226,7 +217,6 @@
     </div>
 
     <div id="toast-container"></div>
-
     <input type="file" id="profile-upload" accept="image/*" class="hidden" onchange="uploadProfilePic(this)">
 
     <div id="custom-modal">
@@ -235,32 +225,7 @@
             <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:25px;">Message</div>
             <div class="modal-actions" style="display:flex; gap:12px;">
                 <button class="modal-btn" id="modal-cancel-btn" style="flex:1; padding:14px; border-radius:14px; border:none; background:var(--border); color:var(--text-dim); font-weight:800; cursor:pointer;">CANCEL</button>
-                <button class="modal-btn" id="modal-confirm-btn" style="flex:1; padding:14px; border-radius:14px; border:none; background:var(--primary); color:white; font-weight:900; cursor:pointer;">CONFIRM</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="info-drawer" onclick="this.classList.remove('open')">
-        <div class="drawer-handle"></div>
-        <div class="drawer-item">
-            <i data-lucide="award"></i>
-            <div>
-                <h4>Elite Mode</h4>
-                <p>Exclusive rewards and prestige styling unlocked for the Top 3 global champions.</p>
-            </div>
-        </div>
-        <div class="drawer-item">
-            <i data-lucide="zap"></i>
-            <div>
-                <h4>Focused Mode</h4>
-                <p>High-contrast, distraction-free environment optimized for long study sessions.</p>
-            </div>
-        </div>
-        <div class="drawer-item">
-            <i data-lucide="moon"></i>
-            <div>
-                <h4>Dark Mode</h4>
-                <p>OLED-optimized interface for reduced eye strain and enhanced terminal feel.</p>
+                <button class="modal-btn" id="modal-confirm-btn" style="flex:1; padding:14px; border-radius:14px; border:none; background:var(--primary); color:#000; font-weight:900; cursor:pointer;">CONFIRM</button>
             </div>
         </div>
     </div>
@@ -268,9 +233,7 @@
     <header id="main-header">
         <div class="brand">AGRI<span>Q</span> PRO</div>
         <div class="header-actions">
-            <i data-lucide="info" class="icon-btn" onclick="document.getElementById('info-drawer').classList.add('open')"></i>
-            <a href="admin.html" class="icon-btn"><i data-lucide="shield-check" size="20"></i></a>
-            <a href="leaderboard.html" class="icon-btn"><i data-lucide="trophy" size="20"></i></a>
+            <a href="admin.html" class="icon-btn"><i data-lucide="trophy" size="20"></i></a>
             <i data-lucide="log-out" id="logout-btn" class="icon-btn hidden" onclick="confirmLogout()"></i>
         </div>
     </header>
@@ -283,7 +246,6 @@
                 <div class="input-group"><i data-lucide="lock"></i><input type="password" id="password" placeholder="Password" required></div>
                 <button type="submit" class="btn-primary" id="auth-btn">SIGN IN <i data-lucide="arrow-right"></i></button>
             </form>
-            <div style="margin: 20px 0; text-align: center; color: var(--text-dim); font-size: 10px; font-weight: 900; letter-spacing: 1px;">SOCIAL GATEWAY</div>
             <button class="btn-social" onclick="handleSocialLogin()">
                 <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="16"> Google Account
             </button>
@@ -300,10 +262,7 @@
                 </div>
                 <div>
                     <div id="elite-status-label" class="status-badge">STANDARD ACCOUNT</div>
-                    <div class="name-wrapper">
-                        <h2 id="user-display-name" style="margin:0; font-weight:900; font-size:18px;">STUDENT</h2>
-                        <i data-lucide="edit-3" id="name-edit-icon" size="14" class="edit-name-btn hidden" onclick="editProfileName()"></i>
-                    </div>
+                    <div class="name-wrapper"><h2 id="user-display-name" style="margin:0; font-weight:900; font-size:18px;">STUDENT</h2></div>
                 </div>
             </div>
 
@@ -315,13 +274,13 @@
                         <span id="total-points-display" style="font-size: 15px; font-weight: 900; color: var(--primary);">0 PTS</span>
                     </div>
                 </div>
-                <i data-lucide="crown" size="40"></i>
+                <i data-lucide="award" size="40"></i>
             </div>
 
             <div class="progression-bar">
                 <div class="prog-stat"><i data-lucide="zap" size="14"></i><span class="prog-label">Streak</span><span class="prog-val" id="streak-val">1 Day</span></div>
                 <div class="prog-stat" style="border-left:1px solid var(--border); border-right:1px solid var(--border);"><i data-lucide="trending-up" size="14"></i><span class="prog-label">Level</span><span class="prog-val" id="level-val">Lvl 1</span></div>
-                <div class="prog-stat"><i data-lucide="award" size="14"></i><span class="prog-label">Popularity</span><span class="prog-val" id="pop-val">Rookie</span></div>
+                <div class="prog-stat"><i data-lucide="star" size="14"></i><span class="prog-label">Popularity</span><span class="prog-val" id="pop-val">Rookie</span></div>
             </div>
 
             <div class="stats-grid">
@@ -331,7 +290,7 @@
 
             <div class="input-group">
                 <i data-lucide="layers"></i>
-                <select id="module-selector" onchange="handleModuleSelection()"><option value="">SELECT SUBJECTS</option></select>
+                <select id="module-selector"><option value="">SELECT SUBJECTS</option></select>
             </div>
 
             <button class="btn-primary" id="start-btn" onclick="startTest()" style="padding:20px; font-size:15px; margin-bottom: 18px;"><i data-lucide="play" fill="currentColor"></i> START TEST</button>
@@ -360,7 +319,6 @@
         const auth = firebase.auth();
         const db = firebase.database();
         let isLoginMode = true;
-        let lockRefreshInterval = null;
         let isPhotoSet = false;
 
         function showModal(title, text, type = 'confirm', onConfirm = null) {
@@ -397,52 +355,36 @@
             const screenAuth = document.getElementById('screen-auth');
             const screenDash = document.getElementById('screen-dash');
             if (user) {
-                const userRef = db.ref(`students/${user.uid}`);
-                userRef.once('value').then(snap => {
-                    if (snap.exists() && snap.val().focusedMode) {
-                        document.body.classList.add('focused-mode');
-                        document.getElementById('focus-toggle').checked = true;
-                    }
-                });
-                
                 screenAuth.classList.add('hidden');
                 await syncUser(user);
                 setupDash(user);
                 screenDash.classList.remove('hidden');
                 document.getElementById('logout-btn').classList.remove('hidden');
-                
-                if(lockRefreshInterval) clearInterval(lockRefreshInterval);
-                lockRefreshInterval = setInterval(checkModuleLock, 30000); // Check lock every 30s
             } else {
                 screenDash.classList.add('hidden');
                 screenAuth.classList.remove('hidden');
                 document.getElementById('logout-btn').classList.add('hidden');
-                document.body.classList.remove('focused-mode');
-                if(lockRefreshInterval) clearInterval(lockRefreshInterval);
             }
             document.body.classList.add('app-ready');
-            setTimeout(() => { 
-                document.getElementById('app-loader').classList.add('fade-out'); 
-                lucide.createIcons(); 
-            }, 800);
+            setTimeout(() => { document.getElementById('app-loader').classList.add('fade-out'); lucide.createIcons(); }, 800);
         });
 
         async function syncUser(user) {
             const ref = db.ref(`students/${user.uid}`);
-            const snap = await ref.once('value');
-            if (!snap.exists()) {
-                await ref.set({
-                    uid: user.uid,
-                    name: (user.displayName || user.email.split('@')[0]).toUpperCase(),
-                    email: user.email,
-                    focusedMode: false,
-                    streak: 1,
-                    lastActive: Date.now(),
-                    testsTaken: 0,
-                    avgAccuracy: 0,
-                    nameEdited: false,
-                    photoLocked: false
-                });
+            try {
+                const snap = await ref.once('value');
+                if (!snap.exists()) {
+                    await ref.set({
+                        uid: user.uid,
+                        name: (user.displayName || user.email.split('@')[0]).toUpperCase(),
+                        email: user.email,
+                        focusedMode: false,
+                        streak: 1, lastActive: Date.now(), testsTaken: 0, avgAccuracy: 0
+                    });
+                }
+            } catch (e) {
+                console.error("Sync Error:", e);
+                showToast("Profile Sync Error", "alert-triangle");
             }
         }
 
@@ -451,23 +393,14 @@
                 const d = snap.val();
                 if(!d) return;
                 document.getElementById('user-display-name').innerText = d.name;
-                const editIcon = document.getElementById('name-edit-icon');
-                if (d.nameEdited) editIcon.classList.add('hidden');
-                else editIcon.classList.remove('hidden');
-                
                 const initialBox = document.getElementById('user-initial');
                 isPhotoSet = d.photoLocked || !!d.profilePic;
-
                 if (d.profilePic) {
                     initialBox.style.backgroundImage = `url(${d.profilePic})`;
                     initialBox.innerText = "";
-                    initialBox.classList.add('no-click');
                 } else {
-                    initialBox.style.backgroundImage = "none";
                     initialBox.innerText = d.name[0];
-                    initialBox.classList.remove('no-click');
                 }
-                
                 document.getElementById('focus-toggle').checked = d.focusedMode;
                 document.body.classList.toggle('focused-mode', d.focusedMode);
                 calculateStats(user.uid);
@@ -487,17 +420,15 @@
         }
 
         function calculateStats(uid) {
-            db.ref('leaderboard').on('value', (snap) => {
+            db.ref('leaderboard').on('value', snap => {
                 const aggregated = {};
                 let userTotalAcc = 0, userCount = 0;
-
                 snap.forEach(child => {
                     const entry = child.val();
                     if (!aggregated[entry.uid]) aggregated[entry.uid] = { score: 0 };
                     aggregated[entry.uid].score += (parseInt(entry.score) || 0);
                     if(entry.uid === uid) { userTotalAcc += (parseFloat(entry.accuracy) || 0); userCount++; }
                 });
-                
                 const lbArray = Object.entries(aggregated).sort((a, b) => b[1].score - a[1].score);
                 const myRank = lbArray.findIndex(x => x[0] === uid) + 1;
                 document.getElementById('rank-val').innerText = myRank > 0 ? myRank : "--";
@@ -506,96 +437,28 @@
                 document.getElementById('tests-taken').innerText = userCount;
 
                 const rankFrame = document.getElementById('rank-frame');
-                const profContainer = document.getElementById('profile-container');
-                const existingCrown = document.getElementById('frame-crown');
-                if (existingCrown) existingCrown.remove();
-
+                const statusBadge = document.getElementById('elite-status-label');
                 if (myRank > 0 && myRank <= 3) {
                     document.body.classList.add('elite-mode');
                     rankFrame.className = 'conqueror-frame';
-                    const crown = document.createElement('div');
-                    crown.id = 'frame-crown';
-                    crown.innerHTML = `<i data-lucide="crown" size="22" class="conqueror-crown"></i>`;
-                    profContainer.appendChild(crown);
-                    document.getElementById('elite-status-label').innerText = "ELITE CHAMPION";
+                    statusBadge.innerText = "CONQUEROR ACCOUNT";
                 } else {
                     document.body.classList.remove('elite-mode');
                     rankFrame.className = 'normal-frame';
-                    document.getElementById('elite-status-label').innerText = "STANDARD ACCOUNT";
+                    statusBadge.innerText = "STANDARD ACCOUNT";
                 }
-                lucide.createIcons();
             });
-        }
-
-        // --- MODULE LOCK LOGIC ---
-        function formatTimeLeft(ms) {
-            const hours = Math.floor(ms / (1000 * 60 * 60));
-            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-            return `${hours}h ${minutes}m`;
-        }
-
-        async function checkModuleLock() {
-            const module = document.getElementById('module-selector').value;
-            const startBtn = document.getElementById('start-btn');
-            const user = auth.currentUser;
-
-            if (!module || !user) {
-                startBtn.disabled = false;
-                startBtn.innerHTML = `<i data-lucide="play" fill="currentColor"></i> START TEST`;
-                lucide.createIcons();
-                return false;
-            }
-
-            const lockRef = db.ref(`module_locks/${user.uid}/${module}`);
-            const snap = await lockRef.once('value');
-
-            if (snap.exists()) {
-                const lastCompletion = snap.val().timestamp;
-                const cooldown = 12 * 60 * 60 * 1000; // 12 Hours
-                const now = Date.now();
-                const timePassed = now - lastCompletion;
-
-                if (timePassed < cooldown) {
-                    const timeLeft = cooldown - timePassed;
-                    startBtn.disabled = true;
-                    startBtn.innerHTML = `<i data-lucide="lock"></i> LOCKED (${formatTimeLeft(timeLeft)})`;
-                    lucide.createIcons();
-                    return true;
-                }
-            }
-
-            startBtn.disabled = false;
-            startBtn.innerHTML = `<i data-lucide="play" fill="currentColor"></i> START TEST`;
-            lucide.createIcons();
-            return false;
-        }
-
-        function handleModuleSelection() {
-            const m = document.getElementById('module-selector').value;
-            if(m) {
-                showToast(`Selected: ${m.toUpperCase().replace(/_/g, ' ')}`, 'layers');
-                checkModuleLock();
-            }
         }
 
         async function startTest() {
             const m = document.getElementById('module-selector').value;
-            if(!m) return showModal("ERROR", "Please select a terminal module first.", "alert");
-            
-            const isLocked = await checkModuleLock();
-            if(isLocked) {
-                showModal("LOCKED", "This module is in cooldown. Please wait 12 hours between attempts.", "alert");
-                return;
-            }
+            if(!m) return showModal("ERROR", "Select a module.", "alert");
             window.location.href = `test.html?mod=${encodeURIComponent(m)}`;
         }
-        // --- END LOCK LOGIC ---
 
         function toggleFocusedMode() { 
             const state = document.getElementById('focus-toggle').checked;
-            document.body.classList.toggle('focused-mode', state);
             db.ref(`students/${auth.currentUser.uid}`).update({ focusedMode: state }); 
-            showToast(state ? "Focus Mode Enabled" : "Standard Mode Restored", "zap");
         }
         
         async function handleAuth(e) {
@@ -604,14 +467,12 @@
             try { 
                 if (isLoginMode) await auth.signInWithEmailAndPassword(email, pass); 
                 else await auth.createUserWithEmailAndPassword(email, pass); 
-                showToast("Session Authorized", "shield-check");
             } catch (err) { showModal("AUTH ERROR", err.message, "alert"); }
         }
 
         async function handleSocialLogin() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            try { await auth.signInWithPopup(provider); showToast("Google Auth Success", "check-circle"); } 
-            catch (err) { if (err.code !== 'auth/popup-closed-by-user') await auth.signInWithRedirect(provider); }
+            try { await auth.signInWithPopup(provider); } catch (err) { await auth.signInWithRedirect(provider); }
         }
 
         function toggleAuthMode() {
@@ -621,40 +482,18 @@
         }
 
         function confirmLogout() { 
-            showModal("LOGOUT", "Terminate current secure session?", "confirm", () => {
-                auth.signOut().then(() => { localStorage.clear(); window.location.reload(); });
-            });
-        }
-
-        function editProfileName() {
-            showModal("PERMANENT IDENTITY", "You can only update your terminal name ONCE. Proceed?", "confirm", () => {
-                const cur = document.getElementById('user-display-name').innerText;
-                const n = prompt("Enter Final Terminal Name:", cur);
-                if (n && n.trim() !== "" && n.toUpperCase() !== cur) {
-                    db.ref(`students/${auth.currentUser.uid}`).update({ name: n.toUpperCase().trim(), nameEdited: true }).then(() => {
-                        location.reload();
-                    });
-                }
-            });
+            showModal("LOGOUT", "Terminate session?", "confirm", () => auth.signOut().then(() => location.reload()));
         }
 
         function handleProfileClick() {
-            if (isPhotoSet) {
-                showModal("LOCKED", "Your terminal avatar is permanently registered.", "alert");
-            } else {
-                showModal("UPLOAD AVATAR", "You can only set your profile photo ONCE. Proceed?", "confirm", () => {
-                    document.getElementById('profile-upload').click();
-                });
-            }
+            if (!isPhotoSet) document.getElementById('profile-upload').click();
         }
 
         function uploadProfilePic(input) {
-            if (isPhotoSet) return;
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = e => {
-                    db.ref(`students/${auth.currentUser.uid}`).update({ profilePic: e.target.result, photoLocked: true })
-                    .then(() => showToast("Avatar Synchronized", "image"));
+                    db.ref(`students/${auth.currentUser.uid}`).update({ profilePic: e.target.result, photoLocked: true });
                 };
                 reader.readAsDataURL(input.files[0]);
             }
