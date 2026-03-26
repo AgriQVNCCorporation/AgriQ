@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f0f9ff">
     <title>AgriQ Pro | Mission Analysis</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
@@ -18,163 +18,133 @@
 
     <style>
         :root {
-            /* Standard Cool Blue Theme */
-            --primary: #00d2ff;
-            --primary-glow: rgba(0, 210, 255, 0.3);
-            --bg: #020617;
-            --surface: #0f172a;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --border: #1e293b;
-            --glass: rgba(255, 255, 255, 0.03);
-            --success: #22c55e;
-            --danger: #ef4444;
-            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        /* Elite Nebula Mode */
-        body.elite-mode {
-            --primary: #22d3ee;
-            --bg: #010409;
-            --surface: #0d1117;
-            background: radial-gradient(circle at top right, #083344, #020617);
-        }
-
-        body.focused-mode {
-            --primary: #3b82f6;
-            --bg: #f8fafc;
+            --primary: #0084ff;
+            --primary-glow: rgba(0, 132, 255, 0.1);
+            --bg: #f0f9ff;
             --surface: #ffffff;
-            --text-main: #0f172a;
+            --text-main: #002d4d;
             --text-dim: #64748b;
             --border: #e2e8f0;
-            --glass: rgba(59, 130, 246, 0.05);
+            --danger: #ef4444;
+            --success: #22c55e;
+            --glass: rgba(255, 255, 255, 0.7);
+            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
             background-color: var(--bg); 
+            background-image: radial-gradient(circle at top right, #e0f2fe, transparent);
             margin: 0; 
             color: var(--text-main); 
             min-height: 100vh; 
             display: flex; 
             flex-direction: column; 
             overflow-x: hidden; 
-            transition: 0.5s ease; 
         }
 
         #analysis-loader {
-            position: fixed; inset: 0; background: #020617; z-index: 9999;
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        #analysis-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+        #analysis-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; transition: 0.6s; }
         
-        .loader-status {
-            font-family: 'JetBrains Mono'; font-size: 10px; color: var(--primary);
-            margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;
-        }
-
         header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
-            background: var(--surface); backdrop-filter: blur(15px);
+            background: var(--glass); backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 100;
         }
-        
-        .header-left { display: flex; align-items: center; gap: 12px; }
 
-        .profile-container { position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
-        
-        #user-initial {
-            width: 34px; height: 34px; background: var(--surface); border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: 900; color: var(--primary); font-size: 14px;
-            background-size: cover; background-position: center;
-            position: relative; z-index: 2; border: 2px solid var(--bg);
+        /* Leaderboard Icon Styling */
+        .icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
         }
-
-        .conqueror-frame {
-            position: absolute; inset: 0; border-radius: 14px;
-            background: linear-gradient(135deg, #22d3ee, #3b82f6, #0ea5e9);
-            background-size: 400% 400%; animation: blueShine 3s linear infinite; z-index: 1;
-        }
-
-        @keyframes blueShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-        .normal-frame { position: absolute; inset: 2px; border-radius: 12px; border: 1.5px solid var(--border); z-index: 1; }
-
-        .brand { font-weight: 900; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
-        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+        .icon-btn:active { transform: scale(0.9); background: var(--primary-glow); }
+        
+        .profile-container { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
         .stat-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .stat-card { 
-            background: var(--surface); border: 1.5px solid var(--border); 
+            background: #fff; border: 1.5px solid var(--border); 
             padding: 22px; border-radius: 28px; text-align: center; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
         }
-        .stat-val { font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; display: block; color: var(--primary); }
-        .stat-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+        .stat-val { font-family: 'JetBrains Mono'; font-size: 30px; font-weight: 900; display: block; color: var(--primary); }
+        .stat-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.2px; }
 
         .analysis-card {
-            background: var(--surface); border: 1.5px solid var(--border);
-            border-radius: 24px; padding: 22px; margin-bottom: 16px;
-            position: relative; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+            background: #fff; border: 1px solid var(--border);
+            border-radius: 24px; padding: 20px; margin-bottom: 16px;
+            position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            animation: slideUp 0.5s ease backwards;
         }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .status-badge { 
-            position: absolute; top: 18px; right: 20px; font-size: 8px; 
-            font-weight: 900; padding: 4px 10px; border-radius: 8px; 
+            position: absolute; top: 15px; right: 15px; font-size: 8px; 
+            font-weight: 900; padding: 4px 10px; border-radius: 50px; 
         }
-        .pass { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
-        .fail { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .pass { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .fail { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 
-        .q-title { font-weight: 700; font-size: 14px; line-height: 1.5; margin-bottom: 15px; padding-right: 70px; }
+        .q-title { font-weight: 700; font-size: 15px; line-height: 1.5; margin-bottom: 15px; padding-right: 60px; color: var(--text-main); }
         
         .data-row { 
-            display: flex; align-items: center; gap: 12px; font-size: 13px; 
-            padding: 12px 16px; background: var(--glass); border-radius: 14px; margin-top: 8px; 
-            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px; font-size: 13px; 
+            padding: 12px; background: var(--bg); border-radius: 14px; margin-top: 8px; 
         }
-        .data-label { font-family: 'JetBrains Mono'; font-size: 8px; color: var(--text-dim); min-width: 55px; font-weight: 800; }
+        .data-label { font-family: 'JetBrains Mono'; font-size: 9px; color: var(--text-dim); min-width: 55px; font-weight: 800; }
 
+        .btn-group { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 40px; }
         .btn-action { 
-            width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: 900; 
+            padding: 18px; border-radius: 20px; border: none; font-weight: 900; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            gap: 12px; transition: 0.2s; font-size: 14px; margin-bottom: 12px;
+            gap: 10px; transition: 0.2s; font-size: 14px;
         }
-        .btn-action.primary { background: var(--primary); color: #000; box-shadow: 0 8px 25px var(--primary-glow); }
-        .btn-action.outline { background: var(--glass); border: 1.5px solid var(--border); color: var(--text-main); }
-        .btn-action:active { transform: scale(0.97); }
-
-        footer { padding: 30px 24px; text-align: center; border-top: 1px solid var(--border); background: var(--surface); margin-top: 40px;}
-        .copy-text { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; font-weight: 800; }
+        .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
+        .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
     </style>
 </head>
 <body>
 
     <div id="analysis-loader">
-        <i data-lucide="zap" class="animate-pulse" color="#00d2ff" size="48"></i>
-        <p class="loader-status">Generating Report...</p>
+        <div style="color:var(--primary);"><i data-lucide="bar-chart-3" size="64"></i></div>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">CALCULATING RESULTS...</p>
     </div>
 
     <header>
-        <div class="header-left">
-            <div class="profile-container" id="profile-container">
-                <div id="rank-frame" class="normal-frame"></div>
-                <div id="user-initial">?</div>
-            </div>
-            <div class="brand">MISSION<span> ANALYSIS</span></div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="profile-container" id="user-initial">U</div>
+            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">ANALYSIS</span></div>
         </div>
-        <div id="user-tag" style="font-size: 9px; font-weight: 900; background: var(--glass); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; color: var(--primary); font-family: 'JetBrains Mono';">PILOT</div>
+        
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a href="leaderboard.html" class="icon-btn">
+                <i data-lucide="trophy" size="20"></i>
+            </a>
+            <div id="user-tag" style="font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono';">STUDENT</div>
+        </div>
     </header>
 
     <main>
         <div class="stat-banner">
-            <div class="stat-card" style="border-color: var(--primary); background: var(--primary-glow);">
+            <div class="stat-card" style="border-color: var(--primary);">
                 <span class="stat-val" id="acc-val">0%</span>
                 <span class="stat-lbl">Accuracy</span>
             </div>
@@ -184,154 +154,80 @@
             </div>
         </div>
 
-        <h3 style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin: 0 0 20px 5px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
-            <i data-lucide="layers" size="14" color="var(--primary)"></i> Log Breakdown
-        </h3>
-
         <div id="review-container"></div>
 
-        <div style="margin-top: 30px;">
+        <div class="btn-group">
             <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
-                <i data-lucide="award"></i> HALL OF CHAMPIONS
-            </button>
-            <button id="retry-btn" class="btn-action outline">
-                <i data-lucide="rotate-ccw"></i> RE-RUN MISSION
+                <i data-lucide="award" size="20"></i> VIEW RANKINGS
             </button>
             <button class="btn-action outline" onclick="window.location.href='index.html'">
-                <i data-lucide="home"></i> RETURN TO BASE
+                <i data-lucide="home" size="20"></i> BACK TO DASHBOARD
             </button>
         </div>
     </main>
 
-    <footer>
-        <div class="copy-text">© 2026 AGRIQ PRO TERMINAL.</div>
-    </footer>
-
     <script>
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function () {
+            window.location.href = "index.html"; 
+        };
+
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
             databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-            projectId: "agri-mcar",
-            storageBucket: "agri-mcar.firebasestorage.app",
-            messagingSenderId: "823436752104",
-            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+            projectId: "agri-mcar"
         };
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        let currentMod = "";
 
-        auth.onAuthStateChanged(async user => {
+        auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'index.html';
-            
-            db.ref(`students/${user.uid}`).on('value', async snap => {
-                const userData = snap.val();
-                if(userData) {
-                    document.getElementById('user-tag').innerText = userData.name.toUpperCase();
-                    const initialBox = document.getElementById('user-initial');
-                    if (userData.profilePic) {
-                        initialBox.style.backgroundImage = `url(${userData.profilePic})`;
-                        initialBox.innerText = "";
-                    } else {
-                        initialBox.innerText = userData.name[0];
-                    }
-
-                    const lbSnap = await db.ref('leaderboard').once('value');
-                    const aggregated = {};
-                    lbSnap.forEach(c => {
-                        const e = c.val();
-                        if(!aggregated[e.uid]) aggregated[e.uid] = 0;
-                        aggregated[e.uid] += (parseInt(e.score) || 0);
-                    });
-                    const lbArr = Object.entries(aggregated).sort((a,b) => b[1]-a[1]);
-                    const myRank = lbArr.findIndex(x => x[0] === user.uid) + 1;
-
-                    document.body.classList.remove('elite-mode', 'focused-mode');
-                    const rankFrame = document.getElementById('rank-frame');
-
-                    if (myRank > 0 && myRank <= 3) {
-                        document.body.classList.add('elite-mode');
-                        rankFrame.className = 'conqueror-frame';
-                    } else {
-                        rankFrame.className = 'normal-frame';
-                    }
-
-                    if(userData.focusedMode) document.body.classList.add('focused-mode');
-                    lucide.createIcons();
+            db.ref(`students/${user.uid}`).once('value', snap => {
+                const d = snap.val();
+                if(d) {
+                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
+                    document.getElementById('user-initial').innerText = d.name[0];
                 }
             });
-
-            loadStoredAnalysis(user.uid);
+            loadAnalysis();
         });
 
-        async function loadStoredAnalysis(uid) {
-            const resultData = JSON.parse(localStorage.getItem('agriq_last_result'));
-            
-            if (!resultData) {
-                document.getElementById('analysis-loader').classList.add('fade-out');
-                return;
-            }
+        function loadAnalysis() {
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (!data) return window.location.href = 'index.html';
 
-            currentMod = resultData.module;
-            document.getElementById('retry-btn').onclick = () => {
-                window.location.href = `test.html?mod=${encodeURIComponent(currentMod)}`;
-            };
-
-            document.getElementById('acc-val').innerText = `${resultData.accuracy}%`;
-            document.getElementById('score-val').innerText = `${resultData.score}/${resultData.total}`;
+            document.getElementById('acc-val').innerText = `${data.accuracy}%`;
+            document.getElementById('score-val').innerText = `${data.score}/${data.total}`;
 
             const container = document.getElementById('review-container');
-            container.innerHTML = ''; 
-
-            resultData.details.forEach((item, index) => {
+            data.details.forEach((item, i) => {
                 const isCorrect = item.user === item.actual;
                 const card = document.createElement('div');
                 card.className = 'analysis-card';
-                card.style.animationDelay = `${index * 0.05}s`;
-                
+                card.style.animationDelay = `${i * 0.05}s`;
                 card.innerHTML = `
-                    <span class="status-badge ${isCorrect ? 'pass' : 'fail'}">${isCorrect ? 'SUCCESS' : 'FAILURE'}</span>
+                    <span class="status-badge ${isCorrect ? 'pass' : 'fail'}">${isCorrect ? 'CORRECT' : 'WRONG'}</span>
                     <div class="q-title">${item.question}</div>
-                    <div class="data-row" style="border-left: 3px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'}">
-                        <span class="data-label">PILOT</span>
+                    <div class="data-row">
+                        <span class="data-label">YOURS</span>
                         <span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}; font-weight:800;">${item.user}</span>
                     </div>
                     ${!isCorrect ? `
-                    <div class="data-row" style="border-left: 3px solid var(--success)">
-                        <span class="data-label">SYSTEM</span>
+                    <div class="data-row">
+                        <span class="data-label">CORRECT</span>
                         <span style="color:var(--success); font-weight:800;">${item.actual}</span>
                     </div>` : ''}
                 `;
                 container.appendChild(card);
             });
-
-            try {
-                const sessionKey = resultData.timestamp || Date.now();
-                const studentSnap = await db.ref(`students/${uid}`).once('value');
-                const sName = studentSnap.val()?.name || "STUDENT";
-
-                await db.ref(`leaderboard/${uid}_${sessionKey}`).set({
-                    uid: uid,
-                    name: sName,
-                    score: resultData.score,
-                    total: resultData.total,
-                    accuracy: resultData.accuracy,
-                    module: resultData.module,
-                    timestamp: sessionKey,
-                    date: resultData.date || new Date().toISOString()
-                });
-
-                await db.ref(`students/${uid}`).update({
-                    testsTaken: firebase.database.ServerValue.increment(1)
-                });
-            } catch (error) {
-                console.error("Sync Failed", error);
-            }
-
+            
             setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 1000);
         }
+
+        lucide.createIcons();
     </script>
 </body>
 </html>
