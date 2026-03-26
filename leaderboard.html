@@ -6,7 +6,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#020617">
     <title>AgriQ Pro | Hall of Champions</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
@@ -18,16 +18,16 @@
 
     <style>
         :root {
-            --primary: #ff3b3b;
-            --primary-glow: rgba(255, 59, 59, 0.4);
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --text-main: #ffffff;
-            --text-dim: #a1a1aa;
-            --border: #222222;
-            --gold: #ffda44;
-            --silver: #cbd5e1;
-            --bronze: #d97706;
+            --primary: #00d2ff;
+            --primary-glow: rgba(0, 210, 255, 0.3);
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #1e293b;
+            --gold: #f59e0b;
+            --silver: #94a3b8;
+            --bronze: #b45309;
             --glass: rgba(255, 255, 255, 0.03);
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
@@ -40,7 +40,7 @@
         }
 
         #leader-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
+            position: fixed; inset: 0; background: #020617; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.5s ease;
         }
@@ -53,43 +53,45 @@
             display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 1000;
         }
-        .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; }
+        .brand { font-weight: 900; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
         .btn-icon {
             background: var(--glass); color: var(--text-main); padding: 10px;
-            border-radius: 12px; border: 1px solid var(--border); cursor: pointer;
+            border-radius: 12px; border: 1.5px solid var(--border); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
 
         main { padding: 0 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
-        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; margin: 60px 0 30px; }
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; margin: 50px 0 30px; }
         .podium-item { 
-            background: var(--surface); border: 1.5px solid var(--border); border-radius: 28px;
+            background: var(--surface); border: 1.5px solid var(--border); border-radius: 24px;
             padding: 20px 10px; text-align: center; position: relative; flex: 1;
             display: flex; flex-direction: column; align-items: center; min-width: 0;
             transition: var(--transition);
         }
         .podium-1 { 
-            height: 240px; border-color: var(--gold); 
-            background: linear-gradient(180deg, rgba(255, 218, 68, 0.1) 0%, var(--surface) 100%);
-            transform: scale(1.1); z-index: 2;
+            height: 220px; border-color: var(--gold); 
+            background: linear-gradient(180deg, rgba(245, 158, 11, 0.1) 0%, var(--surface) 100%);
+            transform: scale(1.08); z-index: 2;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
-        .podium-1 .crown { position: absolute; top: -35px; font-size: 40px; animation: float 3s ease-in-out infinite; }
+        .podium-1 .crown { position: absolute; top: -30px; font-size: 32px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 10px var(--gold)); }
+        
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .avatar-box {
-            width: 54px; height: 54px; border-radius: 50%; border: 2.5px solid var(--border);
+            width: 50px; height: 50px; border-radius: 16px; border: 2px solid var(--border);
             margin-bottom: 12px; overflow: hidden; background: var(--bg);
             display: flex; align-items: center; justify-content: center; font-weight: 900;
             position: relative; background-size: cover; background-position: center;
         }
-        .podium-1 .avatar-box { width: 75px; height: 75px; border-color: var(--gold); border-width: 4px; }
+        .podium-1 .avatar-box { width: 65px; height: 65px; border-color: var(--gold); border-width: 3px; border-radius: 20px; }
 
-        .p-name { font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-dim); width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
-        .podium-1 .p-name { color: var(--gold); font-size: 12px; }
-        .p-score { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; }
+        .p-name { font-weight: 800; font-size: 10px; text-transform: uppercase; color: var(--text-dim); width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+        .podium-1 .p-name { color: var(--gold); font-size: 11px; letter-spacing: 0.5px; }
+        .p-score { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; color: var(--text-main); }
 
         .rank-card {
             background: var(--surface); border: 1.5px solid var(--border);
@@ -99,11 +101,11 @@
         }
         .rank-card.is-me { 
             border-color: var(--primary); 
-            background: rgba(255, 59, 59, 0.08);
-            box-shadow: 0 0 20px rgba(255, 59, 59, 0.1);
+            background: var(--primary-glow);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.1);
         }
         
-        .rank-1 { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 218, 68, 0.15); }
+        .rank-1 { border-color: var(--gold); }
         .rank-2 { border-color: var(--silver); }
         .rank-3 { border-color: var(--bronze); }
 
@@ -115,26 +117,25 @@
 
         .rank-num { width: 22px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--text-dim); font-size: 13px; text-align: center; }
         .user-info { flex: 1; min-width: 0; }
-        .user-name { font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text-main); }
-        .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; margin-top: 2px; }
-        .score-val { font-family: 'JetBrains Mono'; font-weight: 900; color: var(--primary); font-size: 16px; }
+        .user-name { font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-main); }
+        .user-meta { font-size: 8px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; }
+        .score-val { font-family: 'JetBrains Mono'; font-weight: 900; color: var(--primary); font-size: 15px; }
         .me-badge { 
-            background: var(--primary); color: white; font-size: 8px; 
-            padding: 2px 8px; border-radius: 6px; font-weight: 900;
-            box-shadow: 0 0 10px var(--primary-glow);
+            background: var(--primary); color: #000; font-size: 7px; 
+            padding: 2px 6px; border-radius: 4px; font-weight: 900;
         }
     </style>
 </head>
 <body>
 
     <div id="leader-loader">
-        <div style="color:var(--primary);"><i data-lucide="award" class="animate-bounce" size="48"></i></div>
-        <p style="font-family:'JetBrains Mono'; font-size:10px; margin-top:15px; letter-spacing:2px; font-weight:800;">SYNCING IDENTITY...</p>
+        <div style="color:var(--primary);"><i data-lucide="zap" class="animate-pulse" size="48"></i></div>
+        <p style="font-family:'JetBrains Mono'; font-size:10px; margin-top:15px; letter-spacing:2px; font-weight:800; color: var(--primary);">ESTABLISHING UPLINK...</p>
     </div>
 
     <header>
         <div class="brand">HALL OF <span>CHAMPIONS</span></div>
-        <button onclick="window.location.href='index.html'" class="btn-icon" aria-label="Dashboard"><i data-lucide="layout-dashboard" size="20"></i></button>
+        <button onclick="window.location.href='index.html'" class="btn-icon" aria-label="Dashboard"><i data-lucide="home" size="18"></i></button>
     </header>
 
     <main>
@@ -193,7 +194,7 @@
                         score: 0, 
                         acc: 0, 
                         count: 0,
-                        originalName: entry.name // Store the name present in the leaderboard entry
+                        originalName: entry.name 
                     };
                 }
                 aggregated[entry.uid].score += (parseInt(entry.score) || 0);
@@ -203,13 +204,7 @@
 
             const sorted = Object.values(aggregated).map(u => {
                 const profile = studentsData[u.uid] || {};
-                
-                // HYBRID IDENTITY LOGIC:
-                // 1. Priority: Profile Name (Updated name like ZENETSU)
-                // 2. Fallback: Original Name (Name recorded at quiz time)
-                // 3. Final Fallback: "CHAMPION"
                 const finalName = profile.name || u.originalName || "CHAMPION";
-                
                 const finalPhoto = profile.profilePic || profile.photoURL || null;
 
                 return {
@@ -264,14 +259,14 @@
                 return `
                     <div class="rank-card ${isMe ? 'is-me' : ''} ${rank <= 3 ? 'rank-'+rank : ''}">
                         <div class="rank-num">${rank}</div>
-                        <div class="list-img" style="${imgStyle} ${rank <= 3 ? 'border-color:var(--primary);' : ''}">
+                        <div class="list-img" style="${imgStyle}">
                             ${u.photo ? '' : u.displayName[0]}
                         </div>
                         <div class="user-info">
                             <div class="user-name">
                                 <span>${u.displayName}</span>
                                 ${isMe ? '<span class="me-badge">YOU</span>' : ''}
-                                ${rank <= 3 ? '<i data-lucide="shield-check" size="12" style="color:var(--gold);"></i>' : ''}
+                                ${rank <= 3 ? '<i data-lucide="shield-check" size="10" style="color:var(--primary);"></i>' : ''}
                             </div>
                             <div class="user-meta">${u.avgAcc}% ACC • ${getLevel(u.score)}</div>
                         </div>
