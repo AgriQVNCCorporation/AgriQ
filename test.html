@@ -6,8 +6,8 @@
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <title>AgriQ Pro | Active Terminal Test</title>
+    <meta name="theme-color" content="#020617">
+    <title>AgriQ Pro | Active Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -17,163 +17,88 @@
 
     <style>
         :root {
-            --primary: #ff3b3b;
-            --primary-glow: rgba(255, 59, 59, 0.4);
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --text-main: #ffffff;
-            --text-dim: #a1a1aa;
-            --border: #222222;
-            --danger: #ff3b3b;
-            --success: #22c55e;
+            --primary: #00d2ff;
+            --primary-glow: rgba(0, 210, 255, 0.3);
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #1e293b;
+            --danger: #ef4444;
+            --success: #10b981;
             --glass: rgba(255, 255, 255, 0.03);
-            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        body.elite-mode {
-            --primary: #ffcc00;
-            --primary-glow: rgba(255, 204, 0, 0.6);
-            --bg: #050500;
-            --surface: #0f0e0a;
-            --text-main: #fffdf0;
-            --border: #443300;
-        }
-
-        body.focused-mode {
-            --primary: #00aaff;
-            --primary-glow: rgba(0, 170, 255, 0.3);
-            --bg: #f0f9ff;
-            --surface: #ffffff;
-            --text-main: #001a2c;
-            --text-dim: #64748b;
-            --border: #e2e8f0;
-            --glass: rgba(0, 170, 255, 0.05);
-        }
-
-        body.elite-mode.focused-mode {
-            --primary: #d4af37;
-            --border: #cbd5e1;
-            --bg: #f8fafc;
+        body.focused-mode { 
+            --primary: #3b82f6; 
+            --bg: #f8fafc; 
+            --surface: #ffffff; 
+            --text-main: #0f172a; 
+            --text-dim: #64748b; 
+            --border: #e2e8f0; 
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        body { 
-            background-color: var(--bg); 
-            margin: 0; 
-            color: var(--text-main); 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow-x: hidden; 
-            transition: 0.5s ease; 
-        }
+        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; transition: 0.5s ease; }
 
-        #app-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        #app-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
-        
+        #app-loader { position: fixed; inset: 0; background: #020617; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.8s; }
+        #app-loader.fade-out { opacity: 0; visibility: hidden; }
         .loader-status { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
 
-        header {
-            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
-            background: var(--surface); 
-            backdrop-filter: blur(15px);
-            display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid var(--border); 
-            position: sticky; top: 0; z-index: 1000;
-        }
+        header { padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; background: var(--surface); backdrop-filter: blur(15px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000; }
+        .timer-badge { background: var(--glass); color: var(--primary); padding: 8px 16px; border-radius: 12px; border: 1.5px solid var(--primary-glow); font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; box-shadow: 0 0 10px var(--primary-glow); transition: 0.3s; }
 
-        .timer-badge { 
-            background: var(--glass); color: var(--primary); padding: 8px 16px; 
-            border-radius: 12px; border: 1px solid var(--border); 
-            font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px;
-        }
+        #user-initial { width: 40px; height: 40px; background: var(--bg); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--primary); font-size: 16px; border: 1.5px solid var(--border); background-size: cover; background-position: center; }
 
-        .profile-container { position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
+        main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 180px; }
         
-        #user-initial {
-            width: 40px; height: 40px; background: var(--surface); border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: 900; color: var(--primary); font-size: 16px;
-            background-size: cover; background-position: center;
-            position: relative; z-index: 2; border: 2px solid var(--bg);
-        }
-
-        .conqueror-frame {
-            position: absolute; inset: 0; border-radius: 14px;
-            background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fcf6ba 75%, #aa771c 100%);
-            background-size: 400% 400%; animation: goldShine 3s linear infinite; z-index: 1;
-            box-shadow: 0 0 10px var(--primary-glow);
-        }
-
-        .normal-frame { position: absolute; inset: 2px; border-radius: 12px; border: 1.5px solid var(--border); z-index: 1; }
-
-        .conqueror-crown {
-            position: absolute; top: -10px; right: -4px; z-index: 10;
-            filter: drop-shadow(0 0 3px rgba(255, 204, 0, 0.8));
-            color: #ffcc00; transform: rotate(15deg);
-        }
-
-        @keyframes goldShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-        .header-left { display: flex; align-items: center; gap: 12px; }
-        .name-wrapper { display: flex; flex-direction: column; }
-        .edit-name-btn { cursor: pointer; color: var(--text-dim); transition: 0.2s; margin-left: 5px; }
-        .edit-name-btn:hover { color: var(--primary); }
-
-        main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 180px; overflow-y: auto; }
-
-        .marker-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 20px 0; scrollbar-width: none; }
+        .marker-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 20px 0; scrollbar-width: none; -ms-overflow-style: none; }
         .marker-scroll::-webkit-scrollbar { display: none; }
         
-        .q-pill { 
-            min-width: 45px; height: 45px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--border);
-            display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-dim); flex-shrink: 0;
-            cursor: pointer; transition: 0.2s; font-size: 14px;
-        }
-        .q-pill.active { border-color: var(--primary); background: var(--primary-glow); color: var(--primary); }
-        .q-pill.done { border-color: var(--success); color: var(--success); }
+        .q-pill { min-width: 42px; height: 42px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-dim); flex-shrink: 0; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-size: 13px; }
+        .q-pill.active { border-color: var(--primary); background: var(--primary-glow); color: var(--primary); transform: scale(1.1); z-index: 2; }
+        /* Choice Trigger Color: Green */
+        .q-pill.done { border-color: var(--success); background: rgba(16, 185, 129, 0.1); color: var(--success); }
 
-        .q-card { background: var(--surface); border-radius: 28px; padding: 26px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .opt-box { 
-            background: var(--glass); border: 1.5px solid var(--border); padding: 18px; 
-            border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; color: var(--text-main);
-            transition: 0.2s; font-size: 14px; line-height: 1.4;
-        }
-        .opt-box.selected { border-color: var(--primary); background: var(--primary); color: #fff; }
-
-        .controls {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-            width: 92%; max-width: 460px; padding: 18px; background: var(--surface);
-            backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 30px;
-            display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            z-index: 1001;
+        .q-card { background: var(--surface); border-radius: 28px; padding: 26px; border: 1px solid var(--border); margin-bottom: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .progress-line { position: absolute; top: 0; left: 0; height: 4px; background: var(--primary); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 15px var(--primary); }
+        .crop-badge { position: absolute; top: 0; right: 0; background: var(--primary); color: #000; font-size: 9px; font-weight: 900; padding: 5px 14px; border-bottom-left-radius: 15px; text-transform: uppercase; }
+        
+        .opt-box { background: var(--glass); border: 1.5px solid var(--border); padding: 18px; border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; color: var(--text-main); transition: 0.2s; font-size: 14px; line-height: 1.4; display: flex; align-items: center; gap: 12px; }
+        .opt-box:active { transform: scale(0.97); }
+        .opt-box.selected { border-color: var(--primary); background: var(--primary); color: #000; box-shadow: 0 0 25px var(--primary-glow); animation: selectPop 0.3s ease-out; }
+        
+        @keyframes selectPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
 
+        .controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 460px; padding: 16px; background: var(--surface); backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 28px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 1001; }
         .btn-row { display: flex; gap: 10px; }
-        .btn-primary { flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); font-weight: 800; cursor: pointer; }
+        .btn-primary { flex: 1; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #000; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; text-transform: uppercase; transition: 0.2s; }
+        .btn-primary:active { opacity: 0.8; transform: translateY(2px); }
+        .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); font-weight: 800; cursor: pointer; font-size: 14px; text-transform: uppercase; }
+        .btn-danger { width: 100%; padding: 14px; border-radius: 16px; background: rgba(239, 68, 68, 0.05); color: var(--danger); border: 1px solid var(--danger); font-weight: 800; cursor: pointer; font-size: 12px; transition: 0.2s; }
 
-        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(10px); }
-        .modal-content { background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px; border-radius: 28px; padding: 30px; text-align: center; }
+        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(15px); }
+        .modal-content { background: var(--surface); border: 2px solid var(--border); width: 100%; max-width: 350px; border-radius: 30px; padding: 30px; text-align: center; animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes modalIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="app-loader">
-        <div id="loader-icon" style="color:var(--primary);"><i data-lucide="zap" size="64" fill="currentColor"></i></div>
-        <p class="loader-status">Initializing Terminal...</p>
+        <div id="loader-icon" style="color:var(--primary);"><i data-lucide="cpu" size="64"></i></div>
+        <p class="loader-status">Uploading Data Pack...</p>
     </div>
 
     <div id="custom-modal">
         <div class="modal-content">
-            <div id="modal-title" style="font-weight:900; margin-bottom:10px;">ALERT</div>
-            <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:20px;">Text here.</div>
-            <div class="modal-actions" style="display:flex; gap:10px;">
+            <div id="modal-title" style="font-weight:900; font-size: 20px; margin-bottom:10px; color: var(--primary);">ALERT</div>
+            <div id="modal-text" style="font-size:14px; color:var(--text-dim); margin-bottom:25px; line-height:1.5;">Message content.</div>
+            <div class="modal-actions" style="display:flex; gap:12px;">
                 <button class="btn-sec" id="modal-cancel-btn">CANCEL</button>
                 <button class="btn-primary" id="modal-confirm-btn">CONFIRM</button>
             </div>
@@ -181,38 +106,32 @@
     </div>
 
     <header>
-        <div class="header-left">
-            <div class="profile-container" id="profile-container">
-                <div id="rank-frame" class="normal-frame"></div>
-                <div id="user-initial">U</div>
-            </div>
-            <div class="name-wrapper">
-                <div id="student-tag" style="font-weight: 900; font-size: 10px; letter-spacing: 1px; font-family: 'JetBrains Mono'; color: var(--primary);">TERMINAL ACTIVE</div>
-                <div style="display:flex; align-items:center;">
-                    <span id="user-display-name" style="font-weight:800; font-size:14px;">STUDENT</span>
-                    <i data-lucide="edit-3" id="name-edit-icon" size="12" class="edit-name-btn hidden" onclick="editProfileName()"></i>
-                </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="user-initial">U</div>
+            <div>
+                <div style="font-weight: 900; font-size: 9px; color: var(--primary); letter-spacing: 1px;">ENCRYPTED SESSION</div>
+                <span id="user-display-name" style="font-weight:800; font-size:14px;">STUDENT</span>
             </div>
         </div>
         <div id="q-timer" class="timer-badge">00:00</div>
     </header>
 
-    <main id="main-content">
+    <main>
         <div id="marker-grid" class="marker-scroll"></div>
         <div class="q-card">
-            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6;">Synchronizing...</div>
+            <div id="progress-indicator" class="progress-line" style="width: 0%"></div>
+            <div id="crop-tag" class="crop-badge">GENERAL</div>
+            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6; margin-top: 10px;">Establishing Connection...</div>
         </div>
         <div id="opts-display"></div>
     </main>
 
     <div class="controls">
         <div class="btn-row">
-            <button class="btn-sec" onclick="changeQ(-1)">PREVIOUS</button>
-            <button class="btn-primary" onclick="changeQ(1)">NEXT <i data-lucide="chevron-right" size="18"></i></button>
+            <button class="btn-sec" onclick="changeQ(-1)"><i data-lucide="arrow-left" size="18"></i></button>
+            <button class="btn-primary" onclick="changeQ(1)">NEXT QUESTION <i data-lucide="chevron-right" size="18"></i></button>
         </div>
-        <button class="btn-primary" style="background:var(--danger); box-shadow: 0 4px 15px var(--primary-glow);" onclick="submitTest()">
-            SUBMIT TEST <i data-lucide="check-circle" size="18"></i>
-        </button>
+        <button class="btn-danger" onclick="submitTest()">TERMINATE & SUBMIT</button>
     </div>
 
     <script>
@@ -231,7 +150,7 @@
         const auth = firebase.auth();
 
         let questions = [], currentIdx = 0, userChoices = {}, timer;
-        let totalSecondsRemaining = 7200; 
+        let totalSecondsRemaining = 3600; 
         const moduleKey = new URLSearchParams(window.location.search).get('mod');
         let isSubmitting = false;
 
@@ -240,128 +159,55 @@
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-text').innerText = text;
             modal.style.display = 'flex';
-            const cb = document.getElementById('modal-cancel-btn');
-            if(type === 'alert') cb.classList.add('hidden'); else cb.classList.remove('hidden');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            if(type === 'alert') cancelBtn.classList.add('hidden'); else cancelBtn.classList.remove('hidden');
             document.getElementById('modal-confirm-btn').onclick = () => { modal.style.display = 'none'; if(onConfirm) onConfirm(); };
-            cb.onclick = () => modal.style.display = 'none';
+            cancelBtn.onclick = () => modal.style.display = 'none';
         }
 
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+        function shuffleArray(arr) { 
+            if(!arr) return [];
+            return arr.sort(() => Math.random() - 0.5); 
         }
 
-        auth.onAuthStateChanged(async user => {
+        auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'index.html';
-            
-            const userRef = db.ref(`students/${user.uid}`);
-            userRef.once('value').then(snap => {
-                const userData = snap.val();
-                if (userData && userData.focusedMode) {
-                    document.body.classList.add('focused-mode');
-                }
-            });
-
             db.ref(`students/${user.uid}`).on('value', snap => {
-                const userData = snap.val();
-                if (userData) {
-                    document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
-                    const editIcon = document.getElementById('name-edit-icon');
-                    if (userData.nameEdited) editIcon.classList.add('hidden');
-                    else editIcon.classList.remove('hidden');
-
-                    const initialBox = document.getElementById('user-initial');
-                    if (userData.profilePic) {
-                        initialBox.style.backgroundImage = `url(${userData.profilePic})`;
-                        initialBox.innerText = "";
-                    } else {
-                        initialBox.style.backgroundImage = "none";
-                        initialBox.innerText = userData.name[0];
-                    }
-
-                    db.ref('leaderboard').once('value', lbSnap => {
-                        const aggregated = {};
-                        lbSnap.forEach(c => {
-                            const e = c.val();
-                            if(!aggregated[e.uid]) aggregated[e.uid] = 0;
-                            aggregated[e.uid] += (parseInt(e.score) || 0);
-                        });
-                        const lbArr = Object.entries(aggregated).sort((a,b) => b[1]-a[1]);
-                        const myRank = lbArr.findIndex(x => x[0] === user.uid) + 1;
-
-                        const rankFrame = document.getElementById('rank-frame');
-                        const profContainer = document.getElementById('profile-container');
-                        
-                        document.body.classList.remove('elite-mode');
-                        const existingCrown = document.getElementById('frame-crown');
-                        if(existingCrown) existingCrown.remove();
-
-                        if (myRank > 0 && myRank <= 3) {
-                            document.body.classList.add('elite-mode');
-                            rankFrame.className = 'conqueror-frame';
-                            const crown = document.createElement('div');
-                            crown.id = 'frame-crown';
-                            crown.innerHTML = `<i data-lucide="crown" size="14" class="conqueror-crown"></i>`;
-                            profContainer.appendChild(crown);
-                        } else {
-                            rankFrame.className = 'normal-frame';
-                        }
-                        
-                        document.body.classList.toggle('focused-mode', !!userData.focusedMode);
-                        lucide.createIcons();
-                    });
+                const ud = snap.val();
+                if (ud) {
+                    document.getElementById('user-display-name').innerText = ud.name.toUpperCase();
+                    document.getElementById('user-initial').innerText = ud.name[0];
+                    if (ud.profilePic) document.getElementById('user-initial').style.backgroundImage = `url(${ud.profilePic})`;
+                    document.body.classList.toggle('focused-mode', !!ud.focusedMode);
                 }
             });
             loadQuestions();
         });
 
         async function loadQuestions() {
+            if(!moduleKey) return;
             try {
-                const snapNew = await db.ref(`subjects/${moduleKey}`).once('value');
-                let rawData = null;
-                
-                if(snapNew.exists()) {
-                    const moduleData = snapNew.val();
-                    rawData = moduleData.questions;
-                    if(moduleData.config && moduleData.config.timeLimit) {
-                        totalSecondsRemaining = moduleData.config.timeLimit;
-                    }
-                } else {
-                    const snapOld = await db.ref(`questions/${moduleKey}`).once('value');
-                    if(snapOld.exists()){
-                        const oldData = snapOld.val();
-                        rawData = oldData.questions || oldData.data || oldData;
-                    }
-                }
-
-                if(!rawData || (Array.isArray(rawData) && rawData.length === 0)) {
-                    showModal("TERMINAL ERROR", "No module data found in legacy or new systems.", "alert", () => window.location.href = 'index.html');
-                    return;
-                }
-
-                setupQuestions(rawData);
-            } catch (e) { 
-                console.error(e);
-                showModal("SYNC ERROR", "Connection failed.", "alert"); 
-            }
+                const snap = await db.ref(`subjects/${moduleKey}`).once('value');
+                if(!snap.exists()) return;
+                setupQuestions(snap.val());
+            } catch (e) { console.error(e); }
         }
 
-        function setupQuestions(dataInput) {
-            let dataArray = Array.isArray(dataInput) ? dataInput : Object.values(dataInput);
-            let rawQuestions = dataArray.filter(q => q && (q.q || q.question));
-            rawQuestions = shuffleArray(rawQuestions);
-            
-            questions = rawQuestions.map(q => {
-                let options = q.options || [q.a, q.b, q.c, q.d].filter(Boolean);
-                if (options.length === 0) options = [q.A, q.B, q.C, q.D].filter(Boolean);
+        function setupQuestions(moduleData) {
+            // Nested Extraction: subjects -> [mod] -> questions -> data
+            let list = moduleData.questions?.data || moduleData.data || moduleData.questions || moduleData;
+            let arr = Array.isArray(list) ? list : Object.values(list);
+            let raw = arr.filter(q => q && (q.question || q.q));
 
-                return { 
-                    ...q, 
-                    shuffledOpts: shuffleArray([...options]), 
-                    actualCorrect: q.ans || q.answer 
+            if(moduleData.config?.timeLimit) totalSecondsRemaining = moduleData.config.timeLimit;
+
+            questions = shuffleArray(raw).map(q => {
+                const opts = q.options || [q.a, q.b, q.c, q.d].filter(v => v !== undefined);
+                return {
+                    displayQ: q.question || q.q,
+                    shuffledOpts: shuffleArray(opts),
+                    actualCorrect: q.answer || q.ans, // Supporting both naming conventions
+                    crop: q.crop || "GENERAL"
                 };
             });
 
@@ -369,7 +215,8 @@
             setTimeout(() => { 
                 document.getElementById('app-loader').classList.add('fade-out'); 
                 startGlobalTimer(); 
-            }, 1200);
+                lucide.createIcons();
+            }, 1000);
         }
 
         function initUI() {
@@ -388,29 +235,32 @@
 
         function showQ() {
             const q = questions[currentIdx];
-            document.getElementById('q-display').innerText = q.q || q.question;
+            document.getElementById('q-display').innerText = q.displayQ;
+            document.getElementById('crop-tag').innerText = q.crop;
             
+            const prog = ((currentIdx + 1) / questions.length) * 100;
+            document.getElementById('progress-indicator').style.width = prog + "%";
+
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active');
                 if (i === currentIdx) p.classList.add('active');
-                p.classList.toggle('done', !!userChoices[currentIdx]);
+                // NAVIGATION CHOICE TRIGGER: Success Green if userChoices exists for that index
+                p.classList.toggle('done', userChoices[currentIdx] !== undefined && userChoices[currentIdx] !== null);
             });
 
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
-            q.shuffledOpts.forEach(opt => {
+            q.shuffledOpts.forEach((opt, idx) => {
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
-                div.innerText = opt;
+                div.innerHTML = `<span>${String.fromCharCode(65 + idx)}.</span> <span>${opt}</span>`;
                 div.onclick = () => { 
                     userChoices[currentIdx] = (userChoices[currentIdx] === opt) ? null : opt; 
                     showQ(); 
                 };
                 optBox.appendChild(div);
             });
-
-            const activeMark = document.getElementById(`mark-${currentIdx}`);
-            if(activeMark) activeMark.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            document.getElementById(`mark-${currentIdx}`).scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
 
         function startGlobalTimer() {
@@ -423,6 +273,7 @@
                     let m = Math.floor(totalSecondsRemaining/60).toString().padStart(2,'0');
                     let s = (totalSecondsRemaining%60).toString().padStart(2,'0');
                     document.getElementById('q-timer').innerText = `${m}:${s}`;
+                    if(totalSecondsRemaining < 300) document.getElementById('q-timer').style.color = '#ef4444';
                 }
             }, 1000);
         }
@@ -433,84 +284,48 @@
         }
 
         function submitTest() { 
-            showModal("SUBMISSION", "Finalize responses and end terminal session?", "confirm", processFinalResults); 
+            showModal("END SESSION", "Are you ready to finalize your responses?", "confirm", processFinalResults); 
         }
 
-        // --- UPDATED SYNCHRONIZED LOGIC ---
         async function processFinalResults() {
             if(isSubmitting) return;
             isSubmitting = true;
             clearInterval(timer);
 
-            const user = auth.currentUser;
-            if(!user) {
-                alert("Session lost. Please log in again.");
-                return;
-            }
-
-            // 1. Calculate Score
             let score = 0;
-            const now = Date.now(); 
             const details = questions.map((q, i) => {
                 const userAns = userChoices[i] || "SKIPPED";
-                const isCorrect = userAns === q.actualCorrect;
+                // CRITICAL SCORING LOGIC
+                const isCorrect = userAns.trim() === q.actualCorrect?.trim();
                 if(isCorrect) score++;
+                
                 return { 
-                    question: q.q || q.question, 
+                    question: q.displayQ, 
                     user: userAns, 
-                    actual: q.actualCorrect 
+                    actual: q.actualCorrect, 
+                    correct: isCorrect 
                 };
             });
 
-            const resultData = { 
-                uid: user.uid,
+            const finalResult = { 
+                uid: auth.currentUser.uid, 
                 score, 
                 total: questions.length, 
-                accuracy: Math.round((score / questions.length) * 100),
-                module: moduleKey || 'General', 
-                timestamp: now,
-                date: new Date().toISOString()
+                accuracy: Math.round((score/questions.length)*100), 
+                module: moduleKey, 
+                timestamp: Date.now() 
             };
 
             try {
-                // 2. Execute both writes and WAIT for them to finish
-                // Lock module for 24h
-                const lockPromise = moduleKey ? 
-                    db.ref(`module_locks/${user.uid}/${moduleKey}`).set({ 
-                        timestamp: firebase.database.ServerValue.TIMESTAMP 
-                    }) : 
-                    Promise.resolve();
-
-                // Save score to leaderboard
-                const leadPromise = db.ref('leaderboard').push(resultData);
-
-                // Wait for BOTH before proceeding
-                await Promise.all([lockPromise, leadPromise]);
-
-                // 3. Save to local storage for analysis
-                localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
-
-                // 4. Redirect
+                // Save to leaderboard
+                await db.ref('leaderboard').push(finalResult);
+                // Store in LocalStorage for analysis.html
+                localStorage.setItem('agriq_last_result', JSON.stringify({ ...finalResult, details }));
                 window.location.href = 'analysis.html';
-
-            } catch (error) {
-                console.error("Critical Sync Error:", error);
-                alert("Failed to save results. Check your connection.");
-                isSubmitting = false; 
+            } catch (e) { 
+                localStorage.setItem('agriq_last_result', JSON.stringify({ ...finalResult, details }));
+                window.location.href = 'analysis.html'; 
             }
-        }
-
-        function editProfileName() {
-            showModal("PERMANENT IDENTITY", "You can only update your terminal name ONCE. Confirm?", "confirm", () => {
-                const currentName = document.getElementById('user-display-name').innerText;
-                const newName = prompt("Enter Final Terminal Name:", currentName);
-                if (newName && newName.trim() !== "" && newName.toUpperCase() !== currentName) {
-                    db.ref(`students/${auth.currentUser.uid}`).update({ 
-                        name: newName.toUpperCase().trim(),
-                        nameEdited: true 
-                    });
-                }
-            });
         }
     </script>
 </body>
