@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AgriQ Pro | Admin Terminal</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -13,110 +13,200 @@
 
     <style>
         :root {
-            --primary: #ff3b3b; 
-            --boot-accent: #00aaff;
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --card-bg: #111111;
-            --text-main: #ffffff;
-            --text-dim: #a1a1aa;
-            --border: #222222;
-            --success: #00ff88;
+            --primary: #0084ff;
+            --primary-glow: rgba(0, 132, 255, 0.1);
+            --bg: #f0f9ff;
+            --surface: #ffffff;
+            --text-main: #002d4d;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --glass: rgba(255, 255, 255, 0.8);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
             background-color: var(--bg); 
+            background-image: radial-gradient(circle at top right, #e0f2fe, transparent);
             margin: 0; 
             color: var(--text-main); 
-            min-height: 100vh; 
-            padding-bottom: 100px; 
-            display: none; 
+            min-height: 100vh;
+            display: none; /* Controlled by Auth */
         }
 
         #admin-loader {
-            position: fixed; inset: 0; background: #000000; z-index: 10000;
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        #admin-loader.fade-out { opacity: 0; visibility: hidden; transition: 0.8s; }
+        #admin-loader.fade-out { opacity: 0; visibility: hidden; transition: 0.6s; }
         
-        .electric-icon { color: var(--boot-accent); animation: electricPulse 1.5s infinite; }
-        @keyframes electricPulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px var(--boot-accent)); }
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
+            background: var(--glass); 
+            backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid var(--border); 
+            position: sticky; top: 0; z-index: 1000;
         }
 
-        header { 
-            padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; background: var(--surface); backdrop-filter: blur(20px); z-index: 100;
-            border-bottom: 1px solid var(--border);
-        }
-        .brand { font-weight: 900; font-size: 18px; }
+        .brand { font-weight: 900; font-size: 16px; letter-spacing: -0.5px; }
         .brand span { color: var(--primary); }
 
-        main { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 28px; padding: 24px; margin-bottom: 20px; }
-        h2 { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        main { 
+            padding: 20px; 
+            max-width: 500px; 
+            margin: 0 auto; 
+            width: 100%; 
+            padding-bottom: 120px; 
+        }
 
-        .switch-container { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(120,120,120,0.05); border-radius: 20px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .card { 
+            background: #fff; 
+            border-radius: 28px; 
+            padding: 24px; 
+            border: 1px solid var(--border); 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02); 
+        }
+
+        h2 { 
+            font-size: 11px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            color: var(--primary); 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        /* Inputs & Controls */
+        input, textarea { 
+            width: 100%; 
+            background: var(--bg); 
+            border: 1.5px solid var(--border); 
+            border-radius: 18px; 
+            padding: 16px; 
+            color: var(--text-main); 
+            outline: none; 
+            margin-bottom: 12px; 
+            font-size: 14px; 
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); background: #fff; }
+
+        .btn-primary { 
+            width: 100%; 
+            padding: 18px; 
+            border-radius: 20px; 
+            border: none; 
+            background: var(--primary); 
+            color: #fff; 
+            font-weight: 900; 
+            cursor: pointer; 
+            box-shadow: 0 10px 20px var(--primary-glow);
+        }
+
+        .btn-outline { 
+            background: #fff; 
+            border: 1.5px solid var(--border); 
+            color: var(--text-dim); 
+            padding: 8px 14px; 
+            border-radius: 12px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .btn-outline:active { transform: scale(0.95); }
+
+        /* Module List Items */
+        .data-pill { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 16px; 
+            background: #fff; 
+            border-radius: 20px; 
+            margin-bottom: 10px; 
+            border: 1.5px solid var(--border); 
+        }
+
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 24px; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--border); transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--success); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        input, textarea { width: 100%; background: rgba(120,120,120,0.05); border: 1px solid var(--border); border-radius: 18px; padding: 16px; color: var(--text-main); outline: none; margin-bottom: 12px; font-size: 14px; }
-        .btn-primary { width: 100%; padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 10px 16px; border-radius: 12px; font-size: 10px; font-weight: 800; cursor: pointer; }
-
-        .data-pill { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(120,120,120,0.03); border-radius: 16px; margin-bottom: 8px; border: 1px solid var(--border); }
-        
-        .bottom-nav { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); height: 70px; border-radius: 35px; display: flex; align-items: center; width: 92%; max-width: 450px; justify-content: space-around; z-index: 1000; }
-        .nav-item { background: none; border: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; font-size: 9px; font-weight: 800; cursor: pointer; }
+        /* Bottom Nav */
+        .bottom-nav { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            background: var(--glass); backdrop-filter: blur(25px); 
+            border: 1px solid var(--border); height: 75px; border-radius: 35px; 
+            display: flex; align-items: center; width: 92%; max-width: 450px; 
+            justify-content: space-around; z-index: 1000; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+        .nav-item { background: none; border: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; font-size: 9px; font-weight: 800; cursor: pointer; gap: 4px; }
         .nav-item.active { color: var(--primary); }
-        
-        .legacy-box { background: #050505; border: 1px solid #333; padding: 10px; border-radius: 12px; font-family: 'JetBrains Mono'; font-size: 10px; color: #777; overflow-x: auto; white-space: pre; margin-top: 10px; max-height: 120px; }
+
+        /* Legacy Styling */
+        .legacy-box { 
+            background: var(--bg); 
+            border: 1px solid var(--border); 
+            padding: 12px; 
+            border-radius: 14px; 
+            font-family: 'JetBrains Mono'; 
+            font-size: 10px; 
+            color: var(--text-dim); 
+            overflow-x: auto; 
+            white-space: pre; 
+            margin-top: 10px; 
+            max-height: 120px; 
+        }
     </style>
 </head>
 <body>
 
     <div id="admin-loader">
-        <div class="electric-icon"><i data-lucide="zap" size="48"></i></div>
-        <p style="font-size:10px; font-family:'JetBrains Mono'; color:var(--boot-accent); margin-top:15px; letter-spacing:2px;">SYNCING_TERMINAL</p>
+        <div style="color:var(--primary);"><i data-lucide="shield-check" size="54"></i></div>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">ADMIN_VERIFIED</p>
     </div>
 
     <div id="command-center">
         <header>
-            <div class="brand">AGRIQ<span>ADMIN</span></div>
-            <button class="btn-outline" onclick="firebase.auth().signOut()">LOGOUT</button>
+            <div class="brand">AgriQ<span>Terminal</span></div>
+            <button class="btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" onclick="firebase.auth().signOut()">LOGOUT</button>
         </header>
 
         <main>
             <div class="card" id="editor-card">
-                <h2 id="editor-title"><i data-lucide="upload"></i> Deploy Module</h2>
-                <input type="text" id="sub-name" placeholder="Module Name (e.g. agronomy_quiz_01)">
-                <input type="number" id="time-limit" placeholder="Time Limit (seconds)" value="20">
-                <textarea id="json-input" rows="6" placeholder='Paste JSON array here...'></textarea>
-                <button class="btn-primary" onclick="uploadData()" id="push-btn">PUSH TO LIVE</button>
+                <h2><i data-lucide="plus-circle" size="14"></i> Create Module</h2>
+                <input type="text" id="sub-name" placeholder="Module Key (e.g. soil_science_01)">
+                <input type="number" id="time-limit" placeholder="Time Limit (Seconds)" value="600">
+                <textarea id="json-input" rows="5" placeholder='Paste Questions JSON Array...'></textarea>
+                <button class="btn-primary" onclick="uploadData()" id="push-btn">DEPLOY TO LIVE</button>
             </div>
 
             <div class="card">
-                <h2><i data-lucide="layers"></i> Live Modules</h2>
+                <h2><i data-lucide="activity" size="14"></i> Active Registry</h2>
                 <div id="module-list"></div>
             </div>
 
-            <div class="card" style="opacity: 0.7;">
-                <h2 style="color: #666;"><i data-lucide="archive"></i> Legacy Backup</h2>
-                <p style="font-size: 10px; color: var(--text-dim); margin-top: -10px;">Migrate old data to the new structure.</p>
+            <div class="card" style="background: rgba(240, 249, 255, 0.5);">
+                <h2 style="color: var(--text-dim);"><i data-lucide="database" size="14"></i> Legacy Vault</h2>
                 <div id="legacy-backup-container"></div>
             </div>
         </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item active"><i data-lucide="cpu" size="20"></i>CONSOLE</button>
-            <button class="nav-item" onclick="location.href='adminlead.html'"><i data-lucide="trophy" size="20"></i>LEADER</button>
+            <button class="nav-item active"><i data-lucide="terminal" size="22"></i>CONSOLE</button>
+            <button class="nav-item" onclick="location.href='adminlead.html'"><i data-lucide="bar-chart-3" size="22"></i>ANALYTICS</button>
         </nav>
     </div>
 
@@ -156,20 +246,21 @@
                     const pill = document.createElement('div');
                     pill.className = "data-pill";
                     pill.innerHTML = `
-                        <div style="font-size:12px; font-weight:700;">
-                           ${modKey.toUpperCase().replace(/_/g, ' ')}
-                           <div style="font-size:9px; color:var(--text-dim); font-weight:400; margin-top:4px;">${currentTime}s Limit</div>
+                        <div>
+                           <div style="font-size:13px; font-weight:800; color:var(--text-main);">${modKey.toUpperCase().replace(/_/g, ' ')}</div>
+                           <div style="font-size:10px; color:var(--primary); font-family:'JetBrains Mono'; font-weight:700; margin-top:2px;">${currentTime}s</div>
                         </div>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <button class="btn-outline" onclick="deleteModule('${modKey}')">DEL</button>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button class="btn-outline" style="color:var(--danger);" onclick="deleteModule('${modKey}')"><i data-lucide="trash-2" size="14"></i></button>
                             <label class="switch">
                                 <input type="checkbox" ${modData.enabled ? 'checked' : ''} onchange="toggleModule('${modKey}', this.checked)">
                                 <span class="slider"></span>
                             </label>
-                            <button class="btn-outline" style="border-color: var(--boot-accent); color: var(--boot-accent);" onclick="editTime('${modKey}', ${currentTime})">TIME</button>
+                            <button class="btn-outline" onclick="editTime('${modKey}', ${currentTime})">EDIT</button>
                         </div>
                     `;
                     container.appendChild(pill);
+                    lucide.createIcons();
                 });
             });
 
@@ -180,9 +271,9 @@
                     const div = document.createElement('div');
                     div.style.marginBottom = "15px";
                     div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:10px; font-weight:800; color:var(--primary);">${child.key}</span>
-                            <button class="btn-outline" onclick="copyLegacy('${child.key}')">MIGRATE</button>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span style="font-size:10px; font-weight:800; color:var(--text-dim);">${child.key}</span>
+                            <button class="btn-outline" style="font-size:8px; padding:4px 8px;" onclick="copyLegacy('${child.key}')">MIGRATE</button>
                         </div>
                         <div class="legacy-box" id="raw-${child.key}">${JSON.stringify(child.val().questions || child.val())}</div>
                     `;
@@ -192,7 +283,7 @@
         }
 
         function editTime(key, currentTime) {
-            const newTime = prompt(`Set new time limit (seconds) for ${key}:`, currentTime);
+            const newTime = prompt(`New time limit for ${key}:`, currentTime);
             if (newTime !== null && !isNaN(newTime)) {
                 db.ref(`subjects/${key}/config`).update({ timeLimit: parseInt(newTime) });
             }
@@ -208,9 +299,9 @@
         function uploadData() {
             const name = document.getElementById('sub-name').value.trim().toLowerCase().replace(/\s+/g, '_');
             const json = document.getElementById('json-input').value;
-            const time = parseInt(document.getElementById('time-limit').value) || 20;
+            const time = parseInt(document.getElementById('time-limit').value) || 600;
 
-            if(!name || !json) return alert("Fill all fields!");
+            if(!name || !json) return alert("All fields required");
 
             try {
                 const questions = JSON.parse(json);
@@ -219,11 +310,10 @@
                     enabled: true,
                     config: { timeLimit: time }
                 }).then(() => {
-                    alert("Module Deployed!");
+                    alert("Module Live!");
                     document.getElementById('json-input').value = "";
-                    document.getElementById('sub-name').value = "";
                 });
-            } catch(e) { alert("Invalid JSON format!"); }
+            } catch(e) { alert("JSON syntax error!"); }
         }
 
         function toggleModule(key, state) {
@@ -231,9 +321,7 @@
         }
 
         function deleteModule(key) {
-            if(confirm("Delete this module forever?")) {
-                db.ref(`subjects/${key}`).remove();
-            }
+            if(confirm("Confirm deletion?")) db.ref(`subjects/${key}`).remove();
         }
 
         lucide.createIcons();
