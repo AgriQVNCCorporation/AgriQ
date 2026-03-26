@@ -3,221 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AgriQ Pro | Admin Leaderboard</title>
+    <title>AgriQ Pro | Leaderboard Control</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
     <style>
         :root {
-            --primary: #ff3b3b;
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --card-bg: #111111;
-            --text-main: #ffffff;
-            --text-dim: #a1a1aa;
-            --border: #222222;
-            --gold: #ffda44;
-            --silver: #e2e2e2;
-            --bronze: #cd7f32;
-            --transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-
-        body.focus-active {
-            --primary: #00aaff;
+            --primary: #0084ff;
             --bg: #f0f9ff;
             --surface: #ffffff;
-            --card-bg: #f8fafc;
-            --text-main: #001a2c;
+            --text-main: #002d4d;
             --text-dim: #64748b;
             --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --glass: rgba(255, 255, 255, 0.8);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg); margin: 0; color: var(--text-main); min-height: 100vh; transition: background-color var(--transition); display: none; }
-
-        /* --- LOADER --- */
-        #admin-loader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        
+        body { 
+            background-color: var(--bg); 
+            background-image: radial-gradient(circle at top right, #e0f2fe, transparent);
+            margin: 0; color: var(--text-main); min-height: 100vh;
         }
-        #admin-loader.fade-out { opacity: 0; visibility: hidden; transition: 0.8s; }
 
         header {
-            padding: 20px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 1000;
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
+            background: var(--glass); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
         }
+
         .brand { font-weight: 900; font-size: 16px; }
         .brand span { color: var(--primary); }
 
-        main { padding: 0 20px; max-width: 500px; margin: 0 auto; }
+        main { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; padding-bottom: 120px; }
 
-        /* --- PODIUM --- */
-        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin: 40px 0; }
-        .podium-item { 
-            background: var(--surface); border: 1.5px solid var(--border); border-radius: 24px;
-            padding: 15px 5px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center;
-        }
-        .podium-1 { height: 180px; border-color: var(--gold); }
-        .podium-2 { height: 150px; border-color: var(--silver); }
-        .podium-3 { height: 130px; border-color: var(--bronze); }
-        .p-name { font-weight: 800; font-size: 9px; color: var(--text-main); text-transform: uppercase; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .p-score { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; }
-
-        /* --- LIST --- */
-        .rank-card {
-            background: var(--card-bg); border: 1px solid var(--border);
-            padding: 15px 20px; border-radius: 20px;
-            display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
-        }
-        .rank-num { width: 30px; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 12px; color: var(--text-dim); }
-        .user-info { flex: 1; }
-        .user-name { font-weight: 800; font-size: 14px; display: block; }
-        .user-meta { font-size: 8px; color: var(--text-dim); font-weight: 700; }
-        
-        /* --- ADMIN ACTIONS --- */
-        .delete-btn {
-            width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border);
-            background: rgba(255, 59, 59, 0.05); color: var(--primary);
-            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
-        }
-        .delete-btn:hover { background: var(--primary); color: white; }
-
-        .wipe-card {
-            background: rgba(255, 59, 59, 0.05); border: 1px dashed var(--primary);
-            padding: 20px; border-radius: 24px; text-align: center; margin-bottom: 25px;
-        }
-        .btn-danger {
-            width: 100%; padding: 14px; border-radius: 15px; border: none;
-            background: var(--primary); color: white; font-weight: 800; cursor: pointer;
+        .search-box { margin-bottom: 20px; }
+        .search-box input {
+            width: 100%; padding: 14px 20px; border-radius: 18px; border: 1.5px solid var(--border);
+            background: #fff; outline: none; font-weight: 600; font-size: 14px;
         }
 
-        .btn-back {
-            background: var(--surface); color: var(--text-main); padding: 8px 16px;
-            border-radius: 12px; border: 1px solid var(--border); font-weight: 800; font-size: 11px; cursor: pointer;
+        .lead-card {
+            background: #fff; border-radius: 24px; padding: 16px 20px; border: 1.5px solid var(--border);
+            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
         }
+
+        .user-info { display: flex; flex-direction: column; gap: 2px; }
+        .user-name { font-weight: 800; font-size: 14px; color: var(--text-main); }
+        .user-meta { font-size: 9px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .score-display {
+            font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px;
+            color: var(--primary); background: var(--bg); padding: 6px 12px; border-radius: 10px;
+        }
+
+        .actions { display: flex; gap: 8px; }
+        .btn-icon {
+            width: 38px; height: 38px; border-radius: 12px; border: 1.5px solid var(--border);
+            background: #fff; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-edit { color: var(--primary); }
+        .btn-delete { color: var(--danger); }
+
+        .bottom-nav { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--border);
+            height: 75px; border-radius: 35px; display: flex; align-items: center;
+            width: 92%; max-width: 450px; justify-content: space-around; z-index: 1000;
+        }
+        .nav-item { background: none; border: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; font-size: 9px; font-weight: 800; cursor: pointer; gap: 4px; }
+        .nav-item.active { color: var(--primary); }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-dim); font-size: 13px; font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <div id="admin-loader">
-        <div class="electric-icon"><i data-lucide="zap" size="64" stroke-width="3"></i></div>
-        <p style="font-size:10px; font-family:'JetBrains Mono'; color:var(--primary); margin-top:15px; font-weight:800;">ADMIN_LEADER_SYNC</p>
-    </div>
-
     <header>
-        <div class="brand">ADMIN<span>LEADER</span></div>
-        <button class="btn-back" onclick="location.href='admin.html'">BACK</button>
+        <div class="brand">AgriQ<span>Analytics</span></div>
+        <div id="record-count" style="font-size: 9px; font-weight: 800; background: var(--primary); color: #fff; padding: 4px 10px; border-radius: 20px;">0 RECORDS</div>
     </header>
 
-    <main id="admin-content">
-        <div class="podium" id="podium-area"></div>
-
-        <div class="wipe-card">
-            <h2 style="font-size: 10px; letter-spacing: 2px; margin-bottom: 10px; color: var(--primary);">DANGER ZONE</h2>
-            <button class="btn-danger" onclick="confirmWipe()">WIPE ENTIRE LEADERBOARD</button>
+    <main>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search student or module..." oninput="filterResults()">
         </div>
-
-        <div id="leaderboard-list"></div>
-        <div style="height: 50px;"></div>
+        <div id="leaderboard-container">
+            <div class="empty-state">Syncing with database...</div>
+        </div>
     </main>
+
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="location.href='admin.html'"><i data-lucide="terminal" size="22"></i>CONSOLE</button>
+        <button class="nav-item active"><i data-lucide="bar-chart-3" size="22"></i>ANALYTICS</button>
+    </nav>
 
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
             databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-            projectId: "agri-mcar",
-            storageBucket: "agri-mcar.firebasestorage.app",
-            messagingSenderId: "823436752104",
-            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+            projectId: "agri-mcar"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const auth = firebase.auth();
 
-        // --- GATEKEEPER & THEME ---
-        auth.onAuthStateChanged(user => {
+        let allRecords = [];
+        let studentMap = {};
+
+        firebase.auth().onAuthStateChanged(user => {
             if (user && user.email === 'vishalchalse007@gmail.com') {
-                document.body.style.display = 'block';
-                
-                db.ref(`students/${user.uid}`).on('value', snap => {
-                    if (snap.val()?.focusedMode) document.body.classList.add('focus-active');
-                    else document.body.classList.remove('focus-active');
-                });
-
-                initAdminSync();
+                loadInitialData();
             } else {
-                window.location.href = 'index.html';
+                window.location.href = "index.html"; 
             }
         });
 
-        function initAdminSync() {
-            db.ref('leaderboard').on('value', snap => {
-                let data = [];
-                snap.forEach(child => {
-                    data.push({ id: child.key, ...child.val() });
-                });
-                data.sort((a, b) => (b.score || 0) - (a.score || 0));
-                renderAdminUI(data);
-                document.getElementById('admin-loader').classList.add('fade-out');
+        async function loadInitialData() {
+            // 1. Load Student Names into memory first
+            const studentsSnap = await db.ref('students').once('value');
+            studentMap = studentsSnap.val() || {};
+
+            // 2. Listen to Leaderboard
+            db.ref('leaderboard').on('value', (snap) => {
+                allRecords = [];
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        const data = child.val();
+                        const sData = studentMap[data.uid] || { name: "Unknown Student" };
+                        allRecords.push({
+                            id: child.key,
+                            ...data,
+                            studentName: sData.name
+                        });
+                    });
+                    allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+                document.getElementById('record-count').innerText = `${allRecords.length} RECORDS`;
+                renderUI(allRecords);
             });
         }
 
-        function renderAdminUI(users) {
-            const podium = document.getElementById('podium-area');
-            const list = document.getElementById('leaderboard-list');
+        function renderUI(data) {
+            const container = document.getElementById('leaderboard-container');
+            container.innerHTML = "";
 
-            podium.innerHTML = `
-                <div class="podium-item podium-2">
-                    <span style="font-size:20px;">🥈</span>
-                    <span class="p-name">${users[1]?.name || '---'}</span>
-                    <span class="p-score" style="color:var(--silver)">${users[1]?.score || 0}</span>
-                </div>
-                <div class="podium-item podium-1">
-                    <span style="font-size:25px;">🥇</span>
-                    <span class="p-name">${users[0]?.name || '---'}</span>
-                    <span class="p-score" style="color:var(--gold)">${users[0]?.score || 0}</span>
-                </div>
-                <div class="podium-item podium-3">
-                    <span style="font-size:20px;">🥉</span>
-                    <span class="p-name">${users[2]?.name || '---'}</span>
-                    <span class="p-score" style="color:var(--bronze)">${users[2]?.score || 0}</span>
-                </div>
-            `;
+            if (data.length === 0) {
+                container.innerHTML = `<div class="empty-state">No records found.</div>`;
+                return;
+            }
 
-            list.innerHTML = "";
-            users.forEach((u, i) => {
+            data.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "rank-card";
+                card.className = "lead-card";
                 card.innerHTML = `
-                    <div class="rank-num">#${i + 1}</div>
                     <div class="user-info">
-                        <span class="user-name">${u.name || 'Anonymous'}</span>
-                        <span class="user-meta">${u.score} PTS • ${u.module || 'QUIZ'}</span>
+                        <span class="user-name">${item.studentName.toUpperCase()}</span>
+                        <span class="user-meta">${item.module ? item.module.replace(/_/g, ' ') : 'N/A'}</span>
                     </div>
-                    <button class="delete-btn" onclick="deleteEntry('${u.id}')">
-                        <i data-lucide="trash-2" size="14"></i>
-                    </button>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="score-display">${item.score}/${item.total}</div>
+                        <div class="actions">
+                            <button class="btn-icon btn-edit" onclick="editScore('${item.id}', ${item.score}, ${item.total})">
+                                <i data-lucide="edit-3" size="16"></i>
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="deleteRecord('${item.id}')">
+                                <i data-lucide="trash-2" size="16"></i>
+                            </button>
+                        </div>
+                    </div>
                 `;
-                list.appendChild(card);
+                container.appendChild(card);
             });
             lucide.createIcons();
         }
 
-        function deleteEntry(id) {
-            if(confirm("Remove this entry from rankings?")) {
-                db.ref(`leaderboard/${id}`).remove();
+        function filterResults() {
+            const term = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allRecords.filter(r => 
+                r.studentName.toLowerCase().includes(term) || 
+                (r.module && r.module.toLowerCase().includes(term))
+            );
+            renderUI(filtered);
+        }
+
+        function editScore(id, currentScore, total) {
+            const newScore = prompt(`Update score (Max: ${total}):`, currentScore);
+            if (newScore !== null && !isNaN(newScore)) {
+                const val = parseInt(newScore);
+                if (val >= 0 && val <= total) {
+                    db.ref(`leaderboard/${id}`).update({ 
+                        score: val,
+                        accuracy: Math.round((val / total) * 100)
+                    });
+                }
             }
         }
 
-        function confirmWipe() {
-            if(confirm("WARNING: This will delete ALL rankings. Proceed?")) {
-                db.ref('leaderboard').remove();
+        function deleteRecord(id) {
+            if (confirm("Delete this result forever?")) {
+                db.ref(`leaderboard/${id}`).remove();
             }
         }
 
