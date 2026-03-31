@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>AgriQ Pro | Daily Champions</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* Emerald Green Theme to match daily.html */
+        :root {
+            --primary: #10b981; 
+            --bg: #f0fdf4; 
+            --surface: #ffffff;
+            --text-main: #064e3b; 
+            --text-dim: #64748b; 
+            --border: #e2e8f0;
+            --gold: #fbbf24; --silver: #94a3b8; --bronze: #cd7f32;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background-color: var(--bg); margin: 0; color: var(--text-main); 
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            overflow-x: hidden; min-height: 100vh;
+        }
+
+        /* Loader */
+        #leader-loader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s;
+        }
+        #leader-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        /* Header */
+        header {
+            padding: 20px 24px; background: rgba(255,255,255,0.85); 
+            backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+        }
+        .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; text-transform: uppercase; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        main { padding: 0 20px; max-width: 500px; margin: 0 auto; width: 100%; }
+
+        /* Podium Styling */
+        .podium { 
+            display: flex; justify-content: center; align-items: flex-end; 
+            gap: 12px; margin: 40px 0 30px; min-height: 220px; 
+        }
+        
+        .podium-item { 
+            background: var(--surface); border: 1.5px solid var(--border); border-radius: 24px 24px 12px 12px;
+            padding: 20px 10px; text-align: center; position: relative; flex: 1;
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+        }
+        
+        .podium-1 { 
+            height: 210px; border-color: var(--gold); 
+            background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+            transform: translateY(-15px); z-index: 2;
+            box-shadow: 0 15px 35px rgba(251, 191, 36, 0.15);
+        }
+        .podium-2 { height: 170px; border-color: var(--silver); background: linear-gradient(180deg, #f8fafc 0%, #fff 100%); }
+        .podium-3 { height: 150px; border-color: var(--bronze); background: linear-gradient(180deg, #fff7ed 0%, #fff 100%); }
+
+        .crown { position: absolute; top: -25px; font-size: 28px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        .avatar-box {
+            width: 48px; height: 48px; border-radius: 16px; border: 2px solid var(--border);
+            margin-bottom: 12px; overflow: hidden; background: #f1f5f9;
+            display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px;
+            position: relative; background-size: cover; background-position: center; color: var(--text-dim);
+        }
+        .podium-1 .avatar-box { width: 64px; height: 64px; border-color: var(--gold); color: var(--gold); font-size: 24px; }
+        .podium-2 .avatar-box { border-color: var(--silver); color: var(--silver); }
+        .podium-3 .avatar-box { border-color: var(--bronze); color: var(--bronze); }
+
+        .p-name { font-weight: 800; font-size: 10px; text-transform: uppercase; color: var(--text-main); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+        .p-score { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 14px; color: var(--primary); background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 12px; }
+
+        /* List Styling */
+        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin: 20px 0 15px; display: flex; align-items: center; gap: 8px; font-weight: 900; }
+        
+        .rank-card {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 16px; border-radius: 20px;
+            display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: var(--transition);
+            animation: slideUp 0.4s ease forwards; opacity: 0; transform: translateY(10px);
+        }
+        .rank-card.is-me { border-color: var(--primary); background: #f0fdf4; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15); }
+        
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        .list-img {
+            width: 42px; height: 42px; border-radius: 14px; border: 1.5px solid var(--border);
+            overflow: hidden; display: flex; align-items: center; justify-content: center; 
+            font-weight: 800; background: #f8fafc; background-size: cover; background-position: center;
+            color: var(--primary); font-size: 16px;
+        }
+
+        .rank-num { width: 24px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--text-dim); font-size: 13px; text-align: center; }
+        .user-info { flex: 1; min-width: 0; }
+        .user-name { font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+        .user-meta { font-size: 10px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+        .score-val { font-family: 'JetBrains Mono'; font-weight: 900; color: var(--primary); font-size: 18px; text-align: right; }
+        
+        .me-badge { background: var(--primary); color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 50px; font-weight: 900; letter-spacing: 0.5px; }
+
+        /* Return Bar */
+        .bottom-return {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 18px; border-radius: 20px;
+            background: #fff; border: 1.5px solid var(--border);
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            font-weight: 800; color: var(--text-main); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-decoration: none; z-index: 1000; transition: var(--transition);
+        }
+        .bottom-return:active { transform: translateX(-50%) scale(0.98); background: #f8fafc; }
+
+    </style>
+</head>
+<body>
+
+    <div id="leader-loader">
+        <i data-lucide="zap" size="48" color="var(--primary)" style="animation: float 2s infinite;"></i>
+        <p style="font-family:'JetBrains Mono'; font-size:11px; margin-top:20px; letter-spacing:2px; color:var(--primary); font-weight: 800;">SYNCING DAILY RANKS...</p>
+    </div>
+
+    <header>
+        <div class="brand">DAILY <span>DRILL</span></div>
+        <i data-lucide="zap" size="22" color="var(--primary)"></i>
+    </header>
+
+    <main>
+        <div class="podium" id="podium-area"></div>
+        
+        <h3 class="section-title" id="list-title" style="display: none;">
+            <i data-lucide="users" size="16" color="var(--primary)"></i> Top Drillers
+        </h3>
+        <div id="leaderboard-list"></div>
+    </main>
+
+    <a href="leaderboard.html" class="bottom-return">
+        <i data-lucide="arrow-left" size="20"></i> BACK TO GLOBAL RANKS
+    </a>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+        lucide.createIcons();
+
+        let currentUid = null;
+        let studentsData = {};
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUid = user.uid;
+                initGlobalSync();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function initGlobalSync() {
+            // Fetch User Profiles for Avatars/Names
+            db.ref('students').on('value', (snap) => {
+                studentsData = snap.val() || {};
+                fetchScores();
+            });
+        }
+
+        function fetchScores() {
+            db.ref('leaderboard').on('value', (snap) => {
+                const data = snap.val();
+                if (!data) renderEmptyState();
+                else processData(data);
+            });
+        }
+
+        function processData(rawData) {
+            const aggregated = {};
+            
+            // Only aggregate scores where the module is DAILY_DRILL
+            Object.values(rawData).forEach(entry => {
+                if (!entry.uid) return;
+                
+                // --- THIS IS THE FILTER THAT SEPARATES THE LEADERBOARDS ---
+                if (entry.module !== "DAILY_DRILL") return;
+                
+                if (!aggregated[entry.uid]) {
+                    aggregated[entry.uid] = { uid: entry.uid, score: 0, acc: 0, count: 0 };
+                }
+                aggregated[entry.uid].score += (parseInt(entry.score) || 0);
+                aggregated[entry.uid].acc += (parseFloat(entry.accuracy) || 0);
+                aggregated[entry.uid].count++;
+            });
+
+            // Map profiles and sort
+            const sorted = Object.values(aggregated).map(u => {
+                const profile = studentsData[u.uid] || {};
+                return {
+                    ...u,
+                    displayName: (profile.name || "STUDENT").toUpperCase(),
+                    photo: profile.profilePic || null,
+                    avgAcc: Math.round(u.acc / u.count),
+                    level: Math.floor(u.score / 100) + 1 // Custom level scaling for daily drills
+                };
+            }).sort((a, b) => b.score - a.score);
+
+            if(sorted.length === 0) {
+                renderEmptyState();
+            } else {
+                renderUI(sorted);
+            }
+        }
+
+        function renderUI(users) {
+            const podium = document.getElementById('podium-area');
+            const list = document.getElementById('leaderboard-list');
+            document.getElementById('list-title').style.display = 'flex';
+
+            const getAvatarHtml = (u) => {
+                if (!u) return `<div class="avatar-box"><i data-lucide="user" size="20"></i></div>`;
+                const style = u.photo ? `background-image:url('${u.photo}');` : '';
+                return `<div class="avatar-box" style="${style}">${u.photo ? '' : u.displayName[0]}</div>`;
+            };
+
+            // Safely get Top 3
+            const first = users[0], second = users[1], third = users[2];
+
+            // Render Podium
+            podium.innerHTML = `
+                <div class="podium-item podium-2">
+                    <div style="font-size:10px; font-weight:900; color:var(--silver); margin-bottom:5px;">#2</div>
+                    ${getAvatarHtml(second)}
+                    <span class="p-name">${second ? second.displayName : '---'}</span>
+                    <span class="p-score">${second ? second.score + ' XP' : '-'}</span>
+                </div>
+                <div class="podium-item podium-1">
+                    <div class="crown">👑</div>
+                    ${getAvatarHtml(first)}
+                    <span class="p-name">${first ? first.displayName : '---'}</span>
+                    <span class="p-score">${first ? first.score + ' XP' : '-'}</span>
+                </div>
+                <div class="podium-item podium-3">
+                    <div style="font-size:10px; font-weight:900; color:var(--bronze); margin-bottom:5px;">#3</div>
+                    ${getAvatarHtml(third)}
+                    <span class="p-name">${third ? third.displayName : '---'}</span>
+                    <span class="p-score">${third ? third.score + ' XP' : '-'}</span>
+                </div>
+            `;
+
+            // Render List
+            list.innerHTML = users.map((u, i) => {
+                const rank = i + 1;
+                const isMe = u.uid === currentUid;
+                const imgStyle = u.photo ? `background-image:url('${u.photo}');` : '';
+                const delay = i * 0.05;
+
+                return `
+                    <div class="rank-card ${isMe ? 'is-me' : ''}" style="animation-delay: ${delay}s">
+                        <div class="rank-num">${rank}</div>
+                        <div class="list-img" style="${imgStyle}">${u.photo ? '' : u.displayName[0]}</div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                ${u.displayName}
+                                ${isMe ? '<span class="me-badge">YOU</span>' : ''}
+                            </div>
+                            <div class="user-meta">DRILL LVL ${u.level} • ${u.avgAcc}% ACCURACY</div>
+                        </div>
+                        <div class="score-val">${u.score}<span style="font-size:10px; color:var(--text-dim); margin-left:2px;">XP</span></div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+            finishLoading();
+        }
+
+        function renderEmptyState() {
+            document.getElementById('podium-area').innerHTML = '';
+            document.getElementById('list-title').style.display = 'none';
+            document.getElementById('leaderboard-list').innerHTML = `
+                <div style="text-align:center; padding:60px 20px; color:var(--text-dim);">
+                    <i data-lucide="zap-off" size="40" style="opacity:0.5; margin-bottom:15px;"></i>
+                    <div style="font-size:14px; font-weight:800; color:var(--text-main);">No Daily Drills Yet</div>
+                    <div style="font-size:11px; margin-top:5px;">Be the first to complete today's rapid drill!</div>
+                </div>
+            `;
+            lucide.createIcons();
+            finishLoading();
+        }
+
+        function finishLoading() {
+            setTimeout(() => {
+                document.getElementById('leader-loader').classList.add('fade-out');
+            }, 500);
+        }
+    </script>
+</body>
+</html>
