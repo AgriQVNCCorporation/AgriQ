@@ -186,6 +186,11 @@
             </div>
             
             <div class="input-group">
+                <span class="input-label"><i data-lucide="timer" size="12" style="margin-right: 4px;"></i> Time Limit (Seconds)</span>
+                <input type="number" id="time-limit" placeholder="e.g. 600 for 10 mins" value="600">
+            </div>
+
+            <div class="input-group">
                 <span class="input-label">Questions JSON Array</span>
                 <textarea id="json-input" placeholder='[{"q": "...", "options": [...], "ans": "..."}]'></textarea>
             </div>
@@ -260,6 +265,8 @@
                     const data = module.val();
                     const config = data.config || {};
                     const activeDate = config.activeDate || "";
+                    const qCount = (data.questions?.data || data.questions || []).length;
+                    const timeLimit = config.timeLimit || 600; // Default to 600 if missing
                     
                     let statusBadge = '';
                     if (!activeDate) {
@@ -278,7 +285,13 @@
                         <div class="data-pill-header">
                             <div>
                                 <div style="font-size:15px; font-weight:900;">${config.displayName || key.toUpperCase()}</div>
-                                <div style="font-size:10px; color:var(--text-dim); font-family:monospace;">ID: ${key}</div>
+                                <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${key}</div>
+                                
+                                <div style="display:flex; gap: 8px; font-size: 10px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">
+                                    <span style="background: var(--primary-glow); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
+                                    <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
+                                </div>
+                                
                                 ${statusBadge}
                             </div>
                             <label class="switch">
@@ -293,7 +306,7 @@
                                 <button class="btn-outline" onclick="updateModuleDate('${key}', '${today}')" style="padding:0 12px;">TODAY</button>
                             </div>
                         </div>
-                        <div class="data-pill-actions">
+                        <div class="data-pill-actions" style="margin-top: 15px;">
                             <button class="btn-outline" onclick="editModuleData('${key}')"><i data-lucide="edit"></i> EDIT JSON</button>
                             <button class="btn-outline" style="color:var(--danger);" onclick="deleteModule('${key}')"><i data-lucide="trash"></i></button>
                         </div>
@@ -318,6 +331,8 @@
             const key = document.getElementById('sub-key').value.trim().toLowerCase().replace(/\s+/g, '_');
             const name = document.getElementById('sub-name').value.trim();
             const json = document.getElementById('json-input').value;
+            const timeLimit = parseInt(document.getElementById('time-limit').value) || 600; // GET TIME LIMIT
+
             if(!key || !json) return showToast("Enter ID and JSON", "error");
 
             try {
@@ -325,7 +340,8 @@
                 db.ref(`subjects/${key}`).set({
                     questions: qs,
                     enabled: true,
-                    config: { displayName: name || key, timeLimit: 600, activeDate: "" }
+                    // SAVE TIME LIMIT TO DB
+                    config: { displayName: name || key, timeLimit: timeLimit, activeDate: "" } 
                 }).then(() => {
                     showToast("Module Deployed!");
                     document.getElementById('sub-key').value = "";
@@ -339,6 +355,7 @@
                 const d = snap.val();
                 document.getElementById('sub-key').value = key;
                 document.getElementById('sub-name').value = d.config?.displayName || key;
+                document.getElementById('time-limit').value = d.config?.timeLimit || 600; // POPULATE TIME LIMIT
                 document.getElementById('json-input').value = JSON.stringify(d.questions, null, 2);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
