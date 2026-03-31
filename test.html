@@ -188,7 +188,7 @@
 
         // Added `markedQuestions` to track yellow marks
         let questions = [], currentIdx = 0, userChoices = {}, markedQuestions = {}, timer;
-        let totalSecondsRemaining = 3600; 
+        let totalSecondsRemaining = 3600; // Default fallback
         const params = new URLSearchParams(window.location.search);
         const moduleKey = params.get('mod');
         let isSubmitting = false;
@@ -215,7 +215,12 @@
                 if (snap.exists()) {
                     const data = snap.val();
                     const rawQuestions = data.questions?.data || data.questions || [];
-                    if (data.config?.timeLimit) totalSecondsRemaining = data.config.timeLimit;
+                    
+                    // Strictly fetch and parse the timeLimit from the database
+                    if (data.config && data.config.timeLimit) {
+                        totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
+                    }
+                    
                     setupQuestions(rawQuestions);
                 } else {
                     showModal("ERROR", "Module not found.", "alert", () => window.location.href='index.html');
@@ -309,14 +314,24 @@
             lucide.createIcons(); // Refresh icons inside the dynamic HTML
         }
 
+        // Function to update the clock UI instantly
+        function updateTimerUI() {
+            let m = Math.floor(totalSecondsRemaining / 60).toString().padStart(2, '0');
+            let s = (totalSecondsRemaining % 60).toString().padStart(2, '0');
+            document.getElementById('q-timer').innerText = `${m}:${s}`;
+        }
+
         function startGlobalTimer() {
+            // Update the UI immediately so it doesn't show 00:00 for the first second
+            updateTimerUI(); 
+            
             timer = setInterval(() => {
-                if (totalSecondsRemaining <= 0) { clearInterval(timer); processFinalResults(); }
-                else {
+                if (totalSecondsRemaining <= 0) { 
+                    clearInterval(timer); 
+                    processFinalResults(); 
+                } else {
                     totalSecondsRemaining--;
-                    let m = Math.floor(totalSecondsRemaining/60).toString().padStart(2,'0');
-                    let s = (totalSecondsRemaining%60).toString().padStart(2,'0');
-                    document.getElementById('q-timer').innerText = `${m}:${s}`;
+                    updateTimerUI();
                 }
             }, 1000);
         }
