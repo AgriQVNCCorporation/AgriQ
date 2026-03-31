@@ -188,13 +188,14 @@
             </div>
         </div>
     </div>
-<div id="update-banner" style="position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(150px); width: 90%; max-width: 400px; background: #0f172a; color: white; padding: 16px 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: space-between; z-index: 9999; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); opacity: 0;">
-    <div>
-        <div style="font-size:13px; font-weight:800; margin-bottom:2px;">New Version Available! 🚀</div>
-        <div style="font-size:10px; color:var(--text-dim); font-weight:600;">Update for the latest features.</div>
+    
+    <div id="update-banner" style="position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(150px); width: 90%; max-width: 400px; background: #0f172a; color: white; padding: 16px 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: space-between; z-index: 9999; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); opacity: 0;">
+        <div>
+            <div style="font-size:13px; font-weight:800; margin-bottom:2px;">New Version Available! 🚀</div>
+            <div style="font-size:10px; color:var(--text-dim); font-weight:600;">Update for the latest features.</div>
+        </div>
+        <button id="update-btn" style="background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 11px; cursor: pointer;">UPDATE NOW</button>
     </div>
-    <button id="update-btn" style="background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 11px; cursor: pointer;">UPDATE NOW</button>
-</div>
 
     <header>
         <div class="brand">AGRI<span>Q</span> PRO</div>
@@ -275,44 +276,45 @@
         <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
         <a href="profile.html" class="nav-item"><i data-lucide="user"></i>Profile</a>
     </nav>
-// --- SERVICE WORKER & UPDATE LOGIC ---
-let newWorker;
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-        
-        // Listen for new updates waiting
-        reg.addEventListener('updatefound', () => {
-            newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // Slide up the update banner!
-                    const banner = document.getElementById('update-banner');
-                    banner.style.opacity = '1';
-                    banner.style.transform = 'translateX(-50%) translateY(0)';
-                }
-            });
-        });
-    });
-
-    // Detect when the service worker has actually switched over, and reload the page
-    let refreshing;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        window.location.reload();
-        refreshing = true;
-    });
-}
-
-// When the user clicks the "UPDATE NOW" button
-document.getElementById('update-btn')?.addEventListener('click', () => {
-    if (newWorker) {
-        newWorker.postMessage('SKIP_WAITING');
-    }
-});
-// -------------------------------------
 
     <script>
+        // --- SERVICE WORKER & UPDATE LOGIC ---
+        let newWorker;
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                
+                // Listen for new updates waiting
+                reg.addEventListener('updatefound', () => {
+                    newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Slide up the update banner!
+                            const banner = document.getElementById('update-banner');
+                            banner.style.opacity = '1';
+                            banner.style.transform = 'translateX(-50%) translateY(0)';
+                        }
+                    });
+                });
+            });
+
+            // Detect when the service worker has actually switched over, and reload the page
+            let refreshing;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                window.location.reload();
+                refreshing = true;
+            });
+        }
+
+        // When the user clicks the "UPDATE NOW" button
+        document.getElementById('update-btn')?.addEventListener('click', () => {
+            if (newWorker) {
+                newWorker.postMessage('SKIP_WAITING');
+            }
+        });
+        // -------------------------------------
+
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
@@ -372,7 +374,6 @@ document.getElementById('update-btn')?.addEventListener('click', () => {
                     // Securely handle text
                     const safeContent = post.content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-                    // Changed inline style for white-space, handled via CSS now
                     track.innerHTML += `
                         <div class="carousel-slide">
                             <div class="post-card" style="margin-bottom:0;">
@@ -383,7 +384,7 @@ document.getElementById('update-btn')?.addEventListener('click', () => {
                                         <span>${timeString}</span>
                                     </div>
                                 </div>
-                                <div class="post-content" style="white-space: pre-wrap;">${safeContent}</div>
+                                <div class="post-content">${safeContent}</div>
                             </div>
                         </div>
                     `;
