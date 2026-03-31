@@ -106,34 +106,32 @@
         }
         .btn-start:active { transform: scale(0.98); }
 
-        /* POST CAROUSEL SECTION */
+        /* FIXED POST CAROUSEL SECTION */
         .post-section { margin-top: 30px; }
         .section-title { font-weight: 900; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         
-        .carousel-container { overflow: hidden; width: 100%; border-radius: 24px; position: relative; }
-        /* align-items: stretch ensures all slides match the height of the tallest one within the constraints */
-        .carousel-track { display: flex; transition: transform 0.5s ease-in-out; align-items: stretch; }
-        /* display: flex here allows the card to take full height of the slide */
-        .carousel-slide { min-width: 100%; flex-shrink: 0; padding-bottom: 5px; display: flex; }
+        .carousel-container { overflow: hidden; width: 100%; position: relative; }
+        .carousel-track { display: flex; transition: transform 0.5s ease-in-out; align-items: flex-start; }
+        .carousel-slide { min-width: 100%; flex-shrink: 0; padding-bottom: 10px; }
         
         .post-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
-            padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); width: 100%;
-            display: flex; flex-direction: column; max-height: 260px; /* Constrain maximum height */
+            padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            display: flex; flex-direction: column; max-height: 280px; 
+            margin: 0 2px; /* Prevent shadow clipping */
         }
-        /* flex-shrink: 0 prevents the header from getting squished by large text */
+        
         .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-shrink: 0; }
         .post-avatar { width: 36px; height: 36px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; }
         .post-meta h4 { margin: 0; font-size: 14px; font-weight: 800; }
         .post-meta span { font-size: 10px; color: var(--text-dim); font-weight: 600; }
         
-        /* UPDATED POST CONTENT FOR PERFECT SCROLLING */
         .post-content { 
             font-size: 13px; color: var(--text-dim); line-height: 1.6; font-weight: 600; 
-            flex: 1; /* Takes up remaining space in the card */
-            overflow-y: auto; /* Automatically adds a scrollbar if text is too long */
-            overflow-x: hidden; padding-right: 5px; word-wrap: break-word;
+            overflow-y: auto; overflow-x: hidden; padding-right: 5px; word-wrap: break-word;
+            flex-grow: 1;
         }
+        
         /* Custom scrollbar for post content */
         .post-content::-webkit-scrollbar { width: 4px; }
         .post-content::-webkit-scrollbar-track { background: transparent; }
@@ -261,7 +259,6 @@
                 </div>
             </div>
             <div class="dots-container" id="post-dots"></div>
-
         </div>
 
         <footer>
@@ -376,7 +373,7 @@
 
                     track.innerHTML += `
                         <div class="carousel-slide">
-                            <div class="post-card" style="margin-bottom:0;">
+                            <div class="post-card">
                                 <div class="post-header">
                                     <div class="post-avatar">${(post.author || 'A').charAt(0).toUpperCase()}</div>
                                     <div class="post-meta">
@@ -384,7 +381,7 @@
                                         <span>${timeString}</span>
                                     </div>
                                 </div>
-                                <div class="post-content">${safeContent}</div>
+                                <div class="post-content" style="white-space: pre-wrap;">${safeContent}</div>
                             </div>
                         </div>
                     `;
