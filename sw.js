@@ -1,13 +1,12 @@
-
 // CHANGE THIS VERSION NUMBER TO FORCE AN UPDATE
-const CACHE_NAME = 'agriq-pro-v5.0'; 
+const CACHE_NAME = 'agriq-pro-v6.0'; 
 
 const ASSETS_TO_CACHE = [
     './',
-    '/AgriQ/index.html',
-    '/AgriQ/manifest.json',
-    './icon-192x192.png',
-    './icon-512x512.png'
+    './index.html',
+    './manifest.json',
+    './icon-192.png',      // Fixed to match your exact uploaded filename
+    './icon-512x512.png'   // Make sure this file actually exists in your repo!
 ];
 
 // 1. Install & Cache
