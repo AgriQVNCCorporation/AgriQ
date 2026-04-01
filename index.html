@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#f0f9ff">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
+    
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <meta name="theme-color" content="#0084ff">
     
     <title>AgriQ Pro | Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
@@ -25,14 +24,15 @@
             --daily-color: #10b981; --coak-color: #8b5cf6;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        html { 
-    scroll-behavior: smooth; 
-    background-color: var(--bg); /* This is the magic line for the bottom bar! */
-}
-
-body { 
-    background: var(--bg); 
-    margin: 0; 
+        
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); margin: 0; color: var(--text-main); 
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
         }
 
         header { 
