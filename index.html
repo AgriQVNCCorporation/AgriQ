@@ -21,7 +21,7 @@
         :root {
             --primary: #0084ff; --bg: #f0f9ff; --surface: #ffffff;
             --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
-            --daily-color: #10b981;
+            --daily-color: #10b981; --coak-color: #8b5cf6;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -40,8 +40,31 @@
             backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100;
             display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
         }
+        .header-left { display: flex; align-items: center; gap: 15px; }
         .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        /* SIDEBAR STYLES */
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0, 45, 77, 0.4); backdrop-filter: blur(4px);
+            z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
+            background: var(--surface); z-index: 1001; box-shadow: 5px 0 25px rgba(0,0,0,0.1);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; padding: 20px; padding-top: calc(20px + env(safe-area-inset-top));
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 15px; padding: 16px 20px;
+            color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 15px;
+            border-radius: 16px; margin-bottom: 10px; transition: var(--transition);
+        }
+        .sidebar-link i { color: var(--text-dim); transition: var(--transition); }
+        .sidebar-link:hover { background: #f0f9ff; color: var(--primary); }
+        .sidebar-link:hover i { color: var(--primary); }
 
         main { padding: 20px; max-width: 500px; margin: 0 auto; }
 
@@ -64,18 +87,24 @@
         .r-val { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono'; line-height: 1; }
         .r-pts { font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; display: inline-block; margin-top: 8px; }
 
-        .daily-banner {
+        /* BANNERS */
+        .banner-card {
             background: #0f172a; color: white; padding: 20px; border-radius: 24px;
-            margin-bottom: 20px; display: flex; align-items: center; gap: 15px;
-            border-left: 5px solid var(--daily-color); cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-decoration: none;
+            margin-bottom: 15px; display: flex; align-items: center; gap: 15px;
+            cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-decoration: none;
+            transition: var(--transition);
         }
-        .daily-banner:active { transform: scale(0.98); }
-        .daily-icon { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .banner-card:active { transform: scale(0.98); }
+        
+        .daily-banner { border-left: 5px solid var(--daily-color); }
+        .daily-icon { background: rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        
+        .coak-banner { border-left: 5px solid var(--coak-color); }
+        .coak-icon { background: rgba(139, 92, 246, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
 
         .module-card { 
             background: var(--surface); padding: 24px; border-radius: 28px; 
-            border: 1px solid var(--border); margin-bottom: 20px; 
+            border: 1px solid var(--border); margin-bottom: 20px; margin-top: 5px;
         }
         
         .custom-select { position: relative; margin-top: 15px; }
@@ -180,6 +209,33 @@
 </head>
 <body>
 
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand">AGRI<span>Q</span></div>
+            <i data-lucide="x" size="24" style="cursor:pointer; color:var(--text-dim);" onclick="closeSidebar()"></i>
+        </div>
+        
+        <div style="flex: 1;">
+            <a href="update.html" class="sidebar-link">
+                <i data-lucide="refresh-cw" size="20"></i> Updates
+            </a>
+            <a href="group.html" class="sidebar-link">
+                <i data-lucide="users" size="20"></i> Groups
+            </a>
+            <a href="help.html" class="sidebar-link">
+                <i data-lucide="help-circle" size="20"></i> Help
+            </a>
+            <a href="contact.html" class="sidebar-link">
+                <i data-lucide="mail" size="20"></i> Contact Us
+            </a>
+        </div>
+        
+        <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto;">
+            <div class="copyright" style="text-align: center; color: var(--text-dim);">V5.0</div>
+        </div>
+    </div>
+
     <div id="toast"></div>
     <div id="modal-overlay">
         <div class="modal">
@@ -201,7 +257,10 @@
     </div>
 
     <header>
-        <div class="brand">AGRI<span>Q</span> PRO</div>
+        <div class="header-left">
+            <i data-lucide="menu" size="24" style="cursor:pointer; color:var(--text-main);" onclick="toggleSidebar()"></i>
+            <div class="brand">AGRI<span>Q</span> PRO</div>
+        </div>
         <div style="display:flex; gap:18px; align-items:center;">
             <i data-lucide="edit-3" size="20" style="color:var(--text-main); cursor:pointer;" onclick="requestNameChange()"></i>
             <i data-lucide="bell" size="20" style="color:var(--text-dim)"></i>
@@ -225,13 +284,24 @@
             </a>
         </div>
 
-        <a href="daily.html" class="daily-banner">
+        <a href="daily.html" class="banner-card daily-banner">
             <div class="daily-icon">
                 <i data-lucide="zap" fill="var(--daily-color)" color="var(--daily-color)" size="24"></i>
             </div>
             <div style="flex:1;">
                 <h3 style="margin:0 0 4px 0; font-size:15px; font-weight:800;">Daily Rapid Drill</h3>
                 <p style="margin:0; font-size:11px; color:rgba(255,255,255,0.7); font-weight:600;">10 Questions • 5 Mins • Fresh</p>
+            </div>
+            <i data-lucide="chevron-right" color="rgba(255,255,255,0.5)"></i>
+        </a>
+
+        <a href="coakmonks.html" class="banner-card coak-banner">
+            <div class="coak-icon">
+                <i data-lucide="book-open-check" fill="var(--coak-color)" color="var(--coak-color)" size="24"></i>
+            </div>
+            <div style="flex:1;">
+                <h3 style="margin:0 0 4px 0; font-size:15px; font-weight:800;">COAK Monks</h3>
+                <p style="margin:0; font-size:11px; color:rgba(255,255,255,0.7); font-weight:600;">Specialized Preparation Module</p>
             </div>
             <i data-lucide="chevron-right" color="rgba(255,255,255,0.5)"></i>
         </a>
@@ -280,6 +350,21 @@
     </nav>
 
     <script>
+        // --- SIDEBAR LOGIC ---
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            const overlay = document.getElementById('sidebar-overlay');
+            overlay.style.display = 'block';
+            setTimeout(() => overlay.style.opacity = '1', 10);
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            const overlay = document.getElementById('sidebar-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
         // --- SERVICE WORKER & UPDATE LOGIC ---
         let newWorker;
 
@@ -531,7 +616,7 @@
         window.onclick = function(event) {
             if (!event.target.closest('.custom-select')) {
                 const dropdown = document.getElementById('select-dropdown');
-                if (dropdown.classList.contains('show')) toggleDropdown();
+                if (dropdown && dropdown.classList.contains('show')) toggleDropdown();
             }
         }
 
