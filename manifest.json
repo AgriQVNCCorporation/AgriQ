@@ -4,8 +4,8 @@
   "description": "The Ultimate Preparation Terminal",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0084ff",
+  "background_color": "#f0f9ff",
+  "theme_color": "#f0f9ff",
   "orientation": "portrait",
   "icons": [
     {
