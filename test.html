@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -104,6 +105,18 @@
             display: block;
         }
 
+        .retake-badge {
+            display: none;
+            background: #f1f5f9;
+            color: var(--text-dim);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
         .opt-box { 
             background: #fff; border: 1.5px solid var(--border); padding: 18px; 
             border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; color: var(--text-main);
@@ -161,7 +174,10 @@
         <div id="marker-grid" class="marker-scroll"></div>
         
         <div class="q-card">
-            <span id="q-number" class="q-number-label"></span>
+            <span id="q-number" class="q-number-label">
+                QUESTION <span id="q-current-count">--</span> OF <span id="q-total-count">--</span>
+                <span id="retake-badge" class="retake-badge">RETAKE</span>
+            </span>
             <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6; color: var(--text-main);">Preparing your assessment...</div>
         </div>
 
@@ -199,11 +215,26 @@
         let totalSecondsRemaining = 3600; 
         const params = new URLSearchParams(window.location.search);
         const moduleKey = params.get('mod');
+        
+        // Handle retake types
+        const retakeParam = params.get('retake');
+        const isRetake = retakeParam === 'true' || retakeParam === 'half';
+        const isHalfXP = retakeParam === 'half';
+        
         let isSubmitting = false;
 
         document.addEventListener("visibilitychange", () => {
             if (document.hidden && !isSubmitting) processFinalResults();
         });
+
+        // Display Retake badge if applicable
+        if (isRetake) {
+            const badge = document.getElementById('retake-badge');
+            badge.style.display = 'inline-block';
+            if (isHalfXP) {
+                badge.innerText = 'RETAKE (1/2 XP)';
+            }
+        }
 
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'index.html';
@@ -266,6 +297,8 @@
         function initUI() {
             const grid = document.getElementById('marker-grid');
             grid.innerHTML = '';
+            document.getElementById('q-total-count').innerText = questions.length;
+
             questions.forEach((_, i) => {
                 const p = document.createElement('div');
                 p.className = 'q-pill';
@@ -286,8 +319,10 @@
             const q = questions[currentIdx];
             
             // Feature: Display question number
-            document.getElementById('q-number').innerText = `QUESTION ${currentIdx + 1} OF ${questions.length}`;
-            document.getElementById('q-display').innerText = q.displayQ;
+            document.getElementById('q-current-count').innerText = currentIdx + 1;
+            
+            // Feature: Inject Q.1, Q.2, etc. visually before the text
+            document.getElementById('q-display').innerHTML = `<span style="color: var(--primary); font-weight: 800;">Q.${currentIdx + 1}</span> ${q.displayQ}`;
             
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active', 'done', 'marked');
@@ -366,7 +401,13 @@
         }
 
         function submitTest() { 
-            showModal("SUBMIT", "Do you want to end this session?", "confirm", processFinalResults); 
+            let msg = "Do you want to end this session?";
+            if (isHalfXP) {
+                msg += "<br><br><span style='color:var(--text-dim); font-size:12px;'>You will earn HALF XP for this retake.</span>";
+            } else if (isRetake) {
+                msg += "<br><br><span style='color:var(--text-dim); font-size:12px;'>You will earn 0 XP for this retake.</span>";
+            }
+            showModal("SUBMIT", msg, "confirm", processFinalResults); 
         }
 
         async function processFinalResults() {
@@ -374,30 +415,45 @@
             isSubmitting = true;
             clearInterval(timer);
 
-            let score = 0;
+            let correctCount = 0;
             const details = questions.map((q, i) => {
                 const userAns = (userChoices[i] === null || userChoices[i] === undefined) ? "SKIPPED" : userChoices[i];
                 const isCorrect = userAns === q.correct;
-                if(isCorrect) score++;
+                if(isCorrect) correctCount++;
                 return { question: q.displayQ, user: userAns, actual: q.correct };
             });
 
+            // Calculate XP based on retake status
+            let earnedXP = correctCount;
+            if (isHalfXP) {
+                earnedXP = Math.floor(correctCount / 2);
+            } else if (isRetake) {
+                earnedXP = 0;
+            }
+
             const resultData = { 
                 uid: auth.currentUser.uid,
-                score, total: questions.length, 
-                accuracy: Math.round((score / (questions.length || 1)) * 100),
-                module: moduleKey, timestamp: Date.now() 
+                score: earnedXP, // The calculated XP based on retake rules
+                rawScore: correctCount, // Keeps track of actual correct answers for Analysis page
+                total: questions.length, 
+                accuracy: Math.round((correctCount / (questions.length || 1)) * 100),
+                module: moduleKey, timestamp: Date.now(),
+                isRetake: isRetake
             };
 
             try {
+                // Submit to leaderboard
                 await db.ref('leaderboard').push(resultData);
+                
                 const userRef = db.ref(`students/${auth.currentUser.uid}`);
                 const snap = await userRef.once('value');
                 const d = snap.val() || {};
                 
                 const newTests = (d.testsTaken || 0) + 1;
+                
+                // Add XP to total profile
                 await userRef.update({
-                    totalScore: (d.totalScore || 0) + score,
+                    totalScore: (d.totalScore || 0) + earnedXP,
                     testsTaken: newTests,
                     avgAccuracy: Math.round(((d.avgAccuracy || 0) * (newTests - 1) + resultData.accuracy) / newTests)
                 });
@@ -412,7 +468,7 @@
         function showModal(title, text, type, onConfirm) {
             const m = document.getElementById('custom-modal');
             document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-text').innerText = text;
+            document.getElementById('modal-text').innerHTML = text;
             m.style.display = 'flex';
             document.getElementById('modal-confirm-btn').onclick = () => { m.style.display='none'; if(onConfirm) onConfirm(); };
             document.getElementById('modal-cancel-btn').onclick = () => m.style.display='none';
