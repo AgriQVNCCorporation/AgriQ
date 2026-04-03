@@ -181,10 +181,10 @@
         .nav-bar {
             position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9);
             backdrop-filter: blur(15px); display: flex; justify-content: space-around; 
-            padding: 15px 10px calc(15px + env(safe-area-inset-bottom));
+            padding: 15px 5px calc(15px + env(safe-area-inset-bottom));
             border-top: 1px solid var(--border); box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 100;
         }
-        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; transition: var(--transition); }
+        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; transition: var(--transition); flex: 1; }
         .nav-item.active { color: var(--primary); transform: translateY(-2px); }
 
         #modal-overlay {
@@ -348,8 +348,10 @@
     </main>
 
     <nav class="nav-bar">
-        <a href="index.html" class="nav-item active"><i data-lucide="layout-grid"></i>Dashboard</a>
+        <a href="index.html" class="nav-item active"><i data-lucide="layout-grid"></i>Dash</a>
         <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
+        <a href="timeline.html" class="nav-item"><i data-lucide="list-todo"></i>Timeline</a>
+        <a href="todoanalysis.html" class="nav-item"><i data-lucide="activity"></i>Analysis</a>
         <a href="profile.html" class="nav-item"><i data-lucide="user"></i>Profile</a>
     </nav>
 
