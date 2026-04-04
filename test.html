@@ -210,25 +210,6 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        // --- LIVE TRACKING LOGIC ADDED HERE ---
-        const PYTHON_BACKEND_URL = "http://127.0.0.1:5000"; // Ensure this matches your setup
-        let trackingInterval;
-
-        function pingServer(activityStatus) {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            fetch(PYTHON_BACKEND_URL + '/api/update-status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.uid,
-                    activity: activityStatus
-                })
-            }).catch(err => console.log("Live tracking skipped"));
-        }
-        // --------------------------------------
-
         let questions = [], currentIdx = 0, userChoices = {}, markedQuestions = {}, timer;
         let totalSecondsRemaining = 3600; 
         const params = new URLSearchParams(window.location.search);
@@ -256,15 +237,6 @@
 
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'index.html';
-            
-            // --- LIVE TRACKING HEARTBEAT ---
-            pingServer('solving_test'); // Initial ping when test loads
-            if(trackingInterval) clearInterval(trackingInterval);
-            trackingInterval = setInterval(() => {
-                pingServer('solving_test'); // Ping every 1 minute while they are here
-            }, 60000); 
-            // -------------------------------
-            
             db.ref(`students/${user.uid}`).once('value', snap => {
                 const userData = snap.val();
                 if (userData) {
@@ -486,19 +458,9 @@
                 });
 
                 localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
-                
-                // --- TRACKING: Switch user back to browsing before leaving the page ---
-                pingServer('browsing');
-                
-                setTimeout(() => {
-                    window.location.replace('analysis.html');
-                }, 300); // Small delay to ensure the fetch fires
+                window.location.replace('analysis.html');
             } catch (e) {
-                // Ensure they are marked back to browsing even if an error occurs
-                pingServer('browsing');
-                setTimeout(() => {
-                    window.location.replace('analysis.html');
-                }, 300);
+                window.location.replace('analysis.html');
             }
         }
 
