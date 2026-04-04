@@ -17,7 +17,7 @@
 
     <style>
         :root {
-            --primary: #10b981; /* Changed to Emerald Green for Daily Test */
+            --primary: #10b981; 
             --primary-glow: rgba(16, 185, 129, 0.1);
             --bg: #f0fdf4;
             --surface: #ffffff;
@@ -181,7 +181,7 @@
             if (!user) return window.location.href = 'index.html';
             db.ref(`students/${user.uid}`).once('value', snap => {
                 const userData = snap.val();
-                if (userData) {
+                if (userData && userData.name) {
                     document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
                     document.getElementById('user-initial').innerText = userData.name[0];
                 }
@@ -195,16 +195,30 @@
                 if (snap.exists()) {
                     let allQuestionsPool = [];
                     
-                    // Iterate through ALL subjects and pool questions
+                    // Iterate through ALL subjects and pool questions unconditionally
                     snap.forEach(moduleSnap => {
                         const data = moduleSnap.val();
-                        if(data.enabled) {
-                            const rawQs = data.questions?.data || data.questions || [];
-                            allQuestionsPool = allQuestionsPool.concat(rawQs);
+                        if (data) {
+                            // Extract questions safely based on standard database structures
+                            let rawQs = [];
+                            if (Array.isArray(data)) {
+                                rawQs = data;
+                            } else if (data.questions) {
+                                rawQs = data.questions.data || data.questions || [];
+                            }
+                            
+                            // Only add if it's an array
+                            if (Array.isArray(rawQs)) {
+                                allQuestionsPool = allQuestionsPool.concat(rawQs);
+                            }
                         }
                     });
 
+                    // Filter out any "null" or undefined questions to prevent crashes
+                    allQuestionsPool = allQuestionsPool.filter(q => q != null && typeof q === 'object');
+
                     if(allQuestionsPool.length === 0) {
+                        document.getElementById('app-loader').classList.add('fade-out');
                         return showModal("NO DATA", "No active questions found in the database.", "alert", () => window.location.href='index.html');
                     }
 
@@ -216,15 +230,20 @@
                     
                     setupQuestions(selected10);
                 } else {
+                    document.getElementById('app-loader').classList.add('fade-out');
                     showModal("ERROR", "Database empty.", "alert", () => window.location.href='index.html');
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e); 
+                document.getElementById('app-loader').classList.add('fade-out');
+                showModal("DATABASE ERROR", "Failed to load: " + e.message, "alert", () => window.location.href='index.html');
+            }
         }
 
         function setupQuestions(dataArray) {
             questions = dataArray.map(q => ({
                 ...q,
-                displayQ: q.question || q.q,
+                displayQ: q.question || q.q || "Missing Question Text",
                 correct: q.answer || q.ans,
                 shuffledOpts: [...(q.options || [])].sort(() => Math.random() - 0.5)
             }));
@@ -312,7 +331,6 @@
                     let s = (totalSecondsRemaining%60).toString().padStart(2,'0');
                     document.getElementById('q-timer').innerText = `${m}:${s}`;
                     
-                    // Flash red in last 30 seconds
                     if(totalSecondsRemaining <= 30) {
                         document.getElementById('q-timer').style.background = totalSecondsRemaining % 2 === 0 ? 'var(--danger)' : '#fff';
                         document.getElementById('q-timer').style.color = totalSecondsRemaining % 2 === 0 ? '#fff' : 'var(--danger)';
@@ -382,6 +400,7 @@
             document.getElementById('modal-confirm-btn').onclick = () => { m.style.display='none'; if(onConfirm) onConfirm(); };
             document.getElementById('modal-cancel-btn').onclick = () => m.style.display='none';
             if(type === 'alert') document.getElementById('modal-cancel-btn').classList.add('hidden');
+            else document.getElementById('modal-cancel-btn').classList.remove('hidden');
         }
 
         lucide.createIcons();
