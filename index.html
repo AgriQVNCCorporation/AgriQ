@@ -376,13 +376,10 @@
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').then(reg => {
-                
-                // Listen for new updates waiting
                 reg.addEventListener('updatefound', () => {
                     newWorker = reg.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // Slide up the update banner!
                             const banner = document.getElementById('update-banner');
                             banner.style.opacity = '1';
                             banner.style.transform = 'translateX(-50%) translateY(0)';
@@ -391,7 +388,6 @@
                 });
             });
 
-            // Detect when the service worker has actually switched over, and reload the page
             let refreshing;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (refreshing) return;
@@ -400,14 +396,11 @@
             });
         }
 
-        // When the user clicks the "UPDATE NOW" button
         document.getElementById('update-btn')?.addEventListener('click', () => {
-            if (newWorker) {
-                newWorker.postMessage('SKIP_WAITING');
-            }
+            if (newWorker) newWorker.postMessage('SKIP_WAITING');
         });
-        // -------------------------------------
-
+        
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
@@ -426,9 +419,27 @@
         let currentIsRetake = false;
         let completedModules = new Set();
         
-        // Carousel Variables
         let slideIndex = 0;
         let slideInterval = null;
+
+        // --- LIVE TRACKING LOGIC ADDED HERE ---
+        const PYTHON_BACKEND_URL = "http://127.0.0.1:5000"; // Change this if accessing from another device
+        let trackingInterval;
+
+        function pingServer(activityStatus) {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            fetch(PYTHON_BACKEND_URL + '/api/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user.uid,
+                    activity: activityStatus
+                })
+            }).catch(err => console.log("Live tracking skipped (Server unreachable)"));
+        }
+        // --------------------------------------
 
         function getLocalTodayStr() {
             const d = new Date();
@@ -437,10 +448,18 @@
         }
 
         auth.onAuthStateChanged(user => {
-            if (!user) window.location.href = 'login.html';
-            else {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
                 loadDashboardData(user.uid);
-                loadPosts(); // Load posts for carousel
+                loadPosts(); 
+                
+                // Start live tracking heartbeat when they log in
+                pingServer('browsing');
+                if(trackingInterval) clearInterval(trackingInterval);
+                trackingInterval = setInterval(() => {
+                    pingServer('browsing');
+                }, 60000); // Ping every 1 minute
             }
         });
 
@@ -464,8 +483,6 @@
                 posts.forEach((post, i) => {
                     const d = new Date(post.timestamp);
                     const timeString = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    // Securely handle text
                     const safeContent = post.content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
                     track.innerHTML += `
@@ -650,7 +667,13 @@
             }
 
             showAppModal("START MODULE", confirmMsg, () => {
-                window.location.href = `test.html?mod=${currentSelectedModule}${currentIsRetake ? '&retake=half' : ''}`;
+                // TRACKING: Tell Python server the student is starting a test!
+                pingServer('solving_test');
+                
+                // Small delay to make sure the ping sends before leaving the page
+                setTimeout(() => {
+                    window.location.href = `test.html?mod=${currentSelectedModule}${currentIsRetake ? '&retake=half' : ''}`;
+                }, 300);
             });
         }
         
@@ -667,7 +690,7 @@
                     localStorage.setItem('agriq_coupon', code);
                     showToast("Coupon Applied! Unlimited Retakes Unlocked.");
                     closeModal();
-                    fetchSubjectsUI(); // Refresh the list immediately
+                    fetchSubjectsUI(); 
                 } else {
                     showToast("Invalid code.");
                 }
