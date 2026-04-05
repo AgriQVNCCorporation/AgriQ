@@ -15,6 +15,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -196,6 +198,9 @@
         <div id="review-container"></div>
 
         <div class="btn-group">
+            <button class="btn-action outline" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
+                <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
+            </button>
             <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
                 <i data-lucide="award" size="20"></i> VIEW RANKINGS
             </button>
@@ -329,6 +334,70 @@
                     card.style.display = 'none';
                 }
             });
+        }
+
+        // --- NEW PDF GENERATION FUNCTION ---
+        function downloadMissedQuestionsPDF() {
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (!data || !data.details) return;
+
+            // Filter out correctly answered questions
+            const missedQuestions = data.details.filter(item => item.user !== item.actual);
+
+            if (missedQuestions.length === 0) {
+                alert("Perfect score! You don't have any missed or skipped questions to download.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let yPos = 20;
+            const margin = 15;
+            const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
+
+            // Add Document Title
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("AgriQ Pro - Missed & Skipped Questions Review", margin, yPos);
+            yPos += 15;
+
+            // Loop through missed questions and format them onto the PDF
+            missedQuestions.forEach((item, index) => {
+                // Add new page if we are too close to the bottom
+                if (yPos > 260) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Render Question
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0); // Black
+                const qText = `Q${index + 1}. ${item.question}`;
+                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
+                doc.text(splitQuestion, margin, yPos);
+                yPos += (splitQuestion.length * 6) + 2;
+
+                // Render User's Answer
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(11);
+                if (item.user === "SKIPPED") {
+                    doc.setTextColor(100, 100, 100); // Gray for skipped
+                } else {
+                    doc.setTextColor(220, 38, 38); // Red for wrong
+                }
+                doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
+                yPos += 6;
+
+                // Render Correct Answer
+                doc.setTextColor(22, 163, 74); // Green for correct
+                doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
+                yPos += 12; // Extra padding before the next question
+            });
+
+            // Trigger the download
+            doc.save("AgriQ_Missed_Questions.pdf");
         }
     </script>
 </body>
