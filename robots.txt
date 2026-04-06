@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /test.html
+Disallow: /profile.html
+Disallow: /leaderboard.html
+
+Sitemap: https://agriqvnccorporation.github.io/AgriQ/sitemap.xml
