@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>AgriQ Pro | Free Agriculture Test Series & MCAER Mock Tests</title>
+    <meta name="title" content="AgriQ Pro | Free Agriculture Test Series & MCAER Mock Tests">
+    <meta name="description" content="Join AgriQ Pro for a free agriculture test series. Practice with MCAER PG CET, ICAR, and BHU mock tests, previous year question papers (PYQs), and daily drills.">
+    <meta name="keywords" content="agriculture test series free, MCAER PG CET mock test, ICAR AIEEA previous year papers, agriculture competitive exams, AgriQ Pro">
+    <meta name="author" content="AgriQ VNC Corporation">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://agriqvnccorporation.github.io/AgriQ/">
+    <meta property="og:title" content="AgriQ Pro | Free Agriculture Mock Tests">
+    <meta property="og:description" content="Prepare for MCAER, ICAR, and AFO with free daily mock tests and live leaderboards.">
+    <meta property="og:image" content="https://agriqvnccorporation.github.io/AgriQ/banner.jpg"> 
+
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0084ff">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff;
+            --primary-glow: rgba(0, 132, 255, 0.15);
+            --bg: #f0f9ff;
+            --surface: #ffffff;
+            --text-main: #002d4d;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --daily-color: #10b981;
+            --coak-color: #8b5cf6;
+            --pyq-color: #f59e0b; /* Added a color for the new PYQ card */
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text-main); overflow-x: hidden; }
+
+        /* Navigation */
+        nav {
+            position: fixed; top: 0; width: 100%; background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px); z-index: 1000; border-bottom: 1px solid var(--border);
+            padding: 12px 5%; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 4px; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+        
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links .desktop-link { text-decoration: none; color: var(--text-dim); font-weight: 700; font-size: 14px; transition: var(--transition); display: none; }
+        .nav-links .desktop-link:hover { color: var(--primary); }
+        
+        @media(min-width: 768px) { 
+            .nav-links .desktop-link { display: block; }
+            nav { padding: 15px 5%; }
+            .brand { font-size: 22px; }
+        }
+
+        .btn-nav {
+            background: var(--primary); color: white; padding: 10px 18px; border-radius: 12px;
+            font-weight: 800; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 15px var(--primary-glow); transition: var(--transition);
+        }
+        .btn-nav:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 132, 255, 0.3); }
+        .btn-nav:active { transform: scale(0.95); }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 5% 60px; text-align: center; min-height: 85vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle at top, #ffffff, var(--bg));
+            position: relative;
+        }
+        .badge {
+            background: white; border: 1px solid var(--border); padding: 8px 16px;
+            border-radius: 50px; font-size: 12px; font-weight: 800; color: var(--primary);
+            margin-bottom: 24px; display: inline-flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .hero h1 { font-size: 38px; font-weight: 900; line-height: 1.15; margin-bottom: 20px; letter-spacing: -1px; }
+        .hero h1 span { color: var(--primary); }
+        .hero p { font-size: 15px; color: var(--text-dim); max-width: 600px; margin: 0 auto 35px; line-height: 1.6; font-weight: 600; padding: 0 10px; }
+        
+        .cta-group { display: flex; gap: 12px; justify-content: center; flex-direction: column; width: 100%; max-width: 350px; }
+        .btn-large {
+            padding: 16px 24px; border-radius: 16px; font-weight: 800; font-size: 15px;
+            text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; transition: var(--transition); width: 100%;
+        }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 30px var(--primary-glow); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0, 132, 255, 0.3); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-secondary { background: white; color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-secondary:active { transform: scale(0.98); background: #f8fafc; }
+
+        @media(min-width: 768px) {
+            .hero { padding-top: 150px; }
+            .hero h1 { font-size: 56px; line-height: 1.1; }
+            .hero p { font-size: 18px; padding: 0; }
+            .cta-group { flex-direction: row; max-width: none; }
+            .btn-large { width: auto; padding: 18px 32px; font-size: 16px; }
+        }
+
+        /* Supported Exams Marquee */
+        .exam-ticker {
+            background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            padding: 15px 0; overflow: hidden; display: flex; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .ticker-track { display: flex; animation: scroll 25s linear infinite; gap: 30px; padding: 0 15px; }
+        .exam-tag { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+        .exam-tag i { color: var(--primary); opacity: 0.5; }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        @media(min-width: 768px) {
+            .exam-ticker { padding: 20px 0; }
+            .ticker-track { gap: 40px; padding: 0 20px; }
+            .exam-tag { font-size: 18px; }
+        }
+
+        /* Features Section */
+        .features { padding: 60px 5%; max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 40px; padding: 0 10px; }
+        .section-header h2 { font-size: 28px; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px; }
+        .section-header p { color: var(--text-dim); font-weight: 600; font-size: 14px; }
+        
+        /* Modified grid to hold 4 items cleanly */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .feature-card {
+            background: var(--surface); padding: 25px; border-radius: 24px;
+            border: 1px solid var(--border); box-shadow: 0 8px 25px rgba(0,0,0,0.02);
+            transition: var(--transition); text-align: left;
+        }
+        .feature-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 12px 35px rgba(0, 132, 255, 0.08); }
+        .icon-box { 
+            width: 48px; height: 48px; border-radius: 14px; display: flex; 
+            align-items: center; justify-content: center; margin-bottom: 18px;
+        }
+        .feature-card h3 { font-weight: 800; font-size: 18px; margin-bottom: 8px; }
+        .feature-card p { color: var(--text-dim); font-size: 14px; line-height: 1.6; font-weight: 600; margin: 0; }
+
+        @media(min-width: 768px) {
+            .features { padding: 80px 5%; }
+            .section-header { margin-bottom: 50px; }
+            .section-header h2 { font-size: 32px; }
+            .section-header p { font-size: 16px; }
+            /* Auto-fit handles 3 or 4 columns beautifully depending on screen size */
+            .grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+            .feature-card { padding: 30px; border-radius: 28px; }
+            .icon-box { width: 50px; height: 50px; border-radius: 16px; margin-bottom: 20px; }
+            .feature-card h3 { font-size: 20px; margin-bottom: 10px; }
+        }
+
+        /* Footer */
+        footer { background: white; padding: 40px 5%; text-align: center; border-top: 1px solid var(--border); margin-top: 20px; }
+        .footer-brand { margin-bottom: 10px; font-size: 18px; }
+        .copyright { font-size: 11px; color: var(--text-dim); font-weight: 600; margin-bottom: 5px; }
+        .made-with { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;}
+
+        @media(min-width: 768px) {
+            footer { margin-top: 50px; }
+            .copyright { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="#" class="brand">AGRI<span>Q</span> PRO</a>
+        <div class="nav-links">
+            <a href="#features" class="desktop-link">Features</a>
+            <a href="#exams" class="desktop-link">Exams</a>
+            <a href="login.html" class="btn-nav">START FREE TEST <i data-lucide="arrow-right" size="14"></i></a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="badge"><i data-lucide="sparkles" size="12"></i> New MCAER PYQs Added</div>
+        <h1>Free Agriculture <br><span>Test Series</span> & Mock Tests</h1>
+        <p>The ultimate preparation platform for agriculture students. Practice with free MCAER PG CET, ICAR, and BHU mock tests, previous year questions (PYQs), and daily drills to boost your rank.</p>
+        
+        <div class="cta-group">
+            <a href="login.html" class="btn-large btn-primary">Start Free Mock Test <i data-lucide="zap" size="18"></i></a>
+            <a href="#features" class="btn-large btn-secondary">Explore Features</a>
+        </div>
+    </header>
+
+    <div class="exam-ticker" id="exams">
+        <div class="ticker-track">
+            <span class="exam-tag">MCAER PG CET <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">ICAR AIEEA <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">BHU (Ag) <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">SRF/JRF <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">NSC <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">BANKING (AFO) <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">MCAER PG CET <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">ICAR AIEEA <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">BHU PET (Ag) <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">SRF/JRF <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">NSC <i data-lucide="check-circle" size="14"></i></span>
+            <span class="exam-tag">BANKING (AFO) <i data-lucide="check-circle" size="14"></i></span>
+        </div>
+    </div>
+
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2>Everything you need to clear the cutoff.</h2>
+            <p>Designed specifically to give agriculture students a competitive edge.</p>
+        </div>
+
+        <div class="grid">
+            <div class="feature-card">
+                <div class="icon-box" style="background: rgba(16, 185, 129, 0.15);">
+                    <i data-lucide="zap" color="var(--daily-color)" size="22"></i>
+                </div>
+                <h3>Daily Rapid Drills</h3>
+                <p>Sharpen your reflexes with our 10-question, 5-minute daily challenges. Fresh agriculture questions updated every day to test your accuracy under pressure.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box" style="background: rgba(245, 158, 11, 0.15);">
+                    <i data-lucide="file-clock" color="var(--pyq-color)" size="22"></i>
+                </div>
+                <h3>Previous Year Papers</h3>
+                <p>Don't guess what will be on the exam. Take timed mock tests built directly from MCAER, ICAR, and BHU previous year question papers (PYQs).</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box" style="background: rgba(139, 92, 246, 0.15);">
+                    <i data-lucide="book-open-check" color="var(--coak-color)" size="22"></i>
+                </div>
+                <h3>COAK Monks Module</h3>
+                <p>Dive deep into our highly specialized preparation module. Structured, chapter-wise mock tests covering foundational concepts to advanced agronomy.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box" style="background: rgba(0, 132, 255, 0.15);">
+                    <i data-lucide="globe" color="var(--primary)" size="22"></i>
+                </div>
+                <h3>Live Leaderboards</h3>
+                <p>Earn XP for every free test you complete. Climb the Global ranks to see exactly where you stand against thousands of other agriculture students.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="brand footer-brand">AGRI<span>Q</span> PRO</div>
+        <div class="copyright">© 2026 AgriQ VNC Corporation.</div>
+        <div class="made-with">Designed for Excellence</div>
+    </footer>
+
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Firebase Setup - Wrapped in DOMContentLoaded since scripts are now deferred
+        document.addEventListener("DOMContentLoaded", () => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+                authDomain: "agri-mcar.firebaseapp.com",
+                projectId: "agri-mcar"
+            };
+            
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+
+            // Auto-Redirect Logic
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    window.location.href = 'dashboard.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
