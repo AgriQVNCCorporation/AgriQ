@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <title>AgriQ Pro | Help Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff; 
+            --primary-light: #e0f2fe;
+            --bg: #f0f9ff; 
+            --surface: #ffffff;
+            --text-main: #002d4d; 
+            --text-dim: #64748b; 
+            --border: #e2e8f0;
+            --daily-color: #10b981;
+            --coak-color: #8b5cf6;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); margin: 0; color: var(--text-main); 
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        header { 
+            padding: 20px 24px; background: rgba(255,255,255,0.85); 
+            backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .back-btn { background: var(--primary-light); padding: 8px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); color: var(--primary); }
+        .back-btn:active { transform: scale(0.9); }
+        .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+
+        main { padding: 20px; max-width: 500px; margin: 0 auto; }
+
+        .page-header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
+        .page-title { font-size: 24px; font-weight: 900; margin-bottom: 8px; color: var(--text-main); }
+        .page-subtitle { font-size: 13px; color: var(--text-dim); font-weight: 600; line-height: 1.5; padding: 0 10px; }
+
+        /* FAQ ACCORDION STYLES */
+        .faq-container { display: flex; flex-direction: column; gap: 15px; }
+        
+        .faq-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+            overflow: hidden; transition: var(--transition); box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+        }
+        
+        .faq-card.active { border-color: var(--primary); box-shadow: 0 10px 25px rgba(0, 132, 255, 0.1); }
+
+        .faq-question {
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; font-weight: 800; font-size: 15px; color: var(--text-main);
+            background: transparent; border: none; width: 100%; text-align: left;
+            user-select: none;
+        }
+        
+        .faq-icon-wrapper {
+            display: flex; align-items: center; gap: 12px;
+        }
+        
+        .icon-box {
+            width: 36px; height: 36px; border-radius: 12px; display: flex; 
+            align-items: center; justify-content: center;
+        }
+
+        .faq-chevron { color: var(--text-dim); transition: transform 0.3s ease; }
+        .faq-card.active .faq-chevron { transform: rotate(180deg); color: var(--primary); }
+
+        .faq-answer {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f8fafc;
+        }
+        
+        .faq-answer-content {
+            padding: 0 20px 20px 68px; font-size: 13px; color: var(--text-dim); 
+            line-height: 1.6; font-weight: 600;
+        }
+        
+        .faq-answer-content strong { color: var(--text-main); font-weight: 800; }
+        .faq-answer-content ul { padding-left: 20px; margin-top: 8px; margin-bottom: 0; }
+        .faq-answer-content li { margin-bottom: 6px; }
+
+        /* Contact Box */
+        .contact-box {
+            margin-top: 40px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 24px; padding: 25px 20px; text-align: center; color: white;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        .contact-box h3 { margin: 0 0 10px 0; font-size: 18px; font-weight: 900; }
+        .contact-box p { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; margin: 0 0 20px 0; line-height: 1.5; }
+        
+        .btn-contact {
+            background: var(--primary); color: white; border: none; width: 100%;
+            padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            text-decoration: none; transition: var(--transition);
+        }
+        .btn-contact:active { transform: scale(0.96); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="back-btn" onclick="window.location.href='dashboard.html'">
+                <i data-lucide="chevron-left" size="22"></i>
+            </div>
+            <div class="brand">Help Center</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header">
+            <h1 class="page-title">How to use AgriQ Pro 🚀</h1>
+            <p class="page-subtitle">Welcome to the ultimate preparation terminal! Here is your complete guide to mastering the app and crushing your exams.</p>
+        </div>
+
+        <div class="faq-container">
+            
+            <div class="faq-card">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    <div class="faq-icon-wrapper">
+                        <div class="icon-box" style="background: var(--primary-light); color: var(--primary);">
+                            <i data-lucide="book-open" size="20"></i>
+                        </div>
+                        Study Modules
+                    </div>
+                    <i data-lucide="chevron-down" size="20" class="faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        The core of your preparation! On the Dashboard, look for the <strong>Study Module</strong> section. 
+                        <ul>
+                            <li>Tap <strong>Choose Subject</strong> to open the dropdown menu.</li>
+                            <li>Select an available subject (modules marked as LIVE are active today).</li>
+                            <li>Tap <strong>Start Session</strong> to begin your practice.</li>
+                            <li>Once you complete a module, it will be marked as <del>COMPLETED</del> so you know exactly where you stand!</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-card">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    <div class="faq-icon-wrapper">
+                        <div class="icon-box" style="background: rgba(16, 185, 129, 0.2); color: var(--daily-color);">
+                            <i data-lucide="zap" size="20"></i>
+                        </div>
+                        Daily Rapid Drill
+                    </div>
+                    <i data-lucide="chevron-down" size="20" class="faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Boost your speed and accuracy every single day!
+                        <br><br>
+                        Tap the green <strong>Daily Rapid Drill</strong> banner on your Dashboard. You'll get exactly <strong>10 fresh questions</strong> and only <strong>5 minutes</strong> to solve them. Your scores here directly affect your special <em>Daily Drill Rank</em>!
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-card">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    <div class="faq-icon-wrapper">
+                        <div class="icon-box" style="background: rgba(139, 92, 246, 0.2); color: var(--coak-color);">
+                            <i data-lucide="book-open-check" size="20"></i>
+                        </div>
+                        COAK Monks Dojo
+                    </div>
+                    <i data-lucide="chevron-down" size="20" class="faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Welcome to the elite training ground. 
+                        <br><br>
+                        By tapping the purple <strong>COAK Monks</strong> banner, you enter a specialized module with its own unique leveling system. As you complete these advanced tests, you earn <strong>Monk XP</strong> and rank up your Monk Level. Perfect for those wanting to push beyond the basics!
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-card">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    <div class="faq-icon-wrapper">
+                        <div class="icon-box" style="background: #fef08a; color: #ca8a04;">
+                            <i data-lucide="trophy" size="20"></i>
+                        </div>
+                        Ranks & Leaderboard
+                    </div>
+                    <i data-lucide="chevron-down" size="20" class="faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Every correct answer gives you <strong>XP (Experience Points)</strong>. 
+                        <ul>
+                            <li><strong>Global Rank:</strong> Your overall standing among all students across all standard study modules.</li>
+                            <li><strong>Daily Rank:</strong> Your ranking based specifically on your performance in the Daily Rapid Drills.</li>
+                        </ul>
+                        Tap on the rank cards at the top of the Dashboard to view the full leaderboard and see how you stack up against the competition!
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-card">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    <div class="faq-icon-wrapper">
+                        <div class="icon-box" style="background: #fce7f3; color: #db2777;">
+                            <i data-lucide="user-cog" size="20"></i>
+                        </div>
+                        Profile & Settings
+                    </div>
+                    <i data-lucide="chevron-down" size="20" class="faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Want to stand out on the Leaderboard? 
+                        <br><br>
+                        Tap the <strong>pencil icon <i data-lucide="edit-3" size="14"></i></strong> in the top right corner of the Dashboard to update your official Display Name. You can also view your full stats by tapping the <strong>Profile</strong> tab in the bottom navigation bar.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-card">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    <div class="faq-icon-wrapper">
+                        <div class="icon-box" style="background: #e0e7ff; color: #4f46e5;">
+                            <i data-lucide="smartphone" size="20"></i>
+                        </div>
+                        App Updates & Tips
+                    </div>
+                    <i data-lucide="chevron-down" size="20" class="faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <strong>Pro Tip:</strong> AgriQ Pro is a Progressive Web App (PWA). You can install it directly to your home screen from your browser menu (Look for "Add to Home Screen").
+                        <br><br>
+                        If we release new features, a dark <strong>"New Version Available!"</strong> banner will slide up from the bottom of your screen. Just tap <strong>UPDATE NOW</strong> to get the latest content instantly!
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="contact-box">
+            <h3>Still need help?</h3>
+            <p>If you've found a bug, have a suggestion for new modules, or just need technical support, our team is ready to help you out.</p>
+            <a href="contact.html" class="btn-contact">
+                <i data-lucide="mail" size="18"></i> GO TO CONTACT PAGE
+            </a>
+        </div>
+
+    </main>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Accordion Logic
+        function toggleFAQ(button) {
+            const card = button.parentElement;
+            const answer = button.nextElementSibling;
+            
+            // Check if it's already active
+            const isActive = card.classList.contains('active');
+
+            // Close all currently open FAQs (optional, remove if you want multiple open at once)
+            document.querySelectorAll('.faq-card').forEach(c => {
+                c.classList.remove('active');
+                c.querySelector('.faq-answer').style.maxHeight = null;
+            });
+
+            // If it wasn't active, open it
+            if (!isActive) {
+                card.classList.add('active');
+                // Set max-height to the scrollHeight so it perfectly fits the content
+                answer.style.maxHeight = answer.scrollHeight + "px";
+            }
+        }
+    </script>
+</body>
+</html>

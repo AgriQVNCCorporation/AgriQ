@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <title>AgriQ Pro | Communities</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff; 
+            --bg: #f0f9ff; 
+            --surface: #ffffff;
+            --text-main: #002d4d; 
+            --text-dim: #64748b; 
+            --border: #e2e8f0;
+            --wa-color: #25D366;
+            --wa-dark: #128C7E;
+            --wa-light: #dcf8c6;
+            --tg-color: #0088cc;
+            --tg-dark: #005f8f;
+            --tg-light: #e0f2fe;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); margin: 0; color: var(--text-main); 
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        header { 
+            padding: 20px 24px; background: rgba(255,255,255,0.85); 
+            backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .back-btn { background: #e0f2fe; padding: 8px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); color: var(--primary); }
+        .back-btn:active { transform: scale(0.9); }
+        .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+
+        main { padding: 20px; max-width: 500px; margin: 0 auto; }
+
+        .page-title {
+            font-size: 22px; font-weight: 900; margin-bottom: 5px; color: var(--text-main);
+        }
+        .page-subtitle {
+            font-size: 13px; color: var(--text-dim); font-weight: 600; margin-bottom: 25px; line-height: 1.5;
+        }
+
+        /* COMMUNITY CARDS */
+        .social-card {
+            background: var(--surface); border-radius: 28px; padding: 24px;
+            margin-bottom: 25px; border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.04); position: relative; overflow: hidden;
+        }
+
+        /* WhatsApp Styling */
+        .wa-card { border-top: 5px solid var(--wa-color); }
+        .wa-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .wa-icon { background: var(--wa-light); color: var(--wa-dark); padding: 14px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+        
+        /* Telegram Styling */
+        .tg-card { border-top: 5px solid var(--tg-color); }
+        .tg-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .tg-icon { background: var(--tg-light); color: var(--tg-dark); padding: 14px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+
+        .card-title { font-size: 18px; font-weight: 900; margin: 0 0 4px 0; color: var(--text-main); }
+        .card-desc { font-size: 12px; color: var(--text-dim); font-weight: 600; margin: 0; }
+
+        /* Content Bubbles */
+        .msg-bubble {
+            background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 18px; border-top-left-radius: 4px;
+            padding: 16px; margin: 20px 0; font-size: 13px; line-height: 1.6; color: var(--text-main); font-weight: 600;
+        }
+        
+        /* Action Buttons */
+        .btn {
+            width: 100%; padding: 18px; border-radius: 18px; border: none;
+            font-weight: 800; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: var(--transition); text-decoration: none;
+        }
+        .btn:active { transform: scale(0.97); }
+        
+        .btn-wa { background: var(--wa-color); color: white; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.2); }
+        .btn-tg { background: var(--tg-color); color: white; box-shadow: 0 10px 20px rgba(0, 136, 204, 0.2); }
+
+        /* Toast */
+        #toast { 
+            position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px;
+            font-size: 13px; font-weight: 700; display: none; z-index: 10001; 
+            animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <header>
+        <div class="header-left">
+            <div class="back-btn" onclick="window.location.href='dashboard.html'">
+                <i data-lucide="chevron-left" size="22"></i>
+            </div>
+            <div class="brand">Communities</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-title">Connect & Share</div>
+        <div class="page-subtitle">Join our official groups to stay updated and share AgriQ Pro with your friends to build a stronger community!</div>
+
+        <div class="social-card wa-card">
+            <div class="wa-header">
+                <div class="wa-icon">
+                    <i data-lucide="message-circle" size="28"></i>
+                </div>
+                <div>
+                    <h3 class="card-title">AgriQ Official Hub</h3>
+                    <p class="card-desc">WhatsApp Discussion Group</p>
+                </div>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-dim); font-weight: 600; line-height: 1.5; margin-bottom: 20px;">
+                Join our exclusive WhatsApp community for daily MCQs, instant exam updates, and direct discussions with fellow agriculture aspirants.
+            </p>
+
+            <a href="https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=gi_t" target="_blank" class="btn btn-wa">
+                <i data-lucide="users" size="20"></i> JOIN WHATSAPP GROUP
+            </a>
+        </div>
+
+        <div class="social-card tg-card">
+            <div class="tg-header">
+                <div class="tg-icon">
+                    <i data-lucide="send" size="28"></i>
+                </div>
+                <div>
+                    <h3 class="card-title">Spread The Word</h3>
+                    <p class="card-desc">Share on Telegram & WhatsApp</p>
+                </div>
+            </div>
+
+            <p style="font-size: 13px; color: var(--text-dim); font-weight: 600; line-height: 1.5;">
+                Help your friends prepare better! Copy the message below and forward it to your college Telegram and WhatsApp groups.
+            </p>
+
+            <div class="msg-bubble" id="promo-msg">
+नमस्कार कृषी मित्रांनो! 🌾🚀<br><br>
+तुम्ही MCAER, ICAR, SRF किंवा इतर कोणत्याही कृषी स्पर्धा परीक्षेची तयारी करत आहात का? तर तुमच्यासाठी आम्ही एक जबरदस्त आणि १००% मोफत प्लॅटफॉर्म घेऊन आलो आहोत!<br><br>
+फक्त Telegram वर क्विझ सोडवण्यापेक्षा एक पाऊल पुढे जाण्याची वेळ आली आहे! तुमच्या अभ्यासाला योग्य दिशा देण्यासाठी आम्ही डिझाईन केले आहे <b>AgriQ App!</b> 🎯<br><br>
+<b>काय खास आहे यात?</b><br>
+✅ Daily Practice & Mock Tests: परीक्षेच्या परिपूर्ण तयारीसाठी जे काही हवंय ते सर्व इथे मिळेल.<br>
+✅ विषयवार दर्जेदार प्रश्न: कृषी स्पर्धा परीक्षांच्या सर्वोत्कृष्ट पुस्तकांमधून स्वतः तयार केलेले (Hand-framed) प्रश्न, जेणेकरून तुमचे बेसिक्स एकदम क्लिअर होतील. 📚<br>
+✅ Live Leaderboard: हे तुमच्या मित्रांसोबत शेअर करा आणि लीडरबोर्डवर एकमेकांची प्रगती तपासा. अभ्यासात खरी रंगत आता येईल! 🏆<br>
+✅ इन्स्टंट अपडेट्स: हे एक PWA (Progressive Web App) आहे. त्यामुळे Chrome वरून थेट इन्स्टॉल करा आणि रोज नवीन स्टडी मॉड्यूल्स मिळवा! ⚡️<br><br>
+<b>📲 लॉगिन कसे करावे?</b><br>
+कोणतीही झंझट नाही! फक्त तुमच्या Google अकाउंटने एका क्लिकवर Sign Up करा आणि लगेच प्रॅक्टिस सुरू करा.<br><br>
+<b>🔗 आत्ताच इन्स्टॉल करा आणि प्रॅक्टिस सुरू करा:</b><br>
+👉 https://agriqvnccorporation.github.io/AgriQ/dashboard.html<br><br>
+तुमच्या मित्रांना आणि कॉलेजच्या WhatsApp/Telegram ग्रुप्सवर हा मेसेज नक्की शेअर करा! चला तर मग, जिंकण्याची तयारी एकत्र मिळून करूया! 🎓💪
+            </div>
+
+            <button class="btn btn-tg" onclick="copyPromoMessage()">
+                <i data-lucide="copy" size="20"></i> COPY MESSAGE
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        function copyPromoMessage() {
+            // Raw text version for copying (preserves formatting for WhatsApp/Telegram)
+            const rawText = `नमस्कार कृषी मित्रांनो! 🌾🚀
+
+तुम्ही MCAER, ICAR, SRF किंवा इतर कोणत्याही कृषी स्पर्धा परीक्षेची तयारी करत आहात का? तर तुमच्यासाठी आम्ही एक जबरदस्त आणि १००% मोफत प्लॅटफॉर्म घेऊन आलो आहोत!
+
+फक्त Telegram वर क्विझ सोडवण्यापेक्षा एक पाऊल पुढे जाण्याची वेळ आली आहे! तुमच्या अभ्यासाला योग्य दिशा देण्यासाठी आम्ही डिझाईन केले आहे AgriQ App! 🎯
+
+काय खास आहे यात?
+✅ Daily Practice & Mock Tests: परीक्षेच्या परिपूर्ण तयारीसाठी जे काही हवंय ते सर्व इथे मिळेल.
+✅ विषयवार दर्जेदार प्रश्न: कृषी स्पर्धा परीक्षांच्या सर्वोत्कृष्ट पुस्तकांमधून स्वतः तयार केलेले (Hand-framed) प्रश्न, जेणेकरून तुमचे बेसिक्स एकदम क्लिअर होतील. 📚
+✅ Live Leaderboard: हे तुमच्या मित्रांसोबत शेअर करा आणि लीडरबोर्डवर एकमेकांची प्रगती (Progress) तपासा. अभ्यासात खरी रंगत आता येईल! 🏆
+✅ इन्स्टंट अपडेट्स: हे एक PWA (Progressive Web App) आहे. त्यामुळे Chrome वरून थेट इन्स्टॉल करा आणि रोज नवीन स्टडी मॉड्यूल्स मिळवा! ⚡️
+
+📲 लॉगिन कसे करावे?
+कोणतीही झंझट नाही! फक्त तुमच्या Google अकाउंटने एका क्लिकवर Sign Up करा आणि लगेच प्रॅक्टिस सुरू करा.
+
+🔗 आत्ताच इन्स्टॉल करा आणि प्रॅक्टिस सुरू करा:
+👉 https://agriqvnccorporation.github.io/AgriQ/dashboard.html
+
+तुमच्या मित्रांना आणि कॉलेजच्या WhatsApp/Telegram ग्रुप्सवर हा मेसेज नक्की शेअर करा! चला तर मग, जिंकण्याची तयारी एकत्र मिळून करूया! 🎓💪`;
+
+            navigator.clipboard.writeText(rawText).then(() => {
+                showToast("Message copied to clipboard! 🚀");
+            }).catch(err => {
+                showToast("Failed to copy. Please select and copy manually.");
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; 
+            t.style.display = 'block';
+            setTimeout(() => {
+                t.style.animation = 'none';
+                t.style.opacity = '0';
+                setTimeout(() => {
+                    t.style.display = 'none';
+                    t.style.opacity = '1';
+                    t.style.animation = 'slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

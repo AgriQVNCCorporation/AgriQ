@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f0f9ff">
+    <title>AgriQ Pro | Mission Analysis</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff; --primary-glow: rgba(0, 132, 255, 0.1);
+            --bg: #f0f9ff; --surface: #ffffff;
+            --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
+            --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --neutral: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.85);
+            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background-color: var(--bg); 
+            background-image: radial-gradient(circle at top right, #e0f2fe, transparent);
+            margin: 0; color: var(--text-main); min-height: 100vh; 
+            display: flex; flex-direction: column; overflow-x: hidden; 
+        }
+
+        #analysis-loader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #analysis-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; transition: 0.6s; }
+        
+        header {
+            padding: calc(env(safe-area-inset-top) + 15px) 24px 15px;
+            background: var(--glass); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .icon-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; background: #fff;
+            border: 1.5px solid var(--border); border-radius: 12px;
+            color: var(--primary); text-decoration: none; transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .icon-btn:active { transform: scale(0.9); background: var(--primary-glow); }
+        .profile-container { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
+
+        main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
+
+        /* Performance Summary Banner */
+        .feedback-title { font-size: 20px; font-weight: 900; margin-bottom: 5px; color: var(--text-main); }
+        .feedback-sub { font-size: 13px; color: var(--text-dim); font-weight: 600; margin-bottom: 25px; }
+
+        .stat-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card { 
+            background: #fff; border: 1.5px solid var(--border); 
+            padding: 22px; border-radius: 24px; text-align: center; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02); position: relative; overflow: hidden;
+        }
+        .stat-val { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; display: block; color: var(--primary); line-height: 1.1; }
+        .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; display: block; }
+
+        /* Detailed Metrics Bar */
+        .metrics-container { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .progress-bar { display: flex; height: 12px; border-radius: 20px; overflow: hidden; background: var(--border); margin-bottom: 15px; }
+        .prog-correct { background: var(--success); transition: 1s ease-out; width: 0%; }
+        .prog-wrong { background: var(--danger); transition: 1s ease-out; width: 0%; }
+        .prog-skipped { background: var(--neutral); transition: 1s ease-out; width: 0%; }
+        
+        .metric-grid { display: flex; justify-content: space-between; text-align: center; }
+        .metric-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .m-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .m-val { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 16px; color: var(--text-main); }
+        .m-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+
+        /* Filter Pills */
+        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 10px; scrollbar-width: none; }
+        .filter-scroll::-webkit-scrollbar { display: none; }
+        .filter-pill { 
+            padding: 10px 16px; border-radius: 14px; background: #fff; border: 1.5px solid var(--border);
+            font-size: 12px; font-weight: 800; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: 0.2s;
+        }
+        .filter-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px var(--primary-glow); }
+
+        /* Analysis Cards */
+        .analysis-card {
+            background: #fff; border: 1.5px solid var(--border); border-radius: 24px; padding: 22px; margin-bottom: 16px;
+            position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02); animation: slideUp 0.5s ease backwards; transition: 0.3s;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .status-badge { position: absolute; top: 18px; right: 18px; font-size: 9px; font-weight: 900; padding: 6px 12px; border-radius: 50px; display: flex; align-items: center; gap: 4px; }
+        .pass { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .fail { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .skip { background: rgba(148, 163, 184, 0.1); color: var(--neutral); }
+
+        .q-title { font-weight: 700; font-size: 15px; line-height: 1.5; margin-bottom: 18px; padding-right: 80px; color: var(--text-main); }
+        
+        .data-row { display: flex; align-items: center; gap: 12px; font-size: 13px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; }
+        .data-label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
+
+        .btn-group { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+        .btn-action { 
+            padding: 20px; border-radius: 20px; border: none; font-weight: 900; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            gap: 10px; transition: 0.2s; font-size: 15px;
+        }
+        .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
+        .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <div id="analysis-loader">
+        <div style="color:var(--primary);"><i data-lucide="bar-chart-3" class="lucide lucide-bar-chart-3" size="64"></i></div>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">DECODING RESULTS...</p>
+    </div>
+
+    <header>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="profile-container" id="user-initial">U</div>
+            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">ANALYSIS</span></div>
+        </div>
+        
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a href="leaderboard.html" class="icon-btn">
+                <i data-lucide="trophy" size="20"></i>
+            </a>
+            <div id="user-tag" style="font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono';">STUDENT</div>
+        </div>
+    </header>
+
+    <main>
+        <div>
+            <h1 class="feedback-title" id="feedback-msg">Assessment Complete!</h1>
+            <p class="feedback-sub">Here is your detailed performance breakdown.</p>
+        </div>
+
+        <div class="stat-banner">
+            <div class="stat-card" style="border-color: var(--primary); background: #f0f9ff;">
+                <span class="stat-val" id="acc-val">0%</span>
+                <span class="stat-lbl">Accuracy Target</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val" id="score-val" style="color: var(--text-main);">0<span style="font-size:18px; color:var(--text-dim)">/0</span></span>
+                <span class="stat-lbl">Final Score</span>
+            </div>
+        </div>
+
+        <div class="metrics-container">
+            <div class="progress-bar">
+                <div class="prog-correct" id="bar-c"></div>
+                <div class="prog-wrong" id="bar-w"></div>
+                <div class="prog-skipped" id="bar-s"></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <div class="m-dot" style="background:var(--success)"></div>
+                    <span class="m-val" id="count-c">0</span>
+                    <span class="m-lbl">Correct</span>
+                </div>
+                <div class="metric-item">
+                    <div class="m-dot" style="background:var(--danger)"></div>
+                    <span class="m-val" id="count-w">0</span>
+                    <span class="m-lbl">Wrong</span>
+                </div>
+                <div class="metric-item">
+                    <div class="m-dot" style="background:var(--neutral)"></div>
+                    <span class="m-val" id="count-s">0</span>
+                    <span class="m-lbl">Skipped</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-scroll">
+            <div class="filter-pill active" onclick="filterCards('all', this)">All Questions</div>
+            <div class="filter-pill" onclick="filterCards('correct', this)">Correct <i data-lucide="check" size="12"></i></div>
+            <div class="filter-pill" onclick="filterCards('wrong', this)">Wrong <i data-lucide="x" size="12"></i></div>
+            <div class="filter-pill" onclick="filterCards('skipped', this)">Skipped <i data-lucide="minus" size="12"></i></div>
+        </div>
+
+        <div id="review-container"></div>
+
+        <div class="btn-group">
+            <button class="btn-action outline" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
+                <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
+            </button>
+            <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
+                <i data-lucide="award" size="20"></i> VIEW RANKINGS
+            </button>
+            <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
+                <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Prevent back navigation to the active test
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function () { window.location.href = "dashboard.html"; };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+            if (!user) return window.location.href = 'dashboard.html';
+            db.ref(`students/${user.uid}`).once('value', snap => {
+                const d = snap.val();
+                if(d) {
+                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
+                    document.getElementById('user-initial').innerText = d.name[0];
+                }
+            });
+            loadAnalysis();
+        });
+
+        function loadAnalysis() {
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (!data) return window.location.href = 'dashboard.html';
+
+            // Base Stats
+            document.getElementById('acc-val').innerText = `${data.accuracy}%`;
+            document.getElementById('score-val').innerHTML = `${data.score}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
+
+            // Dynamic Feedback Message
+            let msg = "Keep Practicing!";
+            if (data.accuracy >= 90) msg = "Elite Performance! 🏆";
+            else if (data.accuracy >= 75) msg = "Outstanding Work! 🚀";
+            else if (data.accuracy >= 50) msg = "Good Job! 👍";
+            document.getElementById('feedback-msg').innerText = msg;
+
+            // Analyze Details
+            let cCount = 0, wCount = 0, sCount = 0;
+            const container = document.getElementById('review-container');
+            
+            data.details.forEach((item, i) => {
+                let status = "wrong";
+                let badgeClass = "fail";
+                let badgeText = "WRONG";
+                let badgeIcon = "x";
+                let answerColor = "var(--danger)";
+
+                if (item.user === item.actual) {
+                    status = "correct";
+                    badgeClass = "pass";
+                    badgeText = "CORRECT";
+                    badgeIcon = "check";
+                    answerColor = "var(--success)";
+                    cCount++;
+                } else if (item.user === "SKIPPED") {
+                    status = "skipped";
+                    badgeClass = "skip";
+                    badgeText = "SKIPPED";
+                    badgeIcon = "minus";
+                    answerColor = "var(--neutral)";
+                    sCount++;
+                } else {
+                    wCount++;
+                }
+
+                const card = document.createElement('div');
+                card.className = `analysis-card type-${status}`;
+                card.style.animationDelay = `${i * 0.05}s`;
+                card.innerHTML = `
+                    <span class="status-badge ${badgeClass}"><i data-lucide="${badgeIcon}" size="10"></i> ${badgeText}</span>
+                    <div class="q-title"><span style="color:var(--text-dim); font-weight:800; font-family:'JetBrains Mono'; margin-right:5px;">Q${i+1}.</span> ${item.question}</div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">YOURS</span>
+                        <span style="color:${answerColor}; font-weight:800;">${item.user}</span>
+                    </div>
+                    
+                    ${status !== "correct" ? `
+                    <div class="data-row" style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2);">
+                        <span class="data-label" style="color:var(--success);">CORRECT</span>
+                        <span style="color:var(--success); font-weight:800;">${item.actual}</span>
+                    </div>` : ''}
+                `;
+                container.appendChild(card);
+            });
+
+            // Update Metrics
+            document.getElementById('count-c').innerText = cCount;
+            document.getElementById('count-w').innerText = wCount;
+            document.getElementById('count-s').innerText = sCount;
+
+            // Animate Progress Bar
+            setTimeout(() => {
+                document.getElementById('bar-c').style.width = `${(cCount / data.total) * 100}%`;
+                document.getElementById('bar-w').style.width = `${(wCount / data.total) * 100}%`;
+                document.getElementById('bar-s').style.width = `${(sCount / data.total) * 100}%`;
+            }, 100);
+            
+            lucide.createIcons();
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 800);
+        }
+
+        // Filtering Logic
+        function filterCards(type, btn) {
+            // Update Active Pill
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show/Hide Cards
+            const cards = document.querySelectorAll('.analysis-card');
+            cards.forEach(card => {
+                if (type === 'all' || card.classList.contains(`type-${type}`)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // --- NEW PDF GENERATION FUNCTION ---
+        function downloadMissedQuestionsPDF() {
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (!data || !data.details) return;
+
+            // Filter out correctly answered questions
+            const missedQuestions = data.details.filter(item => item.user !== item.actual);
+
+            if (missedQuestions.length === 0) {
+                alert("Perfect score! You don't have any missed or skipped questions to download.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let yPos = 20;
+            const margin = 15;
+            const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
+
+            // Add Document Title
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("AgriQ Pro - Missed & Skipped Questions Review", margin, yPos);
+            yPos += 15;
+
+            // Loop through missed questions and format them onto the PDF
+            missedQuestions.forEach((item, index) => {
+                // Add new page if we are too close to the bottom
+                if (yPos > 260) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Render Question
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0); // Black
+                const qText = `Q${index + 1}. ${item.question}`;
+                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
+                doc.text(splitQuestion, margin, yPos);
+                yPos += (splitQuestion.length * 6) + 2;
+
+                // Render User's Answer
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(11);
+                if (item.user === "SKIPPED") {
+                    doc.setTextColor(100, 100, 100); // Gray for skipped
+                } else {
+                    doc.setTextColor(220, 38, 38); // Red for wrong
+                }
+                doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
+                yPos += 6;
+
+                // Render Correct Answer
+                doc.setTextColor(22, 163, 74); // Green for correct
+                doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
+                yPos += 12; // Extra padding before the next question
+            });
+
+            // Trigger the download
+            doc.save("AgriQ_Missed_Questions.pdf");
+        }
+    </script>
+</body>
+</html>
