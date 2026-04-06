@@ -231,7 +231,7 @@
         auth.onAuthStateChanged(user => { 
             if(user) {
                 // If logged in, keep loader visible and redirect
-                window.location.href = 'dashbord.html'; 
+                window.location.href = 'index.html'; 
             } else {
                 // If not logged in, gracefully fade out the loader to reveal the login card
                 const loader = document.getElementById('global-loader');
