@@ -28,7 +28,7 @@
             margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
         }
 
-        /* --- NEW: Global Loader Styles --- */
+        /* --- Global Loader Styles --- */
         #global-loader {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -49,7 +49,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
-        /* --- NEW: Smooth Card Fade In --- */
+        /* --- Smooth Card Fade In --- */
         .fade-in { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
         @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
@@ -126,8 +126,14 @@
         <h2 id="auth-title" style="margin: 0 0 20px; font-weight: 800;">Welcome Back</h2>
         
         <form onsubmit="handleAuth(event)">
-            <div class="input-group"><i data-lucide="mail"></i><input type="email" id="email" placeholder="Email Address" required></div>
-            <div class="input-group"><i data-lucide="lock"></i><input type="password" id="password" placeholder="Password" required></div>
+            <div class="input-group">
+                <i data-lucide="mail"></i>
+                <input type="email" id="email" placeholder="Email Address" autocomplete="username" required>
+            </div>
+            <div class="input-group">
+                <i data-lucide="lock"></i>
+                <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+            </div>
             <button type="submit" class="btn-primary" id="submit-btn">SIGN IN <i data-lucide="arrow-right"></i></button>
         </form>
 
@@ -174,7 +180,8 @@
                 } else {
                     await auth.createUserWithEmailAndPassword(email, pass);
                 }
-                window.location.href = 'index.html'; // Redirect to dashboard
+                // Redirect to the new dashboard file name
+                window.location.href = 'dashboard.html'; 
             } catch (err) {
                 // Hide loader if error occurs
                 document.getElementById('global-loader').style.opacity = '0';
@@ -189,7 +196,8 @@
                 document.getElementById('global-loader').style.display = 'flex';
                 document.getElementById('global-loader').style.opacity = '1';
                 await auth.signInWithPopup(provider);
-                window.location.href = 'index.html';
+                // Redirect to the new dashboard file name
+                window.location.href = 'dashboard.html';
             } catch (err) {
                 document.getElementById('global-loader').style.opacity = '0';
                 setTimeout(() => document.getElementById('global-loader').style.display = 'none', 300);
@@ -227,11 +235,11 @@
         }
         startTimer();
 
-        // --- NEW: Improved Auth State Observer handling the loading screen ---
+        // --- Improved Auth State Observer handling the loading screen ---
         auth.onAuthStateChanged(user => { 
             if(user) {
-                // If logged in, keep loader visible and redirect
-                window.location.href = 'index.html'; 
+                // If logged in, keep loader visible and redirect to dashboard
+                window.location.href = 'dashboard.html'; 
             } else {
                 // If not logged in, gracefully fade out the loader to reveal the login card
                 const loader = document.getElementById('global-loader');
