@@ -1,3 +1,5 @@
+importScripts("https://progressier.app/UZyYWkBbV0PlxdRnGCVc/sw.js" );
+
 // CHANGE THIS VERSION NUMBER TO FORCE AN UPDATE
 const CACHE_NAME = 'agriq-pro-v6.0'; 
 
