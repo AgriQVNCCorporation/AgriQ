@@ -18,6 +18,8 @@
             --primary-light: #ede9fe;
             --danger: #ef4444;
             --danger-light: #fee2e2;
+            --bot-color: #10b981;
+            --bot-light: #d1fae5;
             --bg: #faf5ff; 
             --surface: rgba(255, 255, 255, 0.9);
             --text-main: #1e1b4b; 
@@ -49,9 +51,11 @@
         .tab {
             padding: 12px 20px; background: white; border: 1px solid var(--border);
             border-radius: 14px; font-weight: 800; font-size: 13px; color: var(--text-dim);
-            cursor: pointer; transition: var(--transition); white-space: nowrap;
+            cursor: pointer; transition: var(--transition); white-space: nowrap; display: flex; align-items: center; gap: 6px;
         }
         .tab.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25); }
+        .tab.bot-tab { border-color: var(--bot-color); color: var(--bot-color); }
+        .tab.bot-tab.active { background: var(--bot-color); color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); }
 
         /* DATA TABLE */
         .table-container { background: white; border-radius: 20px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(139, 92, 246, 0.05); }
@@ -61,9 +65,11 @@
         tr:last-child td { border-bottom: none; }
         tr:hover { background: var(--bg); }
 
-        .uid-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); background: var(--bg); padding: 4px 8px; border-radius: 6px; }
+        .uid-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); background: var(--bg); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 4px; }
         .score-tag { font-family: 'JetBrains Mono'; font-size: 14px; color: var(--primary-dark); font-weight: 800; }
         .module-tag { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; background: #e0e7ff; color: #3730a3; display: inline-block; }
+        
+        .bot-badge { background: var(--bot-light); color: var(--bot-color); font-size: 9px; padding: 3px 6px; border-radius: 6px; font-weight: 900; letter-spacing: 0.5px; margin-left: 6px; vertical-align: middle; }
 
         .actions { display: flex; gap: 8px; }
         .btn-icon { width: 36px; height: 36px; border-radius: 10px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); }
@@ -71,6 +77,19 @@
         .btn-edit:hover { background: var(--primary); color: white; }
         .btn-delete { background: var(--danger-light); color: var(--danger); }
         .btn-delete:hover { background: var(--danger); color: white; }
+
+        /* BOT CREATION PANEL */
+        .bot-panel { background: white; border-radius: 20px; border: 1px solid var(--bot-color); padding: 24px; display: none; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1); }
+        .bot-panel h2 { margin: 0 0 5px 0; color: var(--bot-color); font-weight: 900; display: flex; align-items: center; gap: 8px; }
+        .bot-panel p { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; font-weight: 600; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+        .input-group input { width: 100%; padding: 14px 16px; border-radius: 12px; border: 2px solid var(--border); font-size: 15px; font-weight: 700; outline: none; transition: 0.3s; }
+        .input-group input:focus { border-color: var(--bot-color); box-shadow: 0 0 0 4px var(--bot-light); }
+        
+        .btn-deploy { width: 100%; padding: 16px; border-radius: 14px; border: none; background: var(--bot-color); color: white; font-weight: 900; font-size: 15px; cursor: pointer; transition: 0.3s; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-deploy:active { transform: scale(0.98); }
 
         /* MODAL */
         #modal-overlay {
@@ -124,20 +143,39 @@
 
     <main>
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('coak')"><i data-lucide="swords" size="14" style="margin-right:5px; vertical-align:middle;"></i>COAK Monks</div>
-            <div class="tab" onclick="switchTab('global')"><i data-lucide="globe" size="14" style="margin-right:5px; vertical-align:middle;"></i>Global Logs</div>
-            <div class="tab" onclick="switchTab('daily')"><i data-lucide="zap" size="14" style="margin-right:5px; vertical-align:middle;"></i>Daily Logs</div>
+            <div class="tab active" id="tab-coak" onclick="switchTab('coak')"><i data-lucide="swords" size="14"></i> COAK Monks</div>
+            <div class="tab" id="tab-global" onclick="switchTab('global')"><i data-lucide="globe" size="14"></i> Global Logs</div>
+            <div class="tab" id="tab-daily" onclick="switchTab('daily')"><i data-lucide="zap" size="14"></i> Daily Logs</div>
+            <div class="tab bot-tab" id="tab-bots" onclick="switchTab('bots')"><i data-lucide="bot" size="14"></i> Deploy Bots</div>
         </div>
 
-        <div class="table-container">
+        <div class="table-container" id="table-view">
             <div id="loader" class="loader"><i data-lucide="loader-2" size="32"></i> SYNCING DATA...</div>
             <table id="data-table" style="display: none;">
-                <thead id="table-head">
-                    </thead>
-                <tbody id="table-body">
-                    </tbody>
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
             </table>
         </div>
+
+        <div class="bot-panel" id="bot-view">
+            <h2><i data-lucide="bot" size="24"></i> Bot Deployment Engine</h2>
+            <p>Create artificial users to drive leaderboard competition. Bots will appear in the Global Logs.</p>
+            
+            <div class="input-group">
+                <label>Bot Display Name</label>
+                <input type="text" id="bot-name" placeholder="e.g. AgriMaster99, TopTopper, etc.">
+            </div>
+            
+            <div class="input-group">
+                <label>Initial Score (XP)</label>
+                <input type="number" id="bot-score" placeholder="e.g. 4500">
+            </div>
+
+            <button class="btn-deploy" onclick="deployBot()">
+                <i data-lucide="rocket" size="18"></i> Inject Bot to Leaderboard
+            </button>
+        </div>
+
     </main>
 
     <script>
@@ -157,14 +195,13 @@
         let leaderboardData = [];
         let studentsData = [];
 
-        // Check Auth (Optional: Add Admin Email verification here if needed)
         auth.onAuthStateChanged(user => {
             if (!user) window.location.href = 'login.html';
             else initData();
         });
 
         function initData() {
-            // Fetch Students (For Names & COAK XP)
+            // Fetch Students
             db.ref('students').on('value', snap => {
                 usersMap = {};
                 studentsData = [];
@@ -179,7 +216,7 @@
                 if(currentTab === 'coak') renderTable();
             });
 
-            // Fetch Leaderboard (For Global & Daily logs)
+            // Fetch Leaderboard
             db.ref('leaderboard').on('value', snap => {
                 leaderboardData = [];
                 snap.forEach(child => {
@@ -189,19 +226,31 @@
                         uid: d.uid,
                         score: d.score || 0,
                         module: d.module || 'UNKNOWN',
-                        date: d.timestamp || d.date || Date.now()
+                        date: d.timestamp || d.date || Date.now(),
+                        isBot: d.isBot || false,
+                        botName: d.botName || ''
                     });
                 });
-                leaderboardData.sort((a, b) => b.date - a.date); // Newest first
-                if(currentTab !== 'coak') renderTable();
+                leaderboardData.sort((a, b) => b.date - a.date); 
+                if(currentTab === 'global' || currentTab === 'daily') renderTable();
             });
         }
 
         function switchTab(tabId) {
             currentTab = tabId;
+            
+            // UI Updates
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            renderTable();
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if (tabId === 'bots') {
+                document.getElementById('table-view').style.display = 'none';
+                document.getElementById('bot-view').style.display = 'block';
+            } else {
+                document.getElementById('bot-view').style.display = 'none';
+                document.getElementById('table-view').style.display = 'block';
+                renderTable();
+            }
         }
 
         function renderTable() {
@@ -216,7 +265,7 @@
                 thead.innerHTML = `<tr><th>User Details</th><th>Total COAK XP</th><th>Actions</th></tr>`;
                 
                 studentsData.forEach(s => {
-                    if(s.xp <= 0) return; // Hide 0 XP users to save space
+                    if(s.xp <= 0) return;
                     tbody.innerHTML += `
                         <tr>
                             <td>
@@ -246,13 +295,19 @@
                 );
 
                 filtered.forEach(d => {
-                    const userName = usersMap[d.uid] || 'Unknown User';
+                    // Logic to handle bot names vs real user names
+                    let userName = d.isBot ? d.botName : (usersMap[d.uid] || 'Unknown User');
+                    let botBadge = d.isBot ? `<span class="bot-badge">BOT</span>` : '';
+                    let uidDisplay = d.isBot ? 'SYSTEM_GENERATED' : `${d.key.substring(1, 8)}...`;
+
                     tbody.innerHTML += `
                         <tr>
                             <td>
-                                <div style="font-weight: 800; color: var(--text-main); margin-bottom: 4px;">${userName}</div>
+                                <div style="font-weight: 800; color: var(--text-main); margin-bottom: 4px;">
+                                    ${userName} ${botBadge}
+                                </div>
                                 <div class="module-tag">${d.module.replace(/_/g, ' ')}</div>
-                                <div class="uid-tag" style="margin-top:4px; display:inline-block;">${d.key.substring(1, 8)}...</div>
+                                <div class="uid-tag">${uidDisplay}</div>
                             </td>
                             <td><span class="score-tag">${d.score} XP</span></td>
                             <td>
@@ -272,7 +327,37 @@
             lucide.createIcons();
         }
 
-        // Modal Logic
+        // --- BOT DEPLOYMENT LOGIC ---
+        function deployBot() {
+            const name = document.getElementById('bot-name').value.trim();
+            const score = parseInt(document.getElementById('bot-score').value);
+
+            if (!name) return showToast("Please enter a bot name.");
+            if (isNaN(score) || score < 0) return showToast("Please enter a valid score.");
+
+            // Create a fake unique ID for the bot
+            const botUid = "bot_" + Math.random().toString(36).substr(2, 9);
+
+            // Push directly to leaderboard
+            db.ref('leaderboard').push({
+                uid: botUid,
+                score: score,
+                accuracy: Math.floor(Math.random() * (100 - 85 + 1) + 85), // Random acc between 85-100%
+                module: "GLOBAL_RANKING",
+                timestamp: Date.now(),
+                isBot: true,
+                botName: name
+            }).then(() => {
+                showToast(`Bot '${name}' deployed with ${score} XP!`);
+                document.getElementById('bot-name').value = '';
+                document.getElementById('bot-score').value = '';
+                switchTab('global'); // Auto-switch to see the bot
+            }).catch(err => {
+                showToast("Error deploying bot: " + err.message);
+            });
+        }
+
+        // --- MODAL LOGIC ---
         let actionType = '';
         let targetId = '';
 
@@ -302,7 +387,7 @@
             document.getElementById('m-title').innerText = type === 'coak' ? "Reset XP" : "Delete Record";
             document.getElementById('m-desc').innerHTML = type === 'coak' 
                 ? `Are you sure you want to reset <b>${name}'s</b> COAK XP to 0?`
-                : `Are you sure you want to delete this test record for <b>${name}</b>? This will affect their total ranking.`;
+                : `Are you sure you want to delete this record for <b>${name}</b>?`;
             
             document.getElementById('m-input').style.display = 'none';
             
@@ -322,7 +407,7 @@
                   .then(() => showToast("COAK XP Updated Successfully"));
             } else if (actionType === 'leaderboard') {
                 db.ref(`leaderboard/${targetId}`).update({ score: newVal })
-                  .then(() => showToast("Test Record Updated Successfully"));
+                  .then(() => showToast("Record Updated Successfully"));
             }
             closeModal();
         }
@@ -333,7 +418,7 @@
                   .then(() => showToast("User XP Reset to 0"));
             } else if (actionType === 'leaderboard') {
                 db.ref(`leaderboard/${targetId}`).remove()
-                  .then(() => showToast("Test Record Deleted"));
+                  .then(() => showToast("Record Deleted"));
             }
             closeModal();
         }
