@@ -6,7 +6,7 @@ const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
-    './icon-192x192.png',      // Fixed to match your exact uploaded filename
+    './icon-192.png',      // Fixed to match your exact uploaded filename
     './icon-512x512.png'   // Make sure this file actually exists in your repo!
 ];
 
