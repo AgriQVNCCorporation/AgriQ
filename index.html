@@ -4,19 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-   <link rel="manifest" href="/manifest.json">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="AgriQ Pro">
-<link rel="apple-touch-icon" href="/icon-192x192.png">
-
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-
-
-<meta name="theme-color" content="#007bff"> 
-
-    
     <title>AgriQ Pro | Dominate Your Agriculture Exams</title>
     <meta name="title" content="AgriQ Pro | Dominate Your Agriculture Exams">
     <meta name="description" content="The ultimate Progressive Web App for agriculture students. Prepare for MCAER, ICAR, SRF, BHU, NSC, and banking exams with Daily Rapid Drills and COAK Monks.">
@@ -259,37 +246,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     
     <script>
-        // --- SERVICE WORKER & UPDATE LOGIC ---
-        let newWorker;
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').then(reg => {
-                reg.addEventListener('updatefound', () => {
-                    newWorker = reg.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            const banner = document.getElementById('update-banner');
-                            banner.style.opacity = '1';
-                            banner.style.transform = 'translateX(-50%) translateY(0)';
-                        }
-                    });
-                });
-            });
-
-            let refreshing;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (refreshing) return;
-                window.location.reload();
-                refreshing = true;
-            });
-        }
-
-        document.getElementById('update-btn')?.addEventListener('click', () => {
-            if (newWorker) newWorker.postMessage('SKIP_WAITING');
-        });
         // Initialize Icons
         lucide.createIcons();
-// 
+
         // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
