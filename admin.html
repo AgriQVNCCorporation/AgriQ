@@ -435,16 +435,26 @@
             });
         }
 
+        // --- UPDATED: Date Change resets timestamp if set to TODAY ---
         function updateModuleDate(key, newDate) {
-            db.ref(`subjects/${key}/config`).update({ activeDate: newDate }).then(() => {
+            const updates = { activeDate: newDate };
+            if (newDate === getTodayStr()) {
+                updates.resetTimestamp = Date.now(); // Stamps the exact second to ignore old attempts
+            }
+            db.ref(`subjects/${key}/config`).update(updates).then(() => {
                 showToast("Schedule updated!");
             });
         }
 
+        // --- UPDATED: Toggle Switch resets timestamp when turned ON ---
         function toggleModule(key, state) {
             db.ref(`subjects/${key}`).update({ enabled: state });
+            if (state === true) {
+                db.ref(`subjects/${key}/config`).update({ resetTimestamp: Date.now() });
+            }
         }
 
+        // --- UPDATED: Deployment adds initial reset timestamp ---
         function deployModule() {
             const key = document.getElementById('sub-key').value.trim().toLowerCase().replace(/\s+/g, '_');
             const name = document.getElementById('sub-name').value.trim();
@@ -458,7 +468,12 @@
                 db.ref(`subjects/${key}`).set({
                     questions: qs,
                     enabled: true,
-                    config: { displayName: name || key, timeLimit: timeLimit, activeDate: "" } 
+                    config: { 
+                        displayName: name || key, 
+                        timeLimit: timeLimit, 
+                        activeDate: "",
+                        resetTimestamp: Date.now() // Give it a fresh timestamp upon creation
+                    } 
                 }).then(() => {
                     showToast("Module Deployed!");
                     document.getElementById('sub-key').value = "";
