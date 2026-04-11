@@ -35,15 +35,19 @@
             overflow-x: hidden;
         }
 
-        .skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+        /* --- SKELETON UI STYLES --- */
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+        .skeleton.dark { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
         .skeleton-text { height: 16px; margin-bottom: 8px; width: 100%; }
         .skeleton-text.short { width: 60%; }
         .skeleton-avatar { width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; }
+        
         .post-skeleton { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
         .post-skeleton-header { display: flex; align-items: center; gap: 12px; }
 
-        header { padding: 20px 24px; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        header { padding: 20px 24px; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); transition: var(--transition); }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
@@ -54,45 +58,63 @@
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
         .sidebar-link { display: flex; align-items: center; gap: 15px; padding: 16px 20px; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 16px; margin-bottom: 10px; transition: var(--transition); }
         .sidebar-link i { color: var(--text-dim); transition: var(--transition); }
-        .sidebar-link:hover { background: #f0f9ff; color: var(--primary); }
+        .sidebar-link:hover { background: #f0f9ff; color: var(--primary); transform: translateX(5px); }
         .sidebar-link:hover i { color: var(--primary); }
 
         main { padding: 20px; max-width: 500px; margin: 0 auto; }
+        
         .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .rank-card { padding: 20px; border-radius: 28px; color: white; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: var(--transition); cursor: pointer; text-decoration: none; }
+        .rank-card { padding: 20px; border-radius: 28px; color: white; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: var(--transition); cursor: pointer; text-decoration: none; min-height: 120px; }
+        .rank-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
         .rank-card:active { transform: scale(0.96); }
+        
         .rank-global { background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); }
         .rank-daily { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
-        .rank-bg-icon { position: absolute; right: -10px; bottom: -15px; opacity: 0.2; transform: rotate(-15deg); pointer-events: none; }
+        .rank-bg-icon { position: absolute; right: -10px; bottom: -15px; opacity: 0.2; transform: rotate(-15deg); pointer-events: none; transition: 0.4s ease-out; }
+        .rank-card:hover .rank-bg-icon { transform: rotate(0deg) scale(1.1); opacity: 0.3; }
+        
         .r-title { font-size: 9px; font-weight: 800; opacity: 0.9; text-transform: uppercase; letter-spacing:1px; margin-bottom: 4px; display: block; }
         .r-val { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono'; line-height: 1; }
         .r-pts { font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; display: inline-block; margin-top: 8px; }
 
         .banner-card { background: #0f172a; color: white; padding: 20px; border-radius: 24px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-decoration: none; transition: var(--transition); }
+        .banner-card:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
         .banner-card:active { transform: scale(0.98); }
+        
         .daily-banner { border-left: 5px solid var(--daily-color); }
-        .daily-icon { background: rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .daily-icon { background: rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .banner-card:hover .daily-icon { background: rgba(16, 185, 129, 0.4); }
+        
         .coak-banner { border-left: 5px solid var(--coak-color); }
-        .coak-icon { background: rgba(139, 92, 246, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .coak-icon { background: rgba(139, 92, 246, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .banner-card:hover .coak-icon { background: rgba(139, 92, 246, 0.4); }
 
-        .module-card { background: var(--surface); padding: 24px; border-radius: 28px; border: 1px solid var(--border); margin-bottom: 20px; margin-top: 5px; }
+        .module-card { background: var(--surface); padding: 24px; border-radius: 28px; border: 1px solid var(--border); margin-bottom: 20px; margin-top: 5px; transition: var(--transition); }
+        .module-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.04); }
+        
         .custom-select { position: relative; margin-top: 15px; }
         .select-btn { width: 100%; padding: 18px 20px; border-radius: 18px; border: 1.5px solid var(--border); background: #f8fafc; font-weight: 700; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-main); transition: var(--transition); }
-        .select-btn.active { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 132, 255, 0.1); }
-        .select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; margin-top: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 50; display: none; max-height: 220px; overflow-y: auto; }
-        .select-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+        .select-btn:hover { border-color: rgba(0, 132, 255, 0.5); }
+        .select-btn.active { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 132, 255, 0.1); background: #fff; }
+        
+        .select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; margin-top: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 50; display: none; max-height: 220px; overflow-y: auto; }
+        .select-dropdown.show { display: block; animation: slideDownFade 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        
+        @keyframes slideDownFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
         .select-option { padding: 16px 20px; font-weight: 600; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: var(--transition); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .select-option:last-child { border-bottom: none; }
         .select-option:hover:not(.locked) { background: #f0f9ff; color: var(--primary); padding-left: 25px; }
         .select-option.locked { cursor: not-allowed; opacity: 0.5; background: #f8fafc; color: var(--text-dim); }
 
         .btn-start { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 800; font-size: 16px; margin-top: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(0, 132, 255, 0.2); transition: var(--transition); }
-        .btn-start:active { transform: scale(0.98); }
+        .btn-start:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0, 132, 255, 0.3); }
+        .btn-start:active { transform: scale(0.97); }
 
         .post-section { margin-top: 30px; }
         .section-title { font-weight: 900; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .carousel-container { overflow: hidden; width: 100%; border-radius: 24px; position: relative; }
-        .carousel-track { display: flex; transition: transform 0.5s ease-in-out; align-items: flex-start; }
+        .carousel-track { display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); align-items: flex-start; }
         .carousel-slide { min-width: 100%; flex-shrink: 0; padding-bottom: 10px; }
         .post-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); width: 100%; display: flex; flex-direction: column; max-height: 280px; margin: 0 2px; }
         .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-shrink: 0; }
@@ -100,27 +122,26 @@
         .post-meta h4 { margin: 0; font-size: 14px; font-weight: 800; }
         .post-meta span { font-size: 10px; color: var(--text-dim); font-weight: 600; }
         .post-content { font-size: 13px; color: var(--text-dim); line-height: 1.6; font-weight: 600; overflow-y: auto; overflow-x: hidden; padding-right: 5px; word-wrap: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap; flex-grow: 1; }
-        .post-content::-webkit-scrollbar { width: 4px; }
-        .post-content::-webkit-scrollbar-track { background: transparent; }
-        .post-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         .dots-container { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
-        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: 0.3s; }
-        .dot.active { background: var(--primary); width: 14px; border-radius: 4px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: 0.3s; cursor: pointer; }
+        .dot.active { background: var(--primary); width: 18px; border-radius: 4px; }
 
         footer { text-align: center; padding: 30px 20px 10px; color: var(--text-dim); }
         .copyright { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
 
         .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 15px 5px calc(15px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 100; }
         .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; transition: var(--transition); flex: 1; }
-        .nav-item.active { color: var(--primary); transform: translateY(-2px); }
+        .nav-item:hover { color: var(--primary); }
+        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
 
-        #modal-overlay { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.4); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
+        #modal-overlay { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.4); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; }
         .modal { background: white; padding: 30px; border-radius: 32px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .modal-btn { padding: 16px 24px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; flex: 1; transition: var(--transition); }
-        .modal-input { width: 100%; padding: 16px; border-radius: 16px; border: 1.5px solid var(--border); margin-top: 15px; font-weight: 700; outline: none; text-align: center; text-transform: uppercase; }
-        .modal-input:focus { border-color: var(--primary); }
-        #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .modal-btn:hover { filter: brightness(0.95); transform: translateY(-2px); }
+        .modal-input { width: 100%; padding: 16px; border-radius: 16px; border: 1.5px solid var(--border); margin-top: 15px; font-weight: 700; outline: none; text-align: center; text-transform: uppercase; transition: var(--transition); }
+        .modal-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.1); }
+        #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
@@ -159,12 +180,12 @@
     
     <header>
         <div class="header-left">
-            <i data-lucide="menu" size="24" style="cursor:pointer; color:var(--text-main);" onclick="toggleSidebar()"></i>
+            <i data-lucide="menu" size="24" style="cursor:pointer; color:var(--text-main); transition:0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-main)'" onclick="toggleSidebar()"></i>
             <div class="brand">AGRI<span>Q</span> PRO</div>
         </div>
         <div style="display:flex; gap:18px; align-items:center;">
-            <i data-lucide="edit-3" size="20" style="color:var(--text-main); cursor:pointer;" onclick="requestNameChange()"></i>
-            <i data-lucide="bell" size="20" style="color:var(--text-dim)"></i>
+            <i data-lucide="edit-3" size="20" style="color:var(--text-main); cursor:pointer; transition:0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-main)'" onclick="requestNameChange()"></i>
+            <i data-lucide="bell" size="20" style="color:var(--text-dim); cursor:pointer; transition:0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'"></i>
         </div>
     </header>
 
@@ -173,14 +194,14 @@
             <a href="leaderboard.html" class="rank-card rank-global">
                 <i data-lucide="globe" size="100" class="rank-bg-icon"></i>
                 <span class="r-title">Global Rank</span>
-                <div class="r-val">#<span id="rank-val">--</span></div>
-                <div><span class="r-pts" id="points-val">0 XP</span></div>
+                <div class="r-val" id="rank-val"><div class="skeleton" style="width: 60px; height: 32px; border-radius: 6px;"></div></div>
+                <div><span class="r-pts" id="points-val"><div class="skeleton" style="width: 40px; height: 10px; display:inline-block;"></div></span></div>
             </a>
             <a href="leaderboarddaily.html" class="rank-card rank-daily">
                 <i data-lucide="zap" size="100" class="rank-bg-icon"></i>
                 <span class="r-title">Daily Drill Rank</span>
-                <div class="r-val">#<span id="daily-rank-val">--</span></div>
-                <div><span class="r-pts" id="daily-points-val">0 XP</span></div>
+                <div class="r-val" id="daily-rank-val"><div class="skeleton" style="width: 60px; height: 32px; border-radius: 6px;"></div></div>
+                <div><span class="r-pts" id="daily-points-val"><div class="skeleton" style="width: 40px; height: 10px; display:inline-block;"></div></span></div>
             </a>
         </div>
 
@@ -212,14 +233,15 @@
                     <i data-lucide="chevron-down" size="18" id="dropdown-icon" style="color:var(--text-dim); transition:0.3s;"></i>
                 </div>
                 <div class="select-dropdown" id="select-dropdown">
-                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton skeleton-text" style="width: 80%;"></div></div></div>
-                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton skeleton-text" style="width: 60%;"></div></div></div>
+                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton dark skeleton-text" style="width: 80%;"></div></div></div>
+                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton dark skeleton-text" style="width: 60%;"></div></div></div>
+                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton dark skeleton-text" style="width: 75%;"></div></div></div>
                 </div>
             </div>
 
             <button class="btn-start" onclick="initiateTest()">START SESSION <i data-lucide="arrow-right" size="18"></i></button>
             <div style="text-align: center; margin-top: 15px;">
-                <span style="font-size: 11px; color: var(--text-dim); font-weight: 800; cursor: pointer; text-decoration: underline;" onclick="promptCoupon()">Redeem Promo Code</span>
+                <span style="font-size: 11px; color: var(--text-dim); font-weight: 800; cursor: pointer; text-decoration: underline; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'" onclick="promptCoupon()">Redeem Promo Code</span>
             </div>
         </div>
 
@@ -230,10 +252,10 @@
                      <div class="carousel-slide">
                          <div class="post-skeleton">
                              <div class="post-skeleton-header">
-                                 <div class="skeleton skeleton-avatar"></div>
-                                 <div style="flex:1;"><div class="skeleton skeleton-text" style="margin-bottom:4px;"></div><div class="skeleton skeleton-text short" style="margin:0;"></div></div>
+                                 <div class="skeleton dark skeleton-avatar"></div>
+                                 <div style="flex:1;"><div class="skeleton dark skeleton-text" style="margin-bottom:4px;"></div><div class="skeleton dark skeleton-text short" style="margin:0;"></div></div>
                              </div>
-                             <div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>
+                             <div><div class="skeleton dark skeleton-text"></div><div class="skeleton dark skeleton-text"></div><div class="skeleton dark skeleton-text short"></div></div>
                          </div>
                     </div>
                 </div>
@@ -249,9 +271,9 @@
 
     <nav class="nav-bar">
         <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-grid"></i>Dash</a>
+        <a href="courses.html" class="nav-item"><i data-lucide="library"></i>Courses</a>
         <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
-        <a href="timeline.html" class="nav-item"><i data-lucide="list-todo"></i>Timeline</a>
-        <a href="todoanalysis.html" class="nav-item"><i data-lucide="activity"></i>Analysis</a>
+       
         <a href="profile.html" class="nav-item"><i data-lucide="user"></i>Profile</a>
     </nav>
 
@@ -263,10 +285,7 @@
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
             databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-            projectId: "agri-mcar",
-            storageBucket: "agri-mcar.firebasestorage.app",
-            messagingSenderId: "823436752104",
-            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+            projectId: "agri-mcar"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -278,7 +297,6 @@
         let attemptCounts = new Map();
         let slideIndex = 0; let slideInterval = null;
 
-        // Sync Variables for Accurate "Live" Resets
         let globalSubjectsSnap = null;
         let globalLeaderboardSnap = null;
 
@@ -307,7 +325,6 @@
             }
         });
 
-        // Combined Listener System
         function initDataListeners(uid) {
             db.ref('subjects').on('value', snap => {
                 globalSubjectsSnap = snap;
@@ -321,11 +338,16 @@
         }
 
         function updateDashboardUI(uid) {
-            // Wait until both databases load before calculating
             if(!globalSubjectsSnap || !globalLeaderboardSnap) return;
 
             const subjectsConfig = {};
-            globalSubjectsSnap.forEach(sub => { subjectsConfig[sub.key] = sub.val().config || {}; });
+            globalSubjectsSnap.forEach(sub => { 
+                const modData = sub.val();
+                subjectsConfig[sub.key] = {
+                    ...modData.config,
+                    current_session_id: modData.current_session_id 
+                }; 
+            });
 
             const globalScores = {};
             const dailyScores = {};
@@ -334,7 +356,6 @@
             globalLeaderboardSnap.forEach(child => {
                 const d = child.val();
                 
-                // 1. Give them XP for ALL attempts
                 if (d.module === "DAILY_DRILL") {
                     if(!dailyScores[d.uid]) dailyScores[d.uid] = 0;
                     dailyScores[d.uid] += (parseInt(d.score) || 0);
@@ -343,29 +364,30 @@
                     globalScores[d.uid] += (parseInt(d.score) || 0);
                 }
 
-                // 2. But ONLY count the attempt if it happened AFTER the Admin's latest "reset"
                 if (d.uid === uid) {
-                    const resetTime = subjectsConfig[d.module]?.resetTimestamp || 0;
-                    const attemptTime = d.timestamp || 0; 
+                    const modConfig = subjectsConfig[d.module] || {};
+                    const activeSessionId = modConfig.current_session_id;
                     
-                    if (attemptTime >= resetTime) {
+                    if (activeSessionId) {
+                        if (d.session_id === activeSessionId) {
+                            attemptCounts.set(d.module, (attemptCounts.get(d.module) || 0) + 1);
+                        }
+                    } else {
                         attemptCounts.set(d.module, (attemptCounts.get(d.module) || 0) + 1);
                     }
                 }
             });
 
-            // Update Header Values
             const sortedGlobal = Object.entries(globalScores).sort((a,b) => b[1] - a[1]);
             const gRank = sortedGlobal.findIndex(x => x[0] === uid) + 1;
-            document.getElementById('rank-val').innerText = gRank > 0 ? gRank : "--";
+            document.getElementById('rank-val').innerHTML = gRank > 0 ? `#${gRank}` : "--";
             document.getElementById('points-val').innerText = (globalScores[uid] || 0) + " XP";
 
             const sortedDaily = Object.entries(dailyScores).sort((a,b) => b[1] - a[1]);
             const dRank = sortedDaily.findIndex(x => x[0] === uid) + 1;
-            document.getElementById('daily-rank-val').innerText = dRank > 0 ? dRank : "--";
+            document.getElementById('daily-rank-val').innerHTML = dRank > 0 ? `#${dRank}` : "--";
             document.getElementById('daily-points-val').innerText = (dailyScores[uid] || 0) + " XP";
 
-            // Render Modules
             renderSubjectsDropdown(subjectsConfig);
         }
 
@@ -399,19 +421,28 @@
                     const isLocked = attempts >= maxAllowed && !couponActive;
                     const isRetake = (attempts > 0 && attempts < maxAllowed) || (attempts >= maxAllowed && couponActive);
                     
+                    let badgeHTML = '';
+                    if (activeDate === todayStr) {
+                        // SCHEDULED TODAY = GREEN BADGE
+                        badgeHTML = `<span style="font-size:9px; background:rgba(16, 185, 129, 0.1); color:var(--daily-color); padding:3px 8px; border-radius:8px; font-weight:800;">LIVE</span>`;
+                    } else if (modData.enabled) {
+                        // MANUAL TOGGLE = PURPLE BADGE
+                        badgeHTML = `<span style="font-size:9px; background:rgba(139, 92, 246, 0.1); color:var(--coak-color); padding:3px 8px; border-radius:8px; font-weight:800;">LIVE</span>`;
+                    }
+
                     const optionDiv = document.createElement('div');
                     
                     if (isLocked) {
                         optionDiv.className = `select-option locked`;
                         optionDiv.innerHTML = `<span style="display:flex; align-items:center; gap:10px;"><i data-lucide="lock" size="16"></i> <del>${label}</del></span><span style="font-size:10px; font-weight:800; color:var(--text-dim);">COMPLETED</span>`;
-                        optionDiv.onclick = () => showToast("Module completed. Use a promo code to unlock retakes.", "info");
+                        optionDiv.onclick = () => showToast("Module completed. Use a promo code to unlock retakes.");
                     } else if (isRetake) {
                         optionDiv.className = `select-option`;
-                        optionDiv.innerHTML = `<span style="display:flex; align-items:center; gap:10px;"><i data-lucide="check-circle-2" size="16" color="var(--primary)" style="opacity:0;" class="opt-check"></i> ${label}</span><span style="font-size:9px; background:#f1f5f9; color:var(--text-dim); padding:2px 6px; border-radius:6px; font-weight:800;">RETAKE (1/2 XP)</span>`;
+                        optionDiv.innerHTML = `<span style="display:flex; align-items:center; gap:10px;"><i data-lucide="clipboard-edit" size="16" style="color:var(--text-dim)"></i> <i data-lucide="check-circle-2" size="16" color="var(--primary)" style="opacity:0; position:absolute; left:20px;" class="opt-check"></i> ${label}</span><span style="font-size:9px; background:#f1f5f9; color:var(--text-dim); padding:3px 8px; border-radius:8px; font-weight:800;">RETAKE (1/2 XP)</span>`;
                         optionDiv.onclick = () => selectModule(val, label, optionDiv, true);
                     } else {
                         optionDiv.className = `select-option`;
-                        optionDiv.innerHTML = `<span style="display:flex; align-items:center; gap:10px;"><i data-lucide="check-circle-2" size="16" color="var(--primary)" style="opacity:0;" class="opt-check"></i> ${label}</span>${activeDate === todayStr ? `<span style="font-size:9px; background:var(--primary-glow); color:var(--primary); padding:2px 6px; border-radius:6px; font-weight:800;">LIVE</span>` : ''}`;
+                        optionDiv.innerHTML = `<span style="display:flex; align-items:center; gap:10px;"><i data-lucide="clipboard-edit" size="16" style="color:var(--text-dim)"></i> <i data-lucide="check-circle-2" size="16" color="var(--primary)" style="opacity:0; position:absolute; left:20px;" class="opt-check"></i> ${label}</span>${badgeHTML}`;
                         optionDiv.onclick = () => selectModule(val, label, optionDiv, false);
                     }
                     dropdown.appendChild(optionDiv);
