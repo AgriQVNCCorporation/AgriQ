@@ -263,7 +263,7 @@
         <button class="nav-item active" onclick="window.scrollTo(0,0)"><i data-lucide="file-code-2" size="22"></i>STUDIO</button>
         <button class="nav-item" onclick="document.getElementById('module-list').scrollIntoView()"><i data-lucide="database" size="22"></i>REGISTRY</button>
         <button class="nav-item" onclick="window.location.href='profile.html'"><i data-lucide="user" size="22"></i>PROFILE</button>
-          <button class="nav-item" onclick="window.location.href='adminlead.html'"><i data-lucide="user" size="22"></i>Leader</button>
+        <button class="nav-item" onclick="window.location.href='adminlead.html'"><i data-lucide="user" size="22"></i>Leader</button>
     </nav>
 
     <script>
@@ -289,7 +289,7 @@
                 initAdmin();
                 setTimeout(() => document.getElementById('admin-loader').classList.add('fade-out'), 800);
             } else {
-                window.location.href = "dashboard.html.html"; 
+                window.location.href = "dashboard.html"; 
             }
         });
 
@@ -435,26 +435,48 @@
             });
         }
 
-        // --- UPDATED: Date Change resets timestamp if set to TODAY ---
+        // --- UPDATED: Connects Date Picker to current_session_id ---
         function updateModuleDate(key, newDate) {
-            const updates = { activeDate: newDate };
-            if (newDate === getTodayStr()) {
-                updates.resetTimestamp = Date.now(); // Stamps the exact second to ignore old attempts
-            }
-            db.ref(`subjects/${key}/config`).update(updates).then(() => {
-                showToast("Schedule updated!");
+            // Convert "2026-04-12" to "20260412"
+            const formattedDate = newDate.replace(/-/g, '');
+            const sessionID = `${key}_${formattedDate}`;
+
+            db.ref(`subjects/${key}`).update({ 
+                current_session_id: sessionID,
+                enabled: true // Auto-enable if scheduling a date
+            });
+            
+            db.ref(`subjects/${key}/config`).update({ 
+                activeDate: newDate
+            }).then(() => {
+                showToast("Schedule & Session ID updated!");
             });
         }
 
-        // --- UPDATED: Toggle Switch resets timestamp when turned ON ---
+        // --- UPDATED: Connects Toggle Switch to current_session_id ---
         function toggleModule(key, state) {
-            db.ref(`subjects/${key}`).update({ enabled: state });
             if (state === true) {
-                db.ref(`subjects/${key}/config`).update({ resetTimestamp: Date.now() });
+                // If toggled ON manually, set session ID to today
+                const d = new Date();
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const sessionID = `${key}_${year}${month}${day}`;
+
+                db.ref(`subjects/${key}`).update({ 
+                    enabled: state,
+                    current_session_id: sessionID
+                });
+                
+                db.ref(`subjects/${key}/config`).update({ 
+                    activeDate: getTodayStr() // Visually updates date to today
+                });
+            } else {
+                db.ref(`subjects/${key}`).update({ enabled: state });
             }
         }
 
-        // --- UPDATED: Deployment adds initial reset timestamp ---
+        // --- UPDATED: Connects new deployments to current_session_id ---
         function deployModule() {
             const key = document.getElementById('sub-key').value.trim().toLowerCase().replace(/\s+/g, '_');
             const name = document.getElementById('sub-name').value.trim();
@@ -463,16 +485,23 @@
 
             if(!key || !json) return showToast("Enter ID and JSON", "error");
 
+            // Generate today's session ID for immediate deployment
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const sessionID = `${key}_${year}${month}${day}`;
+
             try {
                 const qs = JSON.parse(json);
                 db.ref(`subjects/${key}`).set({
                     questions: qs,
                     enabled: true,
+                    current_session_id: sessionID, // Added here!
                     config: { 
                         displayName: name || key, 
                         timeLimit: timeLimit, 
-                        activeDate: "",
-                        resetTimestamp: Date.now() // Give it a fresh timestamp upon creation
+                        activeDate: getTodayStr()
                     } 
                 }).then(() => {
                     showToast("Module Deployed!");
