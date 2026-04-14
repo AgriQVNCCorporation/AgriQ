@@ -141,7 +141,7 @@
             <h3 id="m-title" style="margin-top:0; font-weight:900;">Title</h3>
             <div id="m-body"><p id="m-text" style="color:var(--text-dim); font-size:14px; line-height:1.5; font-weight:600;">Message</p></div>
             <div style="display:flex; gap:12px; margin-top:25px;">
-                <button class="modal-btn" style="background:#f1f5f9; color:var(--text-dim);" onclick="closeModal()">CANCEL</button>
+                <button class="modal-btn" id="m-cancel" style="background:#f1f5f9; color:var(--text-dim);" onclick="closeModal()">CANCEL</button>
                 <button class="modal-btn" style="background:var(--primary); color:white" id="m-confirm">CONFIRM</button>
             </div>
         </div>
@@ -257,6 +257,53 @@
             </div>
             <div id="lb-admin-list" style="max-height: 200px; overflow-y: auto;"></div>
         </div>
+
+        <div class="card" id="vishal-card" style="border-color: var(--success); border-width: 2px;">
+            <div class="card-header">
+                <div class="title-wrap" style="color: var(--success);"><i data-lucide="folder-plus" size="18"></i> Vishal's Nested Studio</div>
+            </div>
+            
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px;">Create dynamic folder structures and push arrays (e.g., Agronomy -> Weed).</p>
+
+            <div class="input-group">
+                <span class="input-label">Folder Name (e.g., Agronomy)</span>
+                <input type="text" id="v-folder" placeholder="Main Folder Name">
+            </div>
+
+            <div class="input-group">
+                <span class="input-label">Subtopic / Module Name (e.g., Weed)</span>
+                <input type="text" id="v-subtopic" placeholder="Subtopic Name">
+            </div>
+
+            <div class="input-group">
+                <span class="input-label">Total Questions (Optional - Auto calculates if blank)</span>
+                <input type="number" id="v-qcount" placeholder="e.g. 50">
+            </div>
+            
+            <div class="input-group">
+                <span class="input-label"><i data-lucide="timer" size="12" style="margin-right: 4px;"></i> Time Limit (MINUTES)</span>
+                <input type="number" id="v-time-mins" placeholder="e.g. 10" value="10">
+            </div>
+
+            <div class="input-group">
+                <span class="input-label">Questions JSON Array</span>
+                <textarea id="v-json" placeholder='[{"q": "...", "options": [...], "ans": "..."}]' style="min-height: 120px;"></textarea>
+            </div>
+            
+            <button class="btn-primary" onclick="pushVishalData()" style="background: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);">
+                <i data-lucide="upload-cloud" size="18"></i> PUSH TO FOLDER
+            </button>
+        </div>
+
+        <div class="card" style="border-color: var(--success);">
+            <div class="card-header">
+                <div class="title-wrap" style="color: var(--success);"><i data-lucide="folder-open" size="18"></i> Nested Folders Registry</div>
+            </div>
+            <div id="v-module-list">
+                <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading Folders...</div>
+            </div>
+        </div>
+
     </main>
 
     <nav class="nav-bar">
@@ -265,7 +312,7 @@
         <button class="nav-item" onclick="window.location.href='profile.html'"><i data-lucide="user" size="22"></i>PROFILE</button>
         <button class="nav-item" onclick="window.location.href='adminlead.html'"><i data-lucide="user" size="22"></i>Leader</button>
     </nav>
-
+    
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
@@ -298,56 +345,49 @@
             loadRegistry();
             loadLB();
             loadUpdates(); 
+            loadVishalRegistry(); // Boot up nested registry
         }
 
+        /* ----------------------------------------------------
+           STANDARD ADMIN FUNCTIONS (UPDATES & REGULAR MODULES)
+           ---------------------------------------------------- */
         function publishUpdate() {
             const title = document.getElementById('up-title').value.trim();
             const tag = document.getElementById('up-tag').value.trim();
             const image = document.getElementById('up-image').value.trim();
             const content = document.getElementById('up-content').value.trim();
-
             if (!title || !content) return showToast("Title and Content are required!");
 
-            const updateData = {
-                title: title,
-                tag: tag || "Announcement",
-                image: image,
-                content: content,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                author: "AgriQ Admin"
-            };
-
-            db.ref('updates').push(updateData).then(() => {
-                showToast("Update Published Successfully!");
+            db.ref('updates').push({
+                title: title, tag: tag || "Announcement", image: image,
+                content: content, timestamp: firebase.database.ServerValue.TIMESTAMP, author: "AgriQ Admin"
+            }).then(() => {
+                showToast("Update Published!");
                 document.getElementById('up-title').value = "";
                 document.getElementById('up-tag').value = "";
                 document.getElementById('up-image').value = "";
                 document.getElementById('up-content').value = "";
-            }).catch(err => showToast("Error: " + err.message));
+            });
         }
 
         function loadUpdates() {
             db.ref('updates').on('value', snap => {
                 const container = document.getElementById('updates-list');
                 container.innerHTML = "";
-                
                 if(!snap.exists()) {
                     container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">No active updates.</div>';
                     return;
                 }
-
                 const updatesArray = [];
                 snap.forEach(child => updatesArray.push({ key: child.key, ...child.val() }));
                 updatesArray.sort((a, b) => b.timestamp - a.timestamp); 
 
                 updatesArray.forEach(data => {
+                    const d = new Date(data.timestamp || Date.now());
+                    const timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const div = document.createElement('div');
                     div.className = "lb-item";
                     div.style.alignItems = "flex-start";
-                    
-                    const d = new Date(data.timestamp || Date.now());
-                    const timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
                     div.innerHTML = `
                         <div style="flex: 1;">
                             <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom: 4px;">${data.title}</div>
@@ -365,10 +405,7 @@
 
         function deleteUpdate(key) {
             showAppModal("DELETE UPDATE", "Remove this announcement permanently?", () => {
-                db.ref(`updates/${key}`).remove().then(() => {
-                    showToast("Update Deleted");
-                    closeModal();
-                });
+                db.ref(`updates/${key}`).remove().then(() => { showToast("Update Deleted"); closeModal(); });
             });
         }
 
@@ -387,15 +424,10 @@
                     const timeLimit = config.timeLimit || 600; 
                     
                     let statusBadge = '';
-                    if (!activeDate) {
-                        statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual Toggle Only</span>';
-                    } else if (activeDate < today) {
-                        statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED: Update Date</span>';
-                    } else if (activeDate === today) {
-                        statusBadge = '<span class="badge live"><i data-lucide="check-circle"></i> LIVE TODAY</span>';
-                    } else {
-                        statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> Scheduled: ${activeDate}</span>`;
-                    }
+                    if (!activeDate) { statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual Toggle</span>'; }
+                    else if (activeDate < today) { statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED</span>'; }
+                    else if (activeDate === today) { statusBadge = '<span class="badge live"><i data-lucide="check-circle"></i> LIVE TODAY</span>'; }
+                    else { statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> Sched: ${activeDate}</span>`; }
 
                     const pill = document.createElement('div');
                     pill.className = "data-pill";
@@ -404,12 +436,10 @@
                             <div>
                                 <div style="font-size:15px; font-weight:900;">${config.displayName || key.toUpperCase()}</div>
                                 <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${key}</div>
-                                
                                 <div style="display:flex; gap: 8px; font-size: 10px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">
                                     <span style="background: var(--primary-glow); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
                                     <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
                                 </div>
-                                
                                 ${statusBadge}
                             </div>
                             <label class="switch">
@@ -417,16 +447,9 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <div class="date-editor-box">
-                            <span style="font-size:10px; font-weight:800; color:var(--text-dim);">SCHEDULE DATE</span>
-                            <div style="display:flex; gap:8px;">
-                                <input type="date" value="${activeDate}" onchange="updateModuleDate('${key}', this.value)" style="padding:8px; font-size:12px; border-radius:10px; flex:1;">
-                                <button class="btn-outline" onclick="updateModuleDate('${key}', '${today}')" style="padding:0 12px;">TODAY</button>
-                            </div>
-                        </div>
-                        <div class="data-pill-actions" style="margin-top: 15px;">
-                            <button class="btn-outline" onclick="editModuleData('${key}')"><i data-lucide="edit"></i> EDIT JSON</button>
-                            <button class="btn-outline" style="color:var(--danger);" onclick="deleteModule('${key}')"><i data-lucide="trash"></i></button>
+                        <div class="data-pill-actions" style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn-outline" onclick="editModuleData('${key}')"><i data-lucide="edit" size="14"></i> EDIT JSON</button>
+                            <button class="btn-outline" style="color:var(--danger);" onclick="deleteModule('${key}')"><i data-lucide="trash" size="14"></i></button>
                         </div>
                     `;
                     container.appendChild(pill);
@@ -435,48 +458,23 @@
             });
         }
 
-        // --- UPDATED: Connects Date Picker to current_session_id ---
         function updateModuleDate(key, newDate) {
-            // Convert "2026-04-12" to "20260412"
-            const formattedDate = newDate.replace(/-/g, '');
-            const sessionID = `${key}_${formattedDate}`;
-
-            db.ref(`subjects/${key}`).update({ 
-                current_session_id: sessionID,
-                enabled: true // Auto-enable if scheduling a date
-            });
-            
-            db.ref(`subjects/${key}/config`).update({ 
-                activeDate: newDate
-            }).then(() => {
-                showToast("Schedule & Session ID updated!");
-            });
+            const sessionID = `${key}_${newDate.replace(/-/g, '')}`;
+            db.ref(`subjects/${key}`).update({ current_session_id: sessionID, enabled: true });
+            db.ref(`subjects/${key}/config`).update({ activeDate: newDate }).then(() => showToast("Schedule updated!"));
         }
 
-        // --- UPDATED: Connects Toggle Switch to current_session_id ---
         function toggleModule(key, state) {
-            if (state === true) {
-                // If toggled ON manually, set session ID to today
+            if (state) {
                 const d = new Date();
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                const sessionID = `${key}_${year}${month}${day}`;
-
-                db.ref(`subjects/${key}`).update({ 
-                    enabled: state,
-                    current_session_id: sessionID
-                });
-                
-                db.ref(`subjects/${key}/config`).update({ 
-                    activeDate: getTodayStr() // Visually updates date to today
-                });
+                const sessionID = `${key}_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+                db.ref(`subjects/${key}`).update({ enabled: state, current_session_id: sessionID });
+                db.ref(`subjects/${key}/config`).update({ activeDate: getTodayStr() });
             } else {
                 db.ref(`subjects/${key}`).update({ enabled: state });
             }
         }
 
-        // --- UPDATED: Connects new deployments to current_session_id ---
         function deployModule() {
             const key = document.getElementById('sub-key').value.trim().toLowerCase().replace(/\s+/g, '_');
             const name = document.getElementById('sub-name').value.trim();
@@ -484,29 +482,15 @@
             const timeLimit = parseInt(document.getElementById('time-limit').value) || 600;
 
             if(!key || !json) return showToast("Enter ID and JSON", "error");
-
-            // Generate today's session ID for immediate deployment
             const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const sessionID = `${key}_${year}${month}${day}`;
+            const sessionID = `${key}_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
 
             try {
-                const qs = JSON.parse(json);
                 db.ref(`subjects/${key}`).set({
-                    questions: qs,
-                    enabled: true,
-                    current_session_id: sessionID, // Added here!
-                    config: { 
-                        displayName: name || key, 
-                        timeLimit: timeLimit, 
-                        activeDate: getTodayStr()
-                    } 
+                    questions: JSON.parse(json), enabled: true, current_session_id: sessionID, 
+                    config: { displayName: name || key, timeLimit: timeLimit, activeDate: getTodayStr() } 
                 }).then(() => {
-                    showToast("Module Deployed!");
-                    document.getElementById('sub-key').value = "";
-                    document.getElementById('json-input').value = "";
+                    showToast("Module Deployed!"); document.getElementById('sub-key').value = ""; document.getElementById('json-input').value = "";
                 });
             } catch(e) { showToast("JSON Syntax Error", "error"); }
         }
@@ -523,12 +507,152 @@
         }
 
         function deleteModule(key) {
-            showAppModal("DELETE", `Remove ${key} forever?`, () => {
-                db.ref(`subjects/${key}`).remove();
-                closeModal();
+            showAppModal("DELETE", `Remove ${key} forever?`, () => { db.ref(`subjects/${key}`).remove(); closeModal(); });
+        }
+
+
+        /* ----------------------------------------------------
+           VISHAL NESTED STUDIO LOGIC (FOLDERS & SUBTOPICS)
+           ---------------------------------------------------- */
+           
+        function pushVishalData() {
+            const folderInput = document.getElementById('v-folder').value.trim();
+            const subtopicInput = document.getElementById('v-subtopic').value.trim();
+            const qCountInput = document.getElementById('v-qcount').value.trim();
+            const minsInput = document.getElementById('v-time-mins').value.trim();
+            const jsonStr = document.getElementById('v-json').value;
+
+            const folder = folderInput.toLowerCase().replace(/\s+/g, '_');
+            const subtopic = subtopicInput.toLowerCase().replace(/\s+/g, '_');
+
+            if(!folder || !subtopic || !jsonStr) return customAlert("Validation Error", "Please provide a Folder, Subtopic, and JSON!");
+
+            try {
+                const qs = JSON.parse(jsonStr);
+                const finalCount = qCountInput || qs.length; 
+                const timeInSeconds = (parseInt(minsInput) || 10) * 60; // Converts minutes to seconds for DB
+                
+                customAlert("Processing...", `Deploying into:\n📁 ${folderInput}\n ↳ 📄 ${subtopicInput}`);
+                const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
+                
+                setTimeout(() => {
+                    db.ref(`nested_subjects/${folder}/${subtopic}`).set({
+                        questions: qs,
+                        enabled: true,
+                        current_session_id: sessionID,
+                        config: { 
+                            displayName: subtopicInput, 
+                            folderName: folderInput,
+                            timeLimit: timeInSeconds, 
+                            questionCount: finalCount,
+                            activeDate: getTodayStr()
+                        } 
+                    }).then(() => {
+                        customAlert("Success!", `Deployed into:\n${folderInput} -> ${subtopicInput}`);
+                        document.getElementById('v-subtopic').value = "";
+                        document.getElementById('v-json').value = "";
+                    }).catch(err => { customAlert("Database Error", err.message); });
+                }, 1000);
+
+            } catch(e) { customAlert("JSON Error", "Syntax error found in your JSON Array."); }
+        }
+
+        // LOAD VISHAL REGISTRY
+        function loadVishalRegistry() {
+            db.ref('nested_subjects').on('value', snap => {
+                const container = document.getElementById('v-module-list');
+                container.innerHTML = "";
+                
+                if(!snap.exists()) {
+                    container.innerHTML = "<div style='text-align:center; padding:20px; font-size:12px; color:var(--text-dim);'>No nested folders found.</div>";
+                    return;
+                }
+
+                snap.forEach(folder => {
+                    const folderKey = folder.key;
+                    
+                    // Folder Title
+                    const folderTitle = document.createElement('div');
+                    folderTitle.innerHTML = `<h4 style="margin: 15px 0 10px; color: var(--text-main); font-size: 14px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;"><i data-lucide="folder" size="18" style="color: var(--success);"></i> ${folderKey}</h4>`;
+                    container.appendChild(folderTitle);
+
+                    folder.forEach(subtopic => {
+                        const subtopicKey = subtopic.key;
+                        const data = subtopic.val();
+                        const config = data.config || {};
+                        
+                        const displayName = config.displayName || subtopicKey.toUpperCase();
+                        const timeLimit = config.timeLimit || 600;
+                        const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
+                        
+                        const pill = document.createElement('div');
+                        pill.className = "data-pill";
+                        pill.style.borderLeft = "4px solid var(--success)";
+                        
+                        pill.innerHTML = `
+                            <div class="data-pill-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <div style="font-size:15px; font-weight:900;">${displayName}</div>
+                                    <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${subtopicKey}</div>
+                                    <div style="display:flex; gap: 8px; font-size: 10px; font-weight: 800; color: var(--success); margin-bottom: 6px;">
+                                        <span style="background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
+                                        <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
+                                    </div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" ${data.enabled ? 'checked' : ''} onchange="toggleVishalModule('${folderKey}', '${subtopicKey}', this.checked)">
+                                    <span class="slider" style="background-color: var(--border);"></span>
+                                </label>
+                            </div>
+                            <div class="data-pill-actions" style="margin-top: 15px; display: flex; gap: 10px;">
+                                <button class="btn-outline" onclick="editVishalData('${folderKey}', '${subtopicKey}')"><i data-lucide="edit" size="14"></i> EDIT JSON</button>
+                                <button class="btn-outline" style="color:var(--danger);" onclick="deleteVishalData('${folderKey}', '${subtopicKey}')"><i data-lucide="trash" size="14"></i></button>
+                            </div>
+                        `;
+                        container.appendChild(pill);
+                    });
+                });
+                lucide.createIcons();
             });
         }
 
+        // TOGGLE VISHAL MODULE
+        function toggleVishalModule(folder, subtopic, state) {
+            db.ref(`nested_subjects/${folder}/${subtopic}`).update({ enabled: state });
+            if (state) {
+                db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ activeDate: getTodayStr() });
+            }
+        }
+
+        // EDIT VISHAL MODULE
+        function editVishalData(folder, subtopic) {
+            db.ref(`nested_subjects/${folder}/${subtopic}`).once('value', snap => {
+                const d = snap.val();
+                document.getElementById('v-folder').value = d.config?.folderName || folder;
+                document.getElementById('v-subtopic').value = d.config?.displayName || subtopic;
+                document.getElementById('v-qcount').value = d.config?.questionCount || (d.questions ? d.questions.length : '');
+                
+                // Convert seconds back to minutes for the editor
+                document.getElementById('v-time-mins').value = d.config?.timeLimit ? Math.floor(d.config.timeLimit / 60) : 10;
+                document.getElementById('v-json').value = JSON.stringify(d.questions, null, 2);
+                
+                document.getElementById('vishal-card').scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        // DELETE VISHAL MODULE
+        function deleteVishalData(folder, subtopic) {
+            showAppModal("DELETE", `Remove ${subtopic} from ${folder}?`, () => {
+                db.ref(`nested_subjects/${folder}/${subtopic}`).remove().then(() => {
+                    closeModal();
+                    showToast("Module Deleted");
+                });
+            });
+        }
+
+        /* ----------------------------------------------------
+           UTILITIES (MODALS, TOASTS, LEADERBOARD)
+           ---------------------------------------------------- */
         function loadLB() {
             db.ref('leaderboard').on('value', snap => {
                 const list = document.getElementById('lb-admin-list');
@@ -548,21 +672,29 @@
         }
 
         function wipeLeaderboard() {
-            showAppModal("WIPE", "Clear ALL rankings?", () => {
-                db.ref('leaderboard').remove();
-                closeModal();
-            });
+            showAppModal("WIPE", "Clear ALL rankings?", () => { db.ref('leaderboard').remove(); closeModal(); });
         }
 
         function showAppModal(title, text, onConfirm) {
             document.getElementById('m-title').innerText = title;
             document.getElementById('m-text').innerText = text;
+            document.getElementById('m-cancel').style.display = 'block';
+            document.getElementById('m-confirm').innerText = "CONFIRM";
             document.getElementById('modal-overlay').style.display = 'flex';
             document.getElementById('m-confirm').onclick = onConfirm;
         }
+        
+        function customAlert(title, text) {
+            document.getElementById('m-title').innerText = title;
+            document.getElementById('m-text').innerText = text;
+            document.getElementById('m-cancel').style.display = 'none';
+            document.getElementById('m-confirm').innerText = "OKAY";
+            document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('m-confirm').onclick = () => { closeModal(); };
+        }
 
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-
+        
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.style.display = 'block';
