@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <title>AgriQ Pro | Folder View</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff; --primary-glow: rgba(0, 132, 255, 0.15);
+            --bg: #f0f9ff; --surface: #ffffff;
+            --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
+            --daily-color: #10b981; --warning: #f59e0b;
+            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        
+        body { 
+            background: var(--bg); color: var(--text-main); 
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            overflow-x: hidden; min-height: 100vh;
+        }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .loader-spinner { width: 36px; height: 36px; border: 4px solid rgba(0, 132, 255, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- HEADER --- */
+        header { 
+            padding: 20px 24px; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); 
+            position: sticky; top: env(safe-area-inset-top); z-index: 100;
+            display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border);
+        }
+        .back-btn { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            color: var(--text-main); cursor: pointer; transition: var(--transition);
+        }
+        .back-btn:active { transform: scale(0.9); }
+        .folder-title { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; text-transform: uppercase; color: var(--text-main); flex: 1;}
+        .folder-title span { color: var(--primary); }
+
+        main { padding: 20px; max-width: 600px; margin: 0 auto; }
+
+        .section-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .section-header p { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-top: 5px; }
+
+        /* --- LIST CARD UI --- */
+        .module-list { display: flex; flex-direction: column; gap: 16px; }
+
+        .module-card {
+            background: var(--surface); border-radius: 20px; padding: 20px 20px 20px 24px;
+            border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            display: flex; align-items: center; justify-content: space-between;
+            position: relative; overflow: hidden; cursor: pointer; transition: var(--transition);
+        }
+        
+        /* The Blue Horizontal/Vertical Accent requested */
+        .module-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+            background: linear-gradient(to bottom, var(--primary), #00c6ff);
+            border-radius: 20px 0 0 20px; transition: var(--transition);
+        }
+
+        .module-card:hover, .module-card:active {
+            transform: translateY(-3px); border-color: rgba(0, 132, 255, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 132, 255, 0.1);
+        }
+        .module-card:hover::before { width: 8px; }
+
+        .mod-info { flex: 1; }
+        .mod-title { font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+        
+        .mod-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+        .stat-badge {
+            background: #f8fafc; border: 1px solid var(--border); padding: 4px 10px;
+            border-radius: 8px; font-size: 10px; font-weight: 800; color: var(--text-dim);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .stat-badge.blue { background: var(--primary-glow); color: var(--primary); border-color: transparent; }
+        
+        .play-btn {
+            width: 44px; height: 44px; border-radius: 14px; background: #f8fafc;
+            display: flex; align-items: center; justify-content: center; color: var(--primary);
+            border: 1px solid var(--border); transition: var(--transition);
+        }
+        .module-card:hover .play-btn { background: var(--primary); color: white; transform: scale(1.05); border-color: transparent;}
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+        .empty-state i { opacity: 0.5; margin-bottom: 10px; }
+        .empty-state p { font-size: 13px; font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+    <div id="preloader"><div class="loader-spinner"></div></div>
+
+    <header>
+        <div class="back-btn" onclick="window.location.href='courses.html'"><i data-lucide="chevron-left" size="20"></i></div>
+        <div class="folder-title" id="page-title">FOLDER <span>VIEW</span></div>
+        <i data-lucide="folder-open" size="22" style="color:var(--primary);"></i>
+    </header>
+
+    <main>
+        <div class="section-header">
+            <div>
+                <h2 style="font-size: 16px; font-weight: 900; color: var(--text-main);">Available Topics</h2>
+                <p>Select a module to start practicing</p>
+            </div>
+            <div id="total-count" style="font-size: 12px; font-weight: 800; color: var(--primary); background: var(--primary-glow); padding: 6px 12px; border-radius: 10px;">
+                0 Modules
+            </div>
+        </div>
+
+        <div class="module-list" id="modules-container">
+            </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // Extract folder name from URL (e.g., ?folder=agronomy)
+        const urlParams = new URLSearchParams(window.location.search);
+        const folderKey = urlParams.get('folder');
+
+        window.addEventListener('load', () => {
+            if(!folderKey) {
+                window.location.href = 'courses.html';
+                return;
+            }
+            
+            // Format Title
+            document.getElementById('page-title').innerHTML = folderKey.replace(/_/g, ' ').toUpperCase();
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    fetchFolderData();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        function fetchFolderData() {
+            db.ref(`nested_subjects/${folderKey}`).on('value', snap => {
+                const container = document.getElementById('modules-container');
+                container.innerHTML = "";
+                
+                if (!snap.exists()) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i data-lucide="inbox" size="40"></i>
+                            <p>No study modules found in this folder yet.</p>
+                        </div>
+                    `;
+                    document.getElementById('total-count').innerText = "0 Modules";
+                    lucide.createIcons();
+                    hideLoader();
+                    return;
+                }
+
+                let count = 0;
+                snap.forEach(child => {
+                    count++;
+                    const subtopicKey = child.key;
+                    const data = child.val();
+                    const config = data.config || {};
+                    
+                    const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
+                    
+                    // MODIFIED: Fetch questionCount from config first, fallback to array length, then 0.
+                    const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
+                    
+                    const timeSec = config.timeLimit || 600;
+                    const timeMin = Math.floor(timeSec / 60);
+
+                    const card = document.createElement('div');
+                    card.className = "module-card";
+                    
+                    // Route to test engine, passing both folder and subtopic
+                    card.onclick = () => {
+                        window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}`;
+                    };
+
+                    card.innerHTML = `
+                        <div class="mod-info">
+                            <div class="mod-title">${displayName}</div>
+                            <div class="mod-stats">
+                                <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
+                                <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
+                            </div>
+                        </div>
+                        <div class="play-btn">
+                            <i data-lucide="play" size="20" fill="currentColor"></i>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+
+                document.getElementById('total-count').innerText = `${count} Modules`;
+                lucide.createIcons();
+                hideLoader();
+            });
+        }
+
+        function hideLoader() {
+            setTimeout(() => {
+                document.getElementById('preloader').style.opacity = '0';
+                setTimeout(() => document.getElementById('preloader').style.display = 'none', 400);
+            }, 300);
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
