@@ -22,6 +22,7 @@
             --primary: #0084ff; --bg: #f0f9ff; --surface: #ffffff;
             --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
             --daily-color: #10b981; --coak-color: #8b5cf6; --warning: #f59e0b;
+            --folder-color: #f43f5e; /* New color for fetched folders */
             --transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
@@ -130,7 +131,11 @@
         .card-practice .icon-box { background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); color: white; }
         .card-practice .badge { background: rgba(0, 132, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 132, 255, 0.2); }
 
-        /* Dynamic Free/Owned Card */
+        /* Dynamic Folders (Nested Subjects) */
+        .card-folder .icon-box { background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%); color: white; }
+        .card-folder .badge { background: rgba(244, 63, 94, 0.1); color: var(--folder-color); border: 1px solid rgba(244, 63, 94, 0.2); }
+
+        /* Dynamic Free/Owned Card (Store Modules) */
         .card-dynamic-free .icon-box { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: white; }
         .card-dynamic-free .badge { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
         
@@ -216,7 +221,7 @@
             <i data-lucide="search" size="20" class="search-icon"></i>
         </div>
 
-        <div class="section-title"><i data-lucide="layers" size="20" color="var(--primary)"></i> Study Modules</div>
+        <div class="section-title"><i data-lucide="layers" size="20" color="var(--primary)"></i> Study Modules & Subjects</div>
 
         <div class="course-grid" id="grid-container">
             <div class="course-card card-daily" onclick="window.location.href='daily.html'" data-title="Daily Test Unlock">
@@ -240,15 +245,16 @@
                 <div class="badge"><i data-lucide="unlock" size="10"></i> Unlocked</div>
             </div>
             
-            </div>
+        </div>
 
         <div style="height: 40px;"></div> 
     </main>
 
     <nav class="nav-bar">
         <a href="dashboard.html" class="nav-item"><i data-lucide="layout-grid"></i>Dash</a>
-        <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
         <a href="courses.html" class="nav-item active"><i data-lucide="library"></i>Courses</a>
+        <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
+        <a href="todoanalysis.html" class="nav-item"><i data-lucide="activity"></i>Analysis</a>
         <a href="profile.html" class="nav-item"><i data-lucide="user"></i>Profile</a>
     </nav>
 
@@ -266,6 +272,7 @@
 
         let myPurchases = [];
         let allStoreModules = [];
+        let allNestedFolders = [];
 
         window.addEventListener('load', () => {
             auth.onAuthStateChanged(user => {
@@ -303,12 +310,53 @@
                 allStoreModules.sort((a, b) => b.timestamp - a.timestamp);
                 renderGrid();
             });
+
+            // Listen for Nested Subject Folders (Created from Admin Panel)
+            db.ref('nested_subjects').on('value', snap => {
+                allNestedFolders = [];
+                if (snap.exists()) {
+                    snap.forEach(folderSnap => {
+                        const folderKey = folderSnap.key;
+                        const subtopicCount = folderSnap.numChildren();
+                        allNestedFolders.push({
+                            key: folderKey,
+                            count: subtopicCount
+                        });
+                    });
+                }
+                renderGrid();
+            });
         }
 
         function renderGrid() {
             const grid = document.getElementById('grid-container');
+            // Remove previous dynamic cards to prevent duplicates
             document.querySelectorAll('.dynamic-card').forEach(card => card.remove());
 
+            // 1. Render Folders (Nested Subjects)
+            allNestedFolders.forEach(folder => {
+                const displayName = folder.key.charAt(0).toUpperCase() + folder.key.slice(1).replace(/_/g, ' ');
+
+                const card = document.createElement('div');
+                card.className = `course-card dynamic-card card-folder`;
+                card.setAttribute('data-title', folder.key);
+                card.id = `folder-${folder.key}`;
+
+                // Redirect to a sub-view page (e.g., folder_view.html) passing the folder name
+                card.onclick = () => { window.location.href = `folder_view.html?folder=${folder.key}`; };
+                
+                card.innerHTML = `
+                    <i data-lucide="folder-tree" size="100" class="bg-symbol"></i>
+                    <div class="icon-box"><i data-lucide="folder" size="26"></i></div>
+                    <div class="course-title">${displayName}</div>
+                    <div class="badge"><i data-lucide="layers" size="10"></i> ${folder.count} Topics</div>
+                `;
+                
+                grid.appendChild(card);
+                attach3DEffect(card);
+            });
+
+            // 2. Render Store Modules
             allStoreModules.forEach(data => {
                 const hasBought = myPurchases.includes(data.key);
                 const isLocked = data.accessType === 'locked' && !hasBought;
@@ -316,7 +364,7 @@
                 const card = document.createElement('div');
                 card.className = `course-card dynamic-card ${isLocked ? 'card-locked' : (hasBought ? 'card-owned' : 'card-dynamic-free')}`;
                 card.setAttribute('data-title', data.title);
-                card.id = `card-${data.key}`; // Assign unique ID to every card
+                card.id = `card-${data.key}`;
 
                 if (isLocked) {
                     card.onclick = () => openCheckout(data.key, data.title, data.price);
@@ -339,6 +387,7 @@
                 grid.appendChild(card);
                 attach3DEffect(card);
             });
+
             lucide.createIcons();
         }
 
@@ -363,21 +412,15 @@
                 "currency": "INR",
                 "name": "AgriQ Pro",
                 "handler": function (response) {
-                    // --- BEAUTIFUL CUSTOM TOAST NOTIFICATION ---
                     showToast("Payment Successful! Module Unlocked.");
                     
-                    // 1. Manually add to local list so UI updates immediately
                     if (!myPurchases.includes(moduleKey)) {
                         myPurchases.push(moduleKey);
                     }
                     
-                    // 2. Re-render the grid right now
                     renderGrid();
-                    
-                    // 3. Close modal
                     closeCheckout();
 
-                    // 4. Update Database
                     const uid = auth.currentUser.uid;
                     db.ref(`students/${uid}/purchases/${moduleKey}`).set({
                         paymentId: response.razorpay_payment_id,
@@ -415,7 +458,6 @@
             });
         }
         
-        // --- UI Effects ---
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerHTML = `<i data-lucide="check-circle" size="14" style="margin-right:6px; vertical-align:middle;"></i> ${msg}`;
