@@ -88,6 +88,10 @@
             padding: 20px; background: #fff; border-radius: 24px; margin-bottom: 15px; 
             border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.01);
         }
+        
+        .data-pill-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
 
         .date-editor-box {
             background: #f8fafc; padding: 12px; border-radius: 16px; margin-top: 12px;
@@ -260,7 +264,7 @@
 
         <div class="card" id="vishal-card" style="border-color: var(--success); border-width: 2px;">
             <div class="card-header">
-                <div class="title-wrap" style="color: var(--success);"><i data-lucide="folder-plus" size="18"></i> Vishal's Nested Studio</div>
+                <div class="title-wrap" style="color: var(--success);"><i data-lucide="folder-tree" size="18" style="color: var(--success);"></i> Vishal's Nested Studio</div>
             </div>
             
             <p style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px;">Create dynamic folder structures and push arrays (e.g., Agronomy -> Weed).</p>
@@ -274,15 +278,10 @@
                 <span class="input-label">Subtopic / Module Name (e.g., Weed)</span>
                 <input type="text" id="v-subtopic" placeholder="Subtopic Name">
             </div>
-
-            <div class="input-group">
-                <span class="input-label">Total Questions (Optional - Auto calculates if blank)</span>
-                <input type="number" id="v-qcount" placeholder="e.g. 50">
-            </div>
             
             <div class="input-group">
-                <span class="input-label"><i data-lucide="timer" size="12" style="margin-right: 4px;"></i> Time Limit (MINUTES)</span>
-                <input type="number" id="v-time-mins" placeholder="e.g. 10" value="10">
+                <span class="input-label"><i data-lucide="timer" size="12" style="margin-right: 4px;"></i> Time Limit (Seconds)</span>
+                <input type="number" id="v-time" placeholder="e.g. 600 for 10 mins" value="600">
             </div>
 
             <div class="input-group">
@@ -295,12 +294,12 @@
             </button>
         </div>
 
-        <div class="card" style="border-color: var(--success);">
+        <div class="card" style="border-color: rgba(16, 185, 129, 0.2);">
             <div class="card-header">
-                <div class="title-wrap" style="color: var(--success);"><i data-lucide="folder-open" size="18"></i> Nested Folders Registry</div>
+                <div class="title-wrap" style="color: var(--success);"><i data-lucide="database" size="18"></i> Vishal's Active Folders</div>
             </div>
-            <div id="v-module-list">
-                <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading Folders...</div>
+            <div id="vishal-module-list">
+                <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading Nested Modules...</div>
             </div>
         </div>
 
@@ -312,6 +311,7 @@
         <button class="nav-item" onclick="window.location.href='profile.html'"><i data-lucide="user" size="22"></i>PROFILE</button>
         <button class="nav-item" onclick="window.location.href='adminlead.html'"><i data-lucide="user" size="22"></i>Leader</button>
     </nav>
+    <button class="nav-item" onclick="window.location.href='admintest.html'"><i data-lucide="user" size="22"></i>Test</button>
     
     <script>
         const firebaseConfig = {
@@ -343,51 +343,59 @@
         function initAdmin() {
             lucide.createIcons();
             loadRegistry();
+            loadVishalRegistry(); // NEW INITIALIZATION
             loadLB();
             loadUpdates(); 
-            loadVishalRegistry(); // Boot up nested registry
         }
 
-        /* ----------------------------------------------------
-           STANDARD ADMIN FUNCTIONS (UPDATES & REGULAR MODULES)
-           ---------------------------------------------------- */
         function publishUpdate() {
             const title = document.getElementById('up-title').value.trim();
             const tag = document.getElementById('up-tag').value.trim();
             const image = document.getElementById('up-image').value.trim();
             const content = document.getElementById('up-content').value.trim();
+
             if (!title || !content) return showToast("Title and Content are required!");
 
-            db.ref('updates').push({
-                title: title, tag: tag || "Announcement", image: image,
-                content: content, timestamp: firebase.database.ServerValue.TIMESTAMP, author: "AgriQ Admin"
-            }).then(() => {
-                showToast("Update Published!");
+            const updateData = {
+                title: title,
+                tag: tag || "Announcement",
+                image: image,
+                content: content,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                author: "AgriQ Admin"
+            };
+
+            db.ref('updates').push(updateData).then(() => {
+                showToast("Update Published Successfully!");
                 document.getElementById('up-title').value = "";
                 document.getElementById('up-tag').value = "";
                 document.getElementById('up-image').value = "";
                 document.getElementById('up-content').value = "";
-            });
+            }).catch(err => showToast("Error: " + err.message));
         }
 
         function loadUpdates() {
             db.ref('updates').on('value', snap => {
                 const container = document.getElementById('updates-list');
                 container.innerHTML = "";
+                
                 if(!snap.exists()) {
                     container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">No active updates.</div>';
                     return;
                 }
+
                 const updatesArray = [];
                 snap.forEach(child => updatesArray.push({ key: child.key, ...child.val() }));
                 updatesArray.sort((a, b) => b.timestamp - a.timestamp); 
 
                 updatesArray.forEach(data => {
-                    const d = new Date(data.timestamp || Date.now());
-                    const timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const div = document.createElement('div');
                     div.className = "lb-item";
                     div.style.alignItems = "flex-start";
+                    
+                    const d = new Date(data.timestamp || Date.now());
+                    const timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
                     div.innerHTML = `
                         <div style="flex: 1;">
                             <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom: 4px;">${data.title}</div>
@@ -405,7 +413,10 @@
 
         function deleteUpdate(key) {
             showAppModal("DELETE UPDATE", "Remove this announcement permanently?", () => {
-                db.ref(`updates/${key}`).remove().then(() => { showToast("Update Deleted"); closeModal(); });
+                db.ref(`updates/${key}`).remove().then(() => {
+                    showToast("Update Deleted");
+                    closeModal();
+                });
             });
         }
 
@@ -424,10 +435,15 @@
                     const timeLimit = config.timeLimit || 600; 
                     
                     let statusBadge = '';
-                    if (!activeDate) { statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual Toggle</span>'; }
-                    else if (activeDate < today) { statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED</span>'; }
-                    else if (activeDate === today) { statusBadge = '<span class="badge live"><i data-lucide="check-circle"></i> LIVE TODAY</span>'; }
-                    else { statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> Sched: ${activeDate}</span>`; }
+                    if (!activeDate) {
+                        statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual Toggle Only</span>';
+                    } else if (activeDate < today) {
+                        statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED: Update Date</span>';
+                    } else if (activeDate === today) {
+                        statusBadge = '<span class="badge live"><i data-lucide="check-circle"></i> LIVE TODAY</span>';
+                    } else {
+                        statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> Scheduled: ${activeDate}</span>`;
+                    }
 
                     const pill = document.createElement('div');
                     pill.className = "data-pill";
@@ -436,10 +452,12 @@
                             <div>
                                 <div style="font-size:15px; font-weight:900;">${config.displayName || key.toUpperCase()}</div>
                                 <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${key}</div>
+                                
                                 <div style="display:flex; gap: 8px; font-size: 10px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">
                                     <span style="background: var(--primary-glow); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
                                     <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
                                 </div>
+                                
                                 ${statusBadge}
                             </div>
                             <label class="switch">
@@ -447,9 +465,16 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <div class="data-pill-actions" style="margin-top: 15px; display: flex; gap: 10px;">
-                            <button class="btn-outline" onclick="editModuleData('${key}')"><i data-lucide="edit" size="14"></i> EDIT JSON</button>
-                            <button class="btn-outline" style="color:var(--danger);" onclick="deleteModule('${key}')"><i data-lucide="trash" size="14"></i></button>
+                        <div class="date-editor-box">
+                            <span style="font-size:10px; font-weight:800; color:var(--text-dim);">SCHEDULE DATE</span>
+                            <div style="display:flex; gap:8px;">
+                                <input type="date" value="${activeDate}" onchange="updateModuleDate('${key}', this.value)" style="padding:8px; font-size:12px; border-radius:10px; flex:1;">
+                                <button class="btn-outline" onclick="updateModuleDate('${key}', '${today}')" style="padding:0 12px;">TODAY</button>
+                            </div>
+                        </div>
+                        <div class="data-pill-actions" style="margin-top: 15px; display:flex; gap:8px;">
+                            <button class="btn-outline" onclick="editModuleData('${key}')"><i data-lucide="edit"></i> EDIT JSON</button>
+                            <button class="btn-outline" style="color:var(--danger);" onclick="deleteModule('${key}')"><i data-lucide="trash"></i></button>
                         </div>
                     `;
                     container.appendChild(pill);
@@ -458,18 +483,159 @@
             });
         }
 
+        // --- NEW: VISHAL'S REGISTRY LOADER AND FUNCTIONS ---
+        function loadVishalRegistry() {
+            db.ref('nested_subjects').on('value', snap => {
+                const container = document.getElementById('vishal-module-list');
+                container.innerHTML = "";
+                const today = getTodayStr();
+
+                if (!snap.exists()) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">No nested modules deployed yet.</div>';
+                    return;
+                }
+
+                snap.forEach(folderSnap => {
+                    const folderKey = folderSnap.key;
+                    
+                    folderSnap.forEach(subSnap => {
+                        const subKey = subSnap.key;
+                        const data = subSnap.val();
+                        const config = data.config || {};
+                        const activeDate = config.activeDate || "";
+                        const qCount = (data.questions?.data || data.questions || []).length;
+                        const timeLimit = config.timeLimit || 600; 
+                        
+                        let statusBadge = '';
+                        if (!activeDate) {
+                            statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual</span>';
+                        } else if (activeDate < today) {
+                            statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED</span>';
+                        } else if (activeDate === today) {
+                            statusBadge = '<span class="badge live"><i data-lucide="check-circle"></i> LIVE TODAY</span>';
+                        } else {
+                            statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> ${activeDate}</span>`;
+                        }
+
+                        const pill = document.createElement('div');
+                        pill.className = "data-pill";
+                        pill.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                        pill.innerHTML = `
+                            <div class="data-pill-header">
+                                <div>
+                                    <div style="font-size:10px; color:var(--success); font-weight:800; text-transform:uppercase; margin-bottom:2px;">📁 ${config.folderName || folderKey}</div>
+                                    <div style="font-size:15px; font-weight:900;">↳ ${config.displayName || subKey}</div>
+                                    <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${folderKey}/${subKey}</div>
+                                    
+                                    <div style="display:flex; gap: 8px; font-size: 10px; font-weight: 800; color: var(--success); margin-bottom: 6px;">
+                                        <span style="background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
+                                        <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
+                                    </div>
+                                    
+                                    ${statusBadge}
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" ${data.enabled ? 'checked' : ''} onchange="toggleVishalModule('${folderKey}', '${subKey}', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="date-editor-box" style="border-color: rgba(16, 185, 129, 0.3); background: #f8fafc;">
+                                <span style="font-size:10px; font-weight:800; color:var(--success);">SCHEDULE DATE</span>
+                                <div style="display:flex; gap:8px;">
+                                    <input type="date" value="${activeDate}" onchange="updateVishalModuleDate('${folderKey}', '${subKey}', this.value)" style="padding:8px; font-size:12px; border-radius:10px; flex:1;">
+                                    <button class="btn-outline" onclick="updateVishalModuleDate('${folderKey}', '${subKey}', '${today}')" style="padding:0 12px; color:var(--success); border-color:var(--success);">TODAY</button>
+                                </div>
+                            </div>
+                            <div class="data-pill-actions" style="margin-top: 15px; display:flex; gap:8px;">
+                                <button class="btn-outline" onclick="editVishalModuleData('${folderKey}', '${subKey}')"><i data-lucide="edit"></i> EDIT JSON</button>
+                                <button class="btn-outline" style="color:var(--danger);" onclick="deleteVishalModule('${folderKey}', '${subKey}')"><i data-lucide="trash"></i></button>
+                            </div>
+                        `;
+                        container.appendChild(pill);
+                    });
+                });
+                lucide.createIcons();
+            });
+        }
+
+        function updateVishalModuleDate(folder, subtopic, newDate) {
+            const formattedDate = newDate.replace(/-/g, '');
+            const sessionID = `${folder}_${subtopic}_${formattedDate}`;
+
+            db.ref(`nested_subjects/${folder}/${subtopic}`).update({ 
+                current_session_id: sessionID,
+                enabled: true
+            });
+            
+            db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ 
+                activeDate: newDate
+            }).then(() => showToast("Nested Schedule updated!"));
+        }
+
+        function toggleVishalModule(folder, subtopic, state) {
+            if (state === true) {
+                const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
+                db.ref(`nested_subjects/${folder}/${subtopic}`).update({ 
+                    enabled: state,
+                    current_session_id: sessionID
+                });
+                db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ activeDate: getTodayStr() });
+            } else {
+                db.ref(`nested_subjects/${folder}/${subtopic}`).update({ enabled: state });
+            }
+        }
+
+        function editVishalModuleData(folder, subtopic) {
+            db.ref(`nested_subjects/${folder}/${subtopic}`).once('value', snap => {
+                const d = snap.val();
+                document.getElementById('v-folder').value = d.config?.folderName || folder;
+                document.getElementById('v-subtopic').value = d.config?.displayName || subtopic;
+                document.getElementById('v-time').value = d.config?.timeLimit || 600; 
+                document.getElementById('v-json').value = JSON.stringify(d.questions, null, 2);
+                document.getElementById('vishal-card').scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        function deleteVishalModule(folder, subtopic) {
+            showAppModal("DELETE NESTED", `Remove ${folder} -> ${subtopic} forever?`, () => {
+                db.ref(`nested_subjects/${folder}/${subtopic}`).remove();
+                closeModal();
+            });
+        }
+        // --- END VISHAL'S REGISTRY FUNCTIONS ---
+
         function updateModuleDate(key, newDate) {
-            const sessionID = `${key}_${newDate.replace(/-/g, '')}`;
-            db.ref(`subjects/${key}`).update({ current_session_id: sessionID, enabled: true });
-            db.ref(`subjects/${key}/config`).update({ activeDate: newDate }).then(() => showToast("Schedule updated!"));
+            const formattedDate = newDate.replace(/-/g, '');
+            const sessionID = `${key}_${formattedDate}`;
+
+            db.ref(`subjects/${key}`).update({ 
+                current_session_id: sessionID,
+                enabled: true
+            });
+            
+            db.ref(`subjects/${key}/config`).update({ 
+                activeDate: newDate
+            }).then(() => {
+                showToast("Schedule & Session ID updated!");
+            });
         }
 
         function toggleModule(key, state) {
-            if (state) {
+            if (state === true) {
                 const d = new Date();
-                const sessionID = `${key}_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-                db.ref(`subjects/${key}`).update({ enabled: state, current_session_id: sessionID });
-                db.ref(`subjects/${key}/config`).update({ activeDate: getTodayStr() });
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const sessionID = `${key}_${year}${month}${day}`;
+
+                db.ref(`subjects/${key}`).update({ 
+                    enabled: state,
+                    current_session_id: sessionID
+                });
+                
+                db.ref(`subjects/${key}/config`).update({ 
+                    activeDate: getTodayStr() 
+                });
             } else {
                 db.ref(`subjects/${key}`).update({ enabled: state });
             }
@@ -482,15 +648,28 @@
             const timeLimit = parseInt(document.getElementById('time-limit').value) || 600;
 
             if(!key || !json) return showToast("Enter ID and JSON", "error");
+
             const d = new Date();
-            const sessionID = `${key}_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const sessionID = `${key}_${year}${month}${day}`;
 
             try {
+                const qs = JSON.parse(json);
                 db.ref(`subjects/${key}`).set({
-                    questions: JSON.parse(json), enabled: true, current_session_id: sessionID, 
-                    config: { displayName: name || key, timeLimit: timeLimit, activeDate: getTodayStr() } 
+                    questions: qs,
+                    enabled: true,
+                    current_session_id: sessionID, 
+                    config: { 
+                        displayName: name || key, 
+                        timeLimit: timeLimit, 
+                        activeDate: getTodayStr()
+                    } 
                 }).then(() => {
-                    showToast("Module Deployed!"); document.getElementById('sub-key').value = ""; document.getElementById('json-input').value = "";
+                    showToast("Module Deployed!");
+                    document.getElementById('sub-key').value = "";
+                    document.getElementById('json-input').value = "";
                 });
             } catch(e) { showToast("JSON Syntax Error", "error"); }
         }
@@ -507,152 +686,12 @@
         }
 
         function deleteModule(key) {
-            showAppModal("DELETE", `Remove ${key} forever?`, () => { db.ref(`subjects/${key}`).remove(); closeModal(); });
-        }
-
-
-        /* ----------------------------------------------------
-           VISHAL NESTED STUDIO LOGIC (FOLDERS & SUBTOPICS)
-           ---------------------------------------------------- */
-           
-        function pushVishalData() {
-            const folderInput = document.getElementById('v-folder').value.trim();
-            const subtopicInput = document.getElementById('v-subtopic').value.trim();
-            const qCountInput = document.getElementById('v-qcount').value.trim();
-            const minsInput = document.getElementById('v-time-mins').value.trim();
-            const jsonStr = document.getElementById('v-json').value;
-
-            const folder = folderInput.toLowerCase().replace(/\s+/g, '_');
-            const subtopic = subtopicInput.toLowerCase().replace(/\s+/g, '_');
-
-            if(!folder || !subtopic || !jsonStr) return customAlert("Validation Error", "Please provide a Folder, Subtopic, and JSON!");
-
-            try {
-                const qs = JSON.parse(jsonStr);
-                const finalCount = qCountInput || qs.length; 
-                const timeInSeconds = (parseInt(minsInput) || 10) * 60; // Converts minutes to seconds for DB
-                
-                customAlert("Processing...", `Deploying into:\n📁 ${folderInput}\n ↳ 📄 ${subtopicInput}`);
-                const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
-                
-                setTimeout(() => {
-                    db.ref(`nested_subjects/${folder}/${subtopic}`).set({
-                        questions: qs,
-                        enabled: true,
-                        current_session_id: sessionID,
-                        config: { 
-                            displayName: subtopicInput, 
-                            folderName: folderInput,
-                            timeLimit: timeInSeconds, 
-                            questionCount: finalCount,
-                            activeDate: getTodayStr()
-                        } 
-                    }).then(() => {
-                        customAlert("Success!", `Deployed into:\n${folderInput} -> ${subtopicInput}`);
-                        document.getElementById('v-subtopic').value = "";
-                        document.getElementById('v-json').value = "";
-                    }).catch(err => { customAlert("Database Error", err.message); });
-                }, 1000);
-
-            } catch(e) { customAlert("JSON Error", "Syntax error found in your JSON Array."); }
-        }
-
-        // LOAD VISHAL REGISTRY
-        function loadVishalRegistry() {
-            db.ref('nested_subjects').on('value', snap => {
-                const container = document.getElementById('v-module-list');
-                container.innerHTML = "";
-                
-                if(!snap.exists()) {
-                    container.innerHTML = "<div style='text-align:center; padding:20px; font-size:12px; color:var(--text-dim);'>No nested folders found.</div>";
-                    return;
-                }
-
-                snap.forEach(folder => {
-                    const folderKey = folder.key;
-                    
-                    // Folder Title
-                    const folderTitle = document.createElement('div');
-                    folderTitle.innerHTML = `<h4 style="margin: 15px 0 10px; color: var(--text-main); font-size: 14px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;"><i data-lucide="folder" size="18" style="color: var(--success);"></i> ${folderKey}</h4>`;
-                    container.appendChild(folderTitle);
-
-                    folder.forEach(subtopic => {
-                        const subtopicKey = subtopic.key;
-                        const data = subtopic.val();
-                        const config = data.config || {};
-                        
-                        const displayName = config.displayName || subtopicKey.toUpperCase();
-                        const timeLimit = config.timeLimit || 600;
-                        const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
-                        
-                        const pill = document.createElement('div');
-                        pill.className = "data-pill";
-                        pill.style.borderLeft = "4px solid var(--success)";
-                        
-                        pill.innerHTML = `
-                            <div class="data-pill-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                <div>
-                                    <div style="font-size:15px; font-weight:900;">${displayName}</div>
-                                    <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${subtopicKey}</div>
-                                    <div style="display:flex; gap: 8px; font-size: 10px; font-weight: 800; color: var(--success); margin-bottom: 6px;">
-                                        <span style="background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
-                                        <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
-                                    </div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" ${data.enabled ? 'checked' : ''} onchange="toggleVishalModule('${folderKey}', '${subtopicKey}', this.checked)">
-                                    <span class="slider" style="background-color: var(--border);"></span>
-                                </label>
-                            </div>
-                            <div class="data-pill-actions" style="margin-top: 15px; display: flex; gap: 10px;">
-                                <button class="btn-outline" onclick="editVishalData('${folderKey}', '${subtopicKey}')"><i data-lucide="edit" size="14"></i> EDIT JSON</button>
-                                <button class="btn-outline" style="color:var(--danger);" onclick="deleteVishalData('${folderKey}', '${subtopicKey}')"><i data-lucide="trash" size="14"></i></button>
-                            </div>
-                        `;
-                        container.appendChild(pill);
-                    });
-                });
-                lucide.createIcons();
+            showAppModal("DELETE", `Remove ${key} forever?`, () => {
+                db.ref(`subjects/${key}`).remove();
+                closeModal();
             });
         }
 
-        // TOGGLE VISHAL MODULE
-        function toggleVishalModule(folder, subtopic, state) {
-            db.ref(`nested_subjects/${folder}/${subtopic}`).update({ enabled: state });
-            if (state) {
-                db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ activeDate: getTodayStr() });
-            }
-        }
-
-        // EDIT VISHAL MODULE
-        function editVishalData(folder, subtopic) {
-            db.ref(`nested_subjects/${folder}/${subtopic}`).once('value', snap => {
-                const d = snap.val();
-                document.getElementById('v-folder').value = d.config?.folderName || folder;
-                document.getElementById('v-subtopic').value = d.config?.displayName || subtopic;
-                document.getElementById('v-qcount').value = d.config?.questionCount || (d.questions ? d.questions.length : '');
-                
-                // Convert seconds back to minutes for the editor
-                document.getElementById('v-time-mins').value = d.config?.timeLimit ? Math.floor(d.config.timeLimit / 60) : 10;
-                document.getElementById('v-json').value = JSON.stringify(d.questions, null, 2);
-                
-                document.getElementById('vishal-card').scrollIntoView({ behavior: 'smooth' });
-            });
-        }
-
-        // DELETE VISHAL MODULE
-        function deleteVishalData(folder, subtopic) {
-            showAppModal("DELETE", `Remove ${subtopic} from ${folder}?`, () => {
-                db.ref(`nested_subjects/${folder}/${subtopic}`).remove().then(() => {
-                    closeModal();
-                    showToast("Module Deleted");
-                });
-            });
-        }
-
-        /* ----------------------------------------------------
-           UTILITIES (MODALS, TOASTS, LEADERBOARD)
-           ---------------------------------------------------- */
         function loadLB() {
             db.ref('leaderboard').on('value', snap => {
                 const list = document.getElementById('lb-admin-list');
@@ -672,29 +711,90 @@
         }
 
         function wipeLeaderboard() {
-            showAppModal("WIPE", "Clear ALL rankings?", () => { db.ref('leaderboard').remove(); closeModal(); });
+            showAppModal("WIPE", "Clear ALL rankings?", () => {
+                db.ref('leaderboard').remove();
+                closeModal();
+            });
         }
 
         function showAppModal(title, text, onConfirm) {
             document.getElementById('m-title').innerText = title;
             document.getElementById('m-text').innerText = text;
+            
+            // Show cancel button for standard app modal
             document.getElementById('m-cancel').style.display = 'block';
             document.getElementById('m-confirm').innerText = "CONFIRM";
+            
             document.getElementById('modal-overlay').style.display = 'flex';
             document.getElementById('m-confirm').onclick = onConfirm;
         }
         
+        // --- NEW: Custom Alert Function ---
         function customAlert(title, text) {
             document.getElementById('m-title').innerText = title;
             document.getElementById('m-text').innerText = text;
+            
+            // Hide cancel button for simple alerts
             document.getElementById('m-cancel').style.display = 'none';
             document.getElementById('m-confirm').innerText = "OKAY";
+            
             document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('m-confirm').onclick = () => { closeModal(); };
+            document.getElementById('m-confirm').onclick = () => {
+                closeModal();
+            };
+        }
+
+        // --- NEW: Vishal's Nested Folder Push Logic ---
+        function pushVishalData() {
+            const folderInput = document.getElementById('v-folder').value.trim();
+            const subtopicInput = document.getElementById('v-subtopic').value.trim();
+            const jsonStr = document.getElementById('v-json').value;
+            const timeLimit = parseInt(document.getElementById('v-time').value) || 600;
+
+            const folder = folderInput.toLowerCase().replace(/\s+/g, '_');
+            const subtopic = subtopicInput.toLowerCase().replace(/\s+/g, '_');
+
+            if(!folder || !subtopic || !jsonStr) {
+                return customAlert("Validation Error", "Please provide a Folder Name, Subtopic, and JSON array!");
+            }
+
+            try {
+                const qs = JSON.parse(jsonStr);
+                
+                // Show custom alert indicating processing step
+                customAlert("Creating Folders...", `Initializing Database Path:\n\n📁 ${folderInput}\n ↳ 📄 ${subtopicInput}`);
+                
+                const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
+                const dbPath = `nested_subjects/${folder}/${subtopic}`; 
+                
+                // Slight delay to allow the user to read the alert before DB push completes
+                setTimeout(() => {
+                    db.ref(dbPath).set({
+                        questions: qs,
+                        enabled: true,
+                        current_session_id: sessionID,
+                        config: { 
+                            displayName: subtopicInput, 
+                            folderName: folderInput,
+                            timeLimit: timeLimit, 
+                            activeDate: getTodayStr()
+                        } 
+                    }).then(() => {
+                        customAlert("Success!", `Array successfully deployed into:\n${folderInput} -> ${subtopicInput}`);
+                        document.getElementById('v-subtopic').value = "";
+                        document.getElementById('v-json').value = "";
+                    }).catch(err => {
+                        customAlert("Database Error", err.message);
+                    });
+                }, 1500);
+
+            } catch(e) { 
+                customAlert("JSON Error", "Syntax error found in your JSON Array. Please check formatting.");
+            }
         }
 
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-        
+
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.style.display = 'block';
