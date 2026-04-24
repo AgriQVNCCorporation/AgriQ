@@ -64,12 +64,12 @@
         .input-group { margin-bottom: 15px; position: relative; }
         .input-label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; padding-left: 5px; padding-right: 5px;}
         
-        input, textarea { 
+        input, textarea, select { 
             width: 100%; background: #f8fafc; border: 1.5px solid var(--border); 
             border-radius: 18px; padding: 16px; color: var(--text-main); 
             outline: none; font-size: 14px; font-weight: 600; transition: var(--transition);
         }
-        input:focus, textarea:focus { border-color: var(--primary); background: #fff; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); background: #fff; }
 
         .btn-primary { 
             width: 100%; padding: 18px; border-radius: 20px; border: none; 
@@ -267,11 +267,26 @@
                 <div class="title-wrap" style="color: var(--success);"><i data-lucide="folder-tree" size="18" style="color: var(--success);"></i> Vishal's Nested Studio</div>
             </div>
             
-            <p style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px;">Create dynamic folder structures and push arrays (e.g., Agronomy -> Weed).</p>
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px;">Create dynamic folder structures, select an icon, and push arrays (e.g., Agronomy -> Weed).</p>
 
             <div class="input-group">
                 <span class="input-label">Folder Name (e.g., Agronomy)</span>
                 <input type="text" id="v-folder" placeholder="Main Folder Name">
+            </div>
+
+            <div class="input-group">
+                <span class="input-label">Folder Icon</span>
+                <select id="v-icon" style="width: 100%; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 18px; padding: 16px; color: var(--text-main); outline: none; font-size: 14px; font-weight: 600; appearance: none; cursor: pointer;">
+                    <option value="folder-tree">📂 Default Folder (folder-tree)</option>
+                    <option value="sprout">🌱 Sprout (Agronomy/Botany)</option>
+                    <option value="leaf">🍃 Leaf (Plant Science)</option>
+                    <option value="flask-conical">⚗️ Flask (Pathology/Soil)</option>
+                    <option value="bug">🐛 Bug (Entomology)</option>
+                    <option value="tractor">🚜 Tractor (Engineering)</option>
+                    <option value="book-open">📖 Book (General Study)</option>
+                    <option value="microscope">🔬 Microscope (Genetics)</option>
+                    <option value="sun">☀️ Sun (Meteorology)</option>
+                </select>
             </div>
 
             <div class="input-group">
@@ -343,7 +358,7 @@
         function initAdmin() {
             lucide.createIcons();
             loadRegistry();
-            loadVishalRegistry(); // NEW INITIALIZATION
+            loadVishalRegistry();
             loadLB();
             loadUpdates(); 
         }
@@ -483,7 +498,7 @@
             });
         }
 
-        // --- NEW: VISHAL'S REGISTRY LOADER AND FUNCTIONS ---
+        // --- UPDATED: VISHAL'S REGISTRY LOADER ---
         function loadVishalRegistry() {
             db.ref('nested_subjects').on('value', snap => {
                 const container = document.getElementById('vishal-module-list');
@@ -503,6 +518,7 @@
                         const data = subSnap.val();
                         const config = data.config || {};
                         const activeDate = config.activeDate || "";
+                        const folderIcon = config.icon || "folder-tree";
                         const qCount = (data.questions?.data || data.questions || []).length;
                         const timeLimit = config.timeLimit || 600; 
                         
@@ -523,7 +539,9 @@
                         pill.innerHTML = `
                             <div class="data-pill-header">
                                 <div>
-                                    <div style="font-size:10px; color:var(--success); font-weight:800; text-transform:uppercase; margin-bottom:2px;">📁 ${config.folderName || folderKey}</div>
+                                    <div style="font-size:11px; color:var(--success); font-weight:800; text-transform:uppercase; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                                        <i data-lucide="${folderIcon}" size="14"></i> ${config.folderName || folderKey}
+                                    </div>
                                     <div style="font-size:15px; font-weight:900;">↳ ${config.displayName || subKey}</div>
                                     <div style="font-size:10px; color:var(--text-dim); font-family:monospace; margin-bottom: 4px;">ID: ${folderKey}/${subKey}</div>
                                     
@@ -585,10 +603,12 @@
             }
         }
 
+        // --- UPDATED: EDIT VISHAL DATA ---
         function editVishalModuleData(folder, subtopic) {
             db.ref(`nested_subjects/${folder}/${subtopic}`).once('value', snap => {
                 const d = snap.val();
                 document.getElementById('v-folder').value = d.config?.folderName || folder;
+                document.getElementById('v-icon').value = d.config?.icon || 'folder-tree';
                 document.getElementById('v-subtopic').value = d.config?.displayName || subtopic;
                 document.getElementById('v-time').value = d.config?.timeLimit || 600; 
                 document.getElementById('v-json').value = JSON.stringify(d.questions, null, 2);
@@ -602,7 +622,6 @@
                 closeModal();
             });
         }
-        // --- END VISHAL'S REGISTRY FUNCTIONS ---
 
         function updateModuleDate(key, newDate) {
             const formattedDate = newDate.replace(/-/g, '');
@@ -721,7 +740,6 @@
             document.getElementById('m-title').innerText = title;
             document.getElementById('m-text').innerText = text;
             
-            // Show cancel button for standard app modal
             document.getElementById('m-cancel').style.display = 'block';
             document.getElementById('m-confirm').innerText = "CONFIRM";
             
@@ -729,12 +747,10 @@
             document.getElementById('m-confirm').onclick = onConfirm;
         }
         
-        // --- NEW: Custom Alert Function ---
         function customAlert(title, text) {
             document.getElementById('m-title').innerText = title;
             document.getElementById('m-text').innerText = text;
             
-            // Hide cancel button for simple alerts
             document.getElementById('m-cancel').style.display = 'none';
             document.getElementById('m-confirm').innerText = "OKAY";
             
@@ -744,9 +760,10 @@
             };
         }
 
-        // --- NEW: Vishal's Nested Folder Push Logic ---
+        // --- UPDATED: PUSH VISHAL DATA ---
         function pushVishalData() {
             const folderInput = document.getElementById('v-folder').value.trim();
+            const iconInput = document.getElementById('v-icon').value;
             const subtopicInput = document.getElementById('v-subtopic').value.trim();
             const jsonStr = document.getElementById('v-json').value;
             const timeLimit = parseInt(document.getElementById('v-time').value) || 600;
@@ -761,13 +778,11 @@
             try {
                 const qs = JSON.parse(jsonStr);
                 
-                // Show custom alert indicating processing step
                 customAlert("Creating Folders...", `Initializing Database Path:\n\n📁 ${folderInput}\n ↳ 📄 ${subtopicInput}`);
                 
                 const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
                 const dbPath = `nested_subjects/${folder}/${subtopic}`; 
                 
-                // Slight delay to allow the user to read the alert before DB push completes
                 setTimeout(() => {
                     db.ref(dbPath).set({
                         questions: qs,
@@ -776,6 +791,7 @@
                         config: { 
                             displayName: subtopicInput, 
                             folderName: folderInput,
+                            icon: iconInput,
                             timeLimit: timeLimit, 
                             activeDate: getTodayStr()
                         } 
