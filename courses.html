@@ -22,7 +22,8 @@
             --primary: #0084ff; --bg: #f0f9ff; --surface: #ffffff;
             --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
             --daily-color: #10b981; --coak-color: #8b5cf6; --warning: #f59e0b;
-            --folder-color: #f43f5e; /* New color for fetched folders */
+            --folder-color: #f43f5e; 
+            --monk-color: #ef4444; /* Fiery color for Monk Mode */
             --transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
@@ -131,6 +132,10 @@
         .card-practice .icon-box { background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); color: white; }
         .card-practice .badge { background: rgba(0, 132, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 132, 255, 0.2); }
 
+        /* Monk Mode Card Styling */
+        .card-monk .icon-box { background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; }
+        .card-monk .badge { background: rgba(239, 68, 68, 0.1); color: var(--monk-color); border: 1px solid rgba(239, 68, 68, 0.2); }
+
         /* Dynamic Folders (Nested Subjects) */
         .card-folder .icon-box { background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%); color: white; }
         .card-folder .badge { background: rgba(244, 63, 94, 0.1); color: var(--folder-color); border: 1px solid rgba(244, 63, 94, 0.2); }
@@ -224,6 +229,13 @@
         <div class="section-title"><i data-lucide="layers" size="20" color="var(--primary)"></i> Study Modules & Subjects</div>
 
         <div class="course-grid" id="grid-container">
+            <div class="course-card card-monk" onclick="startMonkMode()" data-title="MCAER Monk Mode">
+                <i data-lucide="flame" size="100" class="bg-symbol"></i>
+                <div class="icon-box"><i data-lucide="flame" size="26"></i></div>
+                <div class="course-title">MCAER Unlimited Monk </div>
+                <div class="badge"><i data-lucide="infinity" size="10"></i> 200 Mix Qs</div>
+            </div>
+
             <div class="course-card card-daily" onclick="window.location.href='daily.html'" data-title="Daily Test Unlock">
                 <i data-lucide="zap" size="100" class="bg-symbol"></i>
                 <div class="icon-box"><i data-lucide="zap" size="26"></i></div>
@@ -311,16 +323,27 @@
                 renderGrid();
             });
 
-            // Listen for Nested Subject Folders (Created from Admin Panel)
+            // Listen for Nested Subject Folders & Icons
             db.ref('nested_subjects').on('value', snap => {
                 allNestedFolders = [];
                 if (snap.exists()) {
                     snap.forEach(folderSnap => {
                         const folderKey = folderSnap.key;
                         const subtopicCount = folderSnap.numChildren();
+                        
+                        // Extract icon from the first subtopic's config
+                        let folderIcon = 'folder-tree'; // Default Fallback
+                        folderSnap.forEach(subSnap => {
+                            const data = subSnap.val();
+                            if (data.config && data.config.icon) {
+                                folderIcon = data.config.icon;
+                            }
+                        });
+
                         allNestedFolders.push({
                             key: folderKey,
-                            count: subtopicCount
+                            count: subtopicCount,
+                            icon: folderIcon
                         });
                     });
                 }
@@ -342,12 +365,13 @@
                 card.setAttribute('data-title', folder.key);
                 card.id = `folder-${folder.key}`;
 
-                // Redirect to a sub-view page (e.g., folder_view.html) passing the folder name
+                // Redirect to a sub-view page passing the folder name
                 card.onclick = () => { window.location.href = `folder_view.html?folder=${folder.key}`; };
                 
+                // Uses dynamically fetched folder.icon
                 card.innerHTML = `
-                    <i data-lucide="folder-tree" size="100" class="bg-symbol"></i>
-                    <div class="icon-box"><i data-lucide="folder" size="26"></i></div>
+                    <i data-lucide="${folder.icon}" size="100" class="bg-symbol"></i>
+                    <div class="icon-box"><i data-lucide="${folder.icon}" size="26"></i></div>
                     <div class="course-title">${displayName}</div>
                     <div class="badge"><i data-lucide="layers" size="10"></i> ${folder.count} Topics</div>
                 `;
@@ -389,6 +413,56 @@
             });
 
             lucide.createIcons();
+        }
+
+        // --- NEW: MONK MODE LOGIC ---
+        function startMonkMode() {
+            showToast("Igniting Monk Mode... Gathering questions!");
+            
+            db.ref('nested_subjects').once('value').then(snap => {
+                let allQuestions = [];
+                
+                if (snap.exists()) {
+                    snap.forEach(folderSnap => {
+                        folderSnap.forEach(subSnap => {
+                            const data = subSnap.val();
+                            if (data.questions) {
+                                // Support both direct array and nested {data: []} format
+                                const qs = Array.isArray(data.questions) ? data.questions : (data.questions.data || []);
+                                allQuestions = allQuestions.concat(qs);
+                            }
+                        });
+                    });
+                }
+                
+                if (allQuestions.length === 0) {
+                    showToast("No questions found across your folders!");
+                    return;
+                }
+                
+                // Shuffle Array (Fisher-Yates)
+                for (let i = allQuestions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+                }
+                
+                // Slice the first 200 questions
+                const monkQuestions = allQuestions.slice(0, 200);
+                
+                // Save them to localStorage so the test page can grab them
+                localStorage.setItem('monkModeQuestions', JSON.stringify(monkQuestions));
+                
+                showToast(`Monk Mode Ready! Loaded ${monkQuestions.length} Questions.`);
+                
+                // Redirect to test page with a special mod flag
+                setTimeout(() => {
+                    window.location.href = 'unlimitedtest.html?mod=monk';
+                }, 1000);
+                
+            }).catch(err => {
+                console.error("Monk Mode Error:", err);
+                showToast("Failed to initialize Monk Mode.");
+            });
         }
 
         function openCheckout(moduleKey, moduleTitle, modulePrice) {
