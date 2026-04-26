@@ -365,15 +365,26 @@
                 card.setAttribute('data-title', folder.key);
                 card.id = `folder-${folder.key}`;
 
+                // --- Generate Random Color (Hue) ---
+                const h = Math.floor(Math.random() * 360);
+                const iconBg = `linear-gradient(135deg, hsl(${h}, 85%, 60%) 0%, hsl(${h}, 85%, 70%) 100%)`;
+                const badgeBg = `hsla(${h}, 85%, 60%, 0.1)`;
+                const badgeText = `hsl(${h}, 85%, 45%)`;
+                const badgeBorder = `1px solid hsla(${h}, 85%, 60%, 0.2)`;
+
                 // Redirect to a sub-view page passing the folder name
                 card.onclick = () => { window.location.href = `folder_view.html?folder=${folder.key}`; };
                 
-                // Uses dynamically fetched folder.icon
+                // Inject the dynamic styles inline to override the CSS
                 card.innerHTML = `
                     <i data-lucide="${folder.icon}" size="100" class="bg-symbol"></i>
-                    <div class="icon-box"><i data-lucide="${folder.icon}" size="26"></i></div>
+                    <div class="icon-box" style="background: ${iconBg}; color: white;">
+                        <i data-lucide="${folder.icon}" size="26"></i>
+                    </div>
                     <div class="course-title">${displayName}</div>
-                    <div class="badge"><i data-lucide="layers" size="10"></i> ${folder.count} Topics</div>
+                    <div class="badge" style="background: ${badgeBg}; color: ${badgeText}; border: ${badgeBorder};">
+                        <i data-lucide="layers" size="10"></i> ${folder.count} Topics
+                    </div>
                 `;
                 
                 grid.appendChild(card);
