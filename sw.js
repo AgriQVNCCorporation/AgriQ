@@ -1,4 +1,3 @@
-
 // CHANGE THIS VERSION NUMBER TO FORCE AN UPDATE
 const CACHE_NAME = 'agriq-pro-v6.0'; 
 
