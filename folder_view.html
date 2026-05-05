@@ -119,12 +119,19 @@
         }
         .stat-badge.blue { background: var(--primary-glow); color: var(--primary); border-color: transparent; }
         
+        /* Score Badge Styling */
+        .stat-badge.score-badge { background: rgba(16, 185, 129, 0.1); color: var(--daily-color); border-color: transparent; }
+
         .play-btn {
             width: 44px; height: 44px; border-radius: 14px; background: #f8fafc;
             display: flex; align-items: center; justify-content: center; color: var(--primary);
-            border: 1px solid var(--border); transition: var(--transition);
+            border: 1px solid var(--border); transition: var(--transition); flex-shrink: 0;
         }
         .module-card:hover .play-btn { background: var(--primary); color: white; transform: scale(1.05); border-color: transparent;}
+        
+        /* Retake Button Styling */
+        .play-btn.retake-btn { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: transparent; }
+        .module-card:hover .play-btn.retake-btn { background: var(--warning); color: white; }
 
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
         .empty-state i { opacity: 0.5; margin-bottom: 10px; }
@@ -165,7 +172,7 @@
         </div>
 
         <div class="module-list" id="modules-container">
-            </div>
+        </div>
     </main>
 
     <script>
@@ -181,6 +188,7 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const folderKey = urlParams.get('folder');
+        let currentUserUid = null;
 
         window.addEventListener('load', () => {
             if(!folderKey) {
@@ -192,71 +200,94 @@
 
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    fetchFolderData();
+                    currentUserUid = user.uid;
+                    fetchDataWithScores();
                 } else {
                     window.location.href = 'login.html';
                 }
             });
         });
 
-        function fetchFolderData() {
-            db.ref(`nested_subjects/${folderKey}`).on('value', snap => {
-                const container = document.getElementById('modules-container');
-                container.innerHTML = "";
+        function fetchDataWithScores() {
+            // Check the 'results' node, matching the save location in test.html
+            db.ref(`students/${currentUserUid}/results`).on('value', scoreSnap => {
+                const userScores = scoreSnap.val() || {};
                 
-                if (!snap.exists()) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i data-lucide="inbox" size="40"></i>
-                            <p>No study modules found in this folder yet.</p>
-                        </div>
-                    `;
-                    document.getElementById('total-count').innerText = "0 Modules";
+                console.log("Your Saved Scores in DB:", userScores); 
+                
+                db.ref(`nested_subjects/${folderKey}`).on('value', snap => {
+                    const container = document.getElementById('modules-container');
+                    container.innerHTML = "";
+                    
+                    if (!snap.exists()) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i data-lucide="inbox" size="40"></i>
+                                <p>No study modules found in this folder yet.</p>
+                            </div>
+                        `;
+                        document.getElementById('total-count').innerText = "0 Modules";
+                        lucide.createIcons();
+                        hideLoader();
+                        return;
+                    }
+
+                    let count = 0;
+                    snap.forEach(child => {
+                        count++;
+                        const subtopicKey = child.key;
+                        const data = child.val();
+                        const config = data.config || {};
+                        
+                        const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
+                        const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
+                        const timeSec = config.timeLimit || 600;
+                        const timeMin = Math.floor(timeSec / 60);
+
+                        // Account for the custom session_id override from test.html
+                        const targetSessionId = data.current_session_id ? data.current_session_id : `${folderKey}_${subtopicKey}`;
+                        
+                        // Check all possible names just to be safe
+                        const pastAttempt = userScores[targetSessionId] || userScores[subtopicKey] || userScores[`${folderKey}_${subtopicKey}`];
+                        const hasAttempted = pastAttempt !== undefined && pastAttempt !== null; 
+                        
+                        let scoreText = "";
+                        if (hasAttempted) {
+                            scoreText = `${pastAttempt.score}/${qCount}`;
+                        }
+
+                        console.log(`Checking Module: ${subtopicKey} | Target ID: ${targetSessionId} | Match Found: ${hasAttempted}`);
+
+                        const card = document.createElement('div');
+                        card.className = "module-card";
+                        
+                        card.onclick = () => {
+                            const isRandom = document.getElementById('randomToggle').checked;
+                            const retakeQuery = hasAttempted ? '&retake=true' : '';
+                            window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&random=${isRandom}${retakeQuery}`;
+                        };
+
+                        card.innerHTML = `
+                            <div class="mod-info">
+                                <div class="mod-title">${displayName}</div>
+                                <div class="mod-stats">
+                                    <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
+                                    <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
+                                    ${hasAttempted ? `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="play-btn ${hasAttempted ? 'retake-btn' : ''}">
+                                <i data-lucide="${hasAttempted ? 'rotate-ccw' : 'play'}" size="20" fill="${hasAttempted ? 'none' : 'currentColor'}"></i>
+                            </div>
+                        `;
+                        
+                        container.appendChild(card);
+                    });
+
+                    document.getElementById('total-count').innerText = `${count} Modules`;
                     lucide.createIcons();
                     hideLoader();
-                    return;
-                }
-
-                let count = 0;
-                snap.forEach(child => {
-                    count++;
-                    const subtopicKey = child.key;
-                    const data = child.val();
-                    const config = data.config || {};
-                    
-                    const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
-                    const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
-                    const timeSec = config.timeLimit || 600;
-                    const timeMin = Math.floor(timeSec / 60);
-
-                    const card = document.createElement('div');
-                    card.className = "module-card";
-                    
-                    // MODIFIED: Read the toggle state before routing
-                    card.onclick = () => {
-                        const isRandom = document.getElementById('randomToggle').checked;
-                        window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&random=${isRandom}`;
-                    };
-
-                    card.innerHTML = `
-                        <div class="mod-info">
-                            <div class="mod-title">${displayName}</div>
-                            <div class="mod-stats">
-                                <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
-                                <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
-                            </div>
-                        </div>
-                        <div class="play-btn">
-                            <i data-lucide="play" size="20" fill="currentColor"></i>
-                        </div>
-                    `;
-                    
-                    container.appendChild(card);
                 });
-
-                document.getElementById('total-count').innerText = `${count} Modules`;
-                lucide.createIcons();
-                hideLoader();
             });
         }
 
