@@ -60,8 +60,31 @@
 
         main { padding: 20px; max-width: 600px; margin: 0 auto; }
 
-        .section-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .section-header { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
         .section-header p { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-top: 5px; }
+
+        /* --- TOGGLE SWITCH UI --- */
+        .settings-bar {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+        .setting-info { display: flex; flex-direction: column; gap: 4px; }
+        .setting-title { font-size: 14px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px;}
+        .setting-desc { font-size: 11px; font-weight: 600; color: var(--text-dim); }
+        
+        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #cbd5e1; transition: .3s; border-radius: 26px; 
+        }
+        .slider:before { 
+            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; 
+            background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
         /* --- LIST CARD UI --- */
         .module-list { display: flex; flex-direction: column; gap: 16px; }
@@ -73,7 +96,6 @@
             position: relative; overflow: hidden; cursor: pointer; transition: var(--transition);
         }
         
-        /* The Blue Horizontal/Vertical Accent requested */
         .module-card::before {
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
             background: linear-gradient(to bottom, var(--primary), #00c6ff);
@@ -131,6 +153,17 @@
             </div>
         </div>
 
+        <div class="settings-bar">
+            <div class="setting-info">
+                <div class="setting-title"><i data-lucide="shuffle" size="14"></i> Randomize Mode</div>
+                <div class="setting-desc">Shuffle questions and answers in tests</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="randomToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
         <div class="module-list" id="modules-container">
             </div>
     </main>
@@ -146,7 +179,6 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        // Extract folder name from URL (e.g., ?folder=agronomy)
         const urlParams = new URLSearchParams(window.location.search);
         const folderKey = urlParams.get('folder');
 
@@ -156,7 +188,6 @@
                 return;
             }
             
-            // Format Title
             document.getElementById('page-title').innerHTML = folderKey.replace(/_/g, ' ').toUpperCase();
 
             auth.onAuthStateChanged(user => {
@@ -194,19 +225,17 @@
                     const config = data.config || {};
                     
                     const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
-                    
-                    // MODIFIED: Fetch questionCount from config first, fallback to array length, then 0.
                     const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
-                    
                     const timeSec = config.timeLimit || 600;
                     const timeMin = Math.floor(timeSec / 60);
 
                     const card = document.createElement('div');
                     card.className = "module-card";
                     
-                    // Route to test engine, passing both folder and subtopic
+                    // MODIFIED: Read the toggle state before routing
                     card.onclick = () => {
-                        window.location.href = `testv.html?folder=${folderKey}&mod=${subtopicKey}`;
+                        const isRandom = document.getElementById('randomToggle').checked;
+                        window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&random=${isRandom}`;
                     };
 
                     card.innerHTML = `
