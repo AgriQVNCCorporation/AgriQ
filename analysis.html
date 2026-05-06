@@ -76,17 +76,28 @@
         .stat-val { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; display: block; color: var(--primary); line-height: 1.1; }
         .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; display: block; }
 
-        /* Detailed Metrics Bar */
-        .metrics-container { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .progress-bar { display: flex; height: 12px; border-radius: 20px; overflow: hidden; background: var(--border); margin-bottom: 15px; }
-        .prog-correct { background: var(--success); transition: 1s ease-out; width: 0%; }
-        .prog-wrong { background: var(--danger); transition: 1s ease-out; width: 0%; }
-        .prog-skipped { background: var(--neutral); transition: 1s ease-out; width: 0%; }
+        /* Detailed Metrics - Circular Chart */
+        .metrics-container { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 25px 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; }
+        .chart-title { font-size: 14px; font-weight: 900; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
         
-        .metric-grid { display: flex; justify-content: space-between; text-align: center; }
+        .donut-chart { 
+            width: 150px; height: 150px; border-radius: 50%; 
+            background: #e2e8f0; /* Default */
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+        .donut-inner {
+            width: 110px; height: 110px; border-radius: 50%; background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .metric-grid { display: flex; justify-content: space-between; text-align: center; width: 100%; padding: 0 10px; }
         .metric-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .m-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .m-val { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 16px; color: var(--text-main); }
+        .m-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .m-val { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; color: var(--text-main); }
         .m-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
 
         /* Filter Pills */
@@ -108,7 +119,7 @@
         .status-badge { position: absolute; top: 18px; right: 18px; font-size: 9px; font-weight: 900; padding: 6px 12px; border-radius: 50px; display: flex; align-items: center; gap: 4px; }
         .pass { background: rgba(34, 197, 94, 0.1); color: var(--success); }
         .fail { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .skip { background: rgba(148, 163, 184, 0.1); color: var(--neutral); }
+        .skip { background: rgba(0, 132, 255, 0.1); color: var(--primary); }
 
         .q-title { font-weight: 700; font-size: 15px; line-height: 1.5; margin-bottom: 18px; padding-right: 80px; color: var(--text-main); }
         
@@ -161,14 +172,22 @@
                 <span class="stat-val" id="score-val" style="color: var(--text-main);">0<span style="font-size:18px; color:var(--text-dim)">/0</span></span>
                 <span class="stat-lbl">Final Score</span>
             </div>
+            <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
+                <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
+                <span class="stat-lbl">Projected MCAER Rank</span>
+                <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
+            </div>
         </div>
 
         <div class="metrics-container">
-            <div class="progress-bar">
-                <div class="prog-correct" id="bar-c"></div>
-                <div class="prog-wrong" id="bar-w"></div>
-                <div class="prog-skipped" id="bar-s"></div>
+            <div class="chart-title">Assessing Questions</div>
+            
+            <div class="donut-chart" id="result-chart">
+                <div class="donut-inner">
+                    <span id="chart-acc-text">0%</span>
+                </div>
             </div>
+
             <div class="metric-grid">
                 <div class="metric-item">
                     <div class="m-dot" style="background:var(--success)"></div>
@@ -181,7 +200,7 @@
                     <span class="m-lbl">Wrong</span>
                 </div>
                 <div class="metric-item">
-                    <div class="m-dot" style="background:var(--neutral)"></div>
+                    <div class="m-dot" style="background:var(--primary)"></div>
                     <span class="m-val" id="count-s">0</span>
                     <span class="m-lbl">Skipped</span>
                 </div>
@@ -242,16 +261,32 @@
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data) return window.location.href = 'dashboard.html';
 
+            // RE-CALCULATION FIX: Use rawScore to bypass any old 0-score retake logic that might have saved.
+            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+            
+            // Calculate accurate percentage based on raw score
+            const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
+
             // Base Stats
-            document.getElementById('acc-val').innerText = `${data.accuracy}%`;
-            document.getElementById('score-val').innerHTML = `${data.score}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
+            document.getElementById('acc-val').innerText = `${calculatedAccuracy}%`;
+            document.getElementById('score-val').innerHTML = `${displayScore}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
+            document.getElementById('chart-acc-text').innerText = `${calculatedAccuracy}%`;
 
             // Dynamic Feedback Message
             let msg = "Keep Practicing!";
-            if (data.accuracy >= 90) msg = "Elite Performance! 🏆";
-            else if (data.accuracy >= 75) msg = "Outstanding Work! 🚀";
-            else if (data.accuracy >= 50) msg = "Good Job! 👍";
+            if (calculatedAccuracy >= 90) msg = "Elite Performance! 🏆";
+            else if (calculatedAccuracy >= 75) msg = "Outstanding Work! 🚀";
+            else if (calculatedAccuracy >= 50) msg = "Good Job! 👍";
             document.getElementById('feedback-msg').innerText = msg;
+
+            // MCAER Rank Logic Calculator
+            let predictedRank = "1500+";
+            if (calculatedAccuracy >= 95) predictedRank = "1 - 50";
+            else if (calculatedAccuracy >= 88) predictedRank = "51 - 150";
+            else if (calculatedAccuracy >= 80) predictedRank = "151 - 400";
+            else if (calculatedAccuracy >= 70) predictedRank = "401 - 800";
+            else if (calculatedAccuracy >= 55) predictedRank = "801 - 1500";
+            document.getElementById('mcaer-rank').innerText = predictedRank;
 
             // Analyze Details
             let cCount = 0, wCount = 0, sCount = 0;
@@ -276,7 +311,7 @@
                     badgeClass = "skip";
                     badgeText = "SKIPPED";
                     badgeIcon = "minus";
-                    answerColor = "var(--neutral)";
+                    answerColor = "var(--primary)"; // Changed text color for skipped answer to blue
                     sCount++;
                 } else {
                     wCount++;
@@ -308,11 +343,15 @@
             document.getElementById('count-w').innerText = wCount;
             document.getElementById('count-s').innerText = sCount;
 
-            // Animate Progress Bar
+            // Render Circular Graph (Conic Gradient)
             setTimeout(() => {
-                document.getElementById('bar-c').style.width = `${(cCount / data.total) * 100}%`;
-                document.getElementById('bar-w').style.width = `${(wCount / data.total) * 100}%`;
-                document.getElementById('bar-s').style.width = `${(sCount / data.total) * 100}%`;
+                const totalQ = data.total || 1;
+                const cDeg = (cCount / totalQ) * 360;
+                const wDeg = cDeg + ((wCount / totalQ) * 360);
+                
+                // Colors: Green (Correct), Red (Wrong), Blue (Skipped)
+                const chartElement = document.getElementById('result-chart');
+                chartElement.style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
             }, 100);
             
             lucide.createIcons();
