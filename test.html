@@ -254,9 +254,7 @@
         });
 
         if (isRetake) {
-            const badge = document.getElementById('retake-badge');
-            badge.style.display = 'inline-block';
-            if (isHalfXP) badge.innerText = 'RETAKE (1/2 XP)';
+            document.getElementById('retake-badge').style.display = 'inline-block';
         }
 
         auth.onAuthStateChanged(user => {
@@ -484,10 +482,8 @@
 
         function submitTest() { 
             let msg = "Do you want to end this session?";
-            if (isHalfXP) {
-                msg += "<br><br><span style='color:var(--text-dim); font-size:12px;'>You will earn HALF XP for this retake.</span>";
-            } else if (isRetake) {
-                msg += "<br><br><span style='color:var(--text-dim); font-size:12px;'>You will earn 0 XP for this retake.</span>";
+            if (isRetake) {
+                msg += "<br><br><span style='color:var(--text-dim); font-size:12px;'>You will earn full XP for this retake.</span>";
             }
             showModal("SUBMIT", msg, "confirm", processFinalResults); 
         }
@@ -505,12 +501,8 @@
                 return { question: q.displayQ, user: userAns, actual: q.correct };
             });
 
+            // Award full normal marks regardless of retake status
             let earnedXP = correctCount;
-            if (isHalfXP) {
-                earnedXP = Math.floor(correctCount / 2);
-            } else if (isRetake) {
-                earnedXP = 0;
-            }
 
             const resultData = { 
                 uid: auth.currentUser.uid,
