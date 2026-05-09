@@ -134,6 +134,14 @@
         }
         .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
         .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
+        
+        .view-options-btn {
+            margin-top: 15px; display: inline-flex; align-items: center; gap: 6px;
+            font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none;
+            background: var(--primary-glow); padding: 8px 14px; border-radius: 10px;
+            transition: 0.2s; font-family: 'JetBrains Mono';
+        }
+        .view-options-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -334,6 +342,12 @@
                         <span class="data-label" style="color:var(--success);">CORRECT</span>
                         <span style="color:var(--success); font-weight:800;">${item.actual}</span>
                     </div>` : ''}
+                    
+                    <div style="text-align: right;">
+                        <a href="test.html?reviewIndex=${i}" class="view-options-btn">
+                            VIEW OPTIONS <i data-lucide="external-link" size="12"></i>
+                        </a>
+                    </div>
                 `;
                 container.appendChild(card);
             });
@@ -375,7 +389,7 @@
             });
         }
 
-        // --- NEW PDF GENERATION FUNCTION ---
+        // --- ENHANCED PDF GENERATION FUNCTION ---
         function downloadMissedQuestionsPDF() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data || !data.details) return;
@@ -404,35 +418,78 @@
             // Loop through missed questions and format them onto the PDF
             missedQuestions.forEach((item, index) => {
                 // Add new page if we are too close to the bottom
-                if (yPos > 260) {
+                if (yPos > 270) {
                     doc.addPage();
                     yPos = 20;
                 }
 
-                // Render Question
+                // Render Question Text
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0); // Black
                 const qText = `Q${index + 1}. ${item.question}`;
                 const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
                 doc.text(splitQuestion, margin, yPos);
-                yPos += (splitQuestion.length * 6) + 2;
+                yPos += (splitQuestion.length * 6) + 4;
 
-                // Render User's Answer
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(11);
-                if (item.user === "SKIPPED") {
-                    doc.setTextColor(100, 100, 100); // Gray for skipped
+                // Render Options if they were saved in localStorage
+                if (item.options && item.options.length > 0) {
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(11);
+                    
+                    item.options.forEach(opt => {
+                        // Check bounds inside the options loop
+                        if (yPos > 280) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
+                        
+                        let prefix = "- ";
+                        
+                        if (opt === item.actual) {
+                            doc.setTextColor(22, 163, 74); // Green for correct
+                            prefix = "[Correct] ";
+                        } else if (opt === item.user) {
+                            doc.setTextColor(220, 38, 38); // Red for wrongly chosen
+                            prefix = "[Your Answer] ";
+                        } else {
+                            doc.setTextColor(80, 80, 80); // Dark gray for neutral options
+                        }
+                        
+                        const optText = doc.splitTextToSize(`${prefix}${opt}`, maxLineWidth - 5);
+                        doc.text(optText, margin + 5, yPos);
+                        yPos += (optText.length * 6) + 2;
+                    });
+                    
+                    // Show "Skipped" message if skipped
+                    if (item.user === "SKIPPED") {
+                        if (yPos > 280) { doc.addPage(); yPos = 20; }
+                        doc.setFont("helvetica", "italic");
+                        doc.setFontSize(10);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text("Status: You skipped this question.", margin + 5, yPos);
+                        yPos += 8;
+                    }
+
                 } else {
-                    doc.setTextColor(220, 38, 38); // Red for wrong
-                }
-                doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
-                yPos += 6;
+                    // Fallback for older test results that didn't save options
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(11);
+                    if (item.user === "SKIPPED") {
+                        doc.setTextColor(100, 100, 100); // Gray for skipped
+                    } else {
+                        doc.setTextColor(220, 38, 38); // Red for wrong
+                    }
+                    doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
+                    yPos += 6;
 
-                // Render Correct Answer
-                doc.setTextColor(22, 163, 74); // Green for correct
-                doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
-                yPos += 12; // Extra padding before the next question
+                    // Render Correct Answer
+                    doc.setTextColor(22, 163, 74); // Green for correct
+                    doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
+                    yPos += 12; 
+                }
+                
+                yPos += 8; // Extra padding before the next question
             });
 
             // Trigger the download
