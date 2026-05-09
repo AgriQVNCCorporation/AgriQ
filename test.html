@@ -181,7 +181,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <div id="q-timer" class="timer-badge">00:00</div>
-            <button onclick="togglePause()" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:5px; display:flex;">
+            <button id="pause-btn" onclick="togglePause()" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:5px; display:flex;">
                 <i data-lucide="pause-circle" size="24"></i>
             </button>
         </div>
@@ -201,7 +201,7 @@
         <div id="opts-display"></div>
     </main>
 
-    <div class="controls">
+    <div class="controls" id="bottom-controls">
         <div class="btn-row">
             <button class="btn-sec" style="flex: 1;" onclick="changeQ(-1)"><i data-lucide="chevron-left" size="20"></i></button>
             
@@ -234,6 +234,8 @@
         const params = new URLSearchParams(window.location.search);
         const moduleKey = params.get('mod');
         const folderKey = params.get('folder'); 
+        const reviewIndexParam = params.get('reviewIndex');
+        const isReviewMode = reviewIndexParam !== null;
         
         // NEW: Grab the random parameter from the URL
         const isRandomMode = params.get('random') === 'true';
@@ -248,12 +250,12 @@
         let isPaused = false;
 
         document.addEventListener("visibilitychange", () => {
-            if (document.hidden && !isSubmitting && !isPaused) {
+            if (document.hidden && !isSubmitting && !isPaused && !isReviewMode) {
                 togglePause();
             }
         });
 
-        if (isRetake) {
+        if (isRetake && !isReviewMode) {
             document.getElementById('retake-badge').style.display = 'inline-block';
         }
 
@@ -262,13 +264,92 @@
             db.ref(`students/${user.uid}`).once('value', snap => {
                 const userData = snap.val();
                 if (userData) {
-                    document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
+                    if(!isReviewMode) document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
                     document.getElementById('user-initial').innerText = userData.name[0];
                 }
             });
-            loadQuestions();
+
+            if (isReviewMode) {
+                setupReviewMode(parseInt(reviewIndexParam));
+            } else {
+                loadQuestions();
+            }
         });
 
+        // ---------------- REVIEW MODE LOGIC ---------------- //
+        function setupReviewMode(index) {
+            document.getElementById('app-loader').classList.add('fade-out');
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            
+            if (!data || !data.details || !data.details[index]) {
+                return window.location.href = 'analysis.html';
+            }
+
+            const qData = data.details[index];
+            const opts = qData.options || [];
+
+            // Adjust UI for Review Mode
+            document.getElementById('bottom-controls').style.display = 'none';
+            document.getElementById('marker-grid').style.display = 'none';
+            document.getElementById('pause-btn').style.display = 'none';
+            document.getElementById('main-content').style.paddingBottom = '40px'; 
+            
+            const timerBadge = document.getElementById('q-timer');
+            timerBadge.innerText = "REVIEW";
+            timerBadge.style.background = "var(--primary-glow)";
+            timerBadge.style.borderColor = "var(--primary)";
+            
+            document.getElementById('assessment-type-label').innerText = "REVIEW MODE";
+            document.getElementById('assessment-type-label').style.color = "var(--primary)";
+            document.getElementById('user-display-name').innerText = `Q${index + 1} OVERVIEW`;
+
+            document.getElementById('q-number').innerHTML = `QUESTION <span style="color:var(--text-main);">${index + 1}</span>`;
+            document.getElementById('q-display').innerHTML = qData.question;
+
+            const optBox = document.getElementById('opts-display');
+            optBox.innerHTML = '';
+            
+            if (opts.length === 0) {
+                optBox.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-dim); font-size:14px; font-weight:700;">Option details are not available.<br>Please take a new test to see them.</div>';
+            } else {
+                opts.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'opt-box';
+                    div.style.cursor = 'default';
+                    div.innerText = opt;
+                    
+                    // Highlight Correct Answer
+                    if (opt === qData.actual) {
+                        div.style.borderColor = 'var(--success)';
+                        div.style.background = 'var(--success-glow)';
+                        div.style.color = 'var(--success)';
+                        div.innerHTML += ' <i data-lucide="check-circle" size="18" style="float:right;"></i>';
+                    } 
+                    // Highlight User's Wrong Answer
+                    else if (opt === qData.user && qData.user !== qData.actual) {
+                        div.style.borderColor = 'var(--danger)';
+                        div.style.background = 'rgba(239, 68, 68, 0.05)';
+                        div.style.color = 'var(--danger)';
+                        div.innerHTML += ' <i data-lucide="x-circle" size="18" style="float:right;"></i>';
+                    }
+                    
+                    optBox.appendChild(div);
+                });
+            }
+
+            // Add Back Button
+            const backBtn = document.createElement('button');
+            backBtn.className = 'btn-primary';
+            backBtn.style.marginTop = '25px';
+            backBtn.style.width = '100%';
+            backBtn.innerHTML = '<i data-lucide="arrow-left" size="18"></i> BACK TO ANALYSIS';
+            backBtn.onclick = () => window.location.href = 'analysis.html';
+            document.getElementById('main-content').appendChild(backBtn);
+            
+            lucide.createIcons();
+        }
+
+        // ---------------- NORMAL TEST LOGIC ---------------- //
         async function loadQuestions() {
             if (!moduleKey) return window.location.href = 'courses.html';
 
@@ -387,6 +468,7 @@
         }
 
         function togglePause() {
+            if (isReviewMode) return;
             isPaused = !isPaused;
             const overlay = document.getElementById('pause-overlay');
             if (isPaused) {
@@ -498,7 +580,14 @@
                 const userAns = (userChoices[i] === null || userChoices[i] === undefined) ? "SKIPPED" : userChoices[i];
                 const isCorrect = userAns === q.correct;
                 if(isCorrect) correctCount++;
-                return { question: q.displayQ, user: userAns, actual: q.correct };
+                
+                // NEW: Saving options so we can render them in Review Mode
+                return { 
+                    question: q.displayQ, 
+                    user: userAns, 
+                    actual: q.correct,
+                    options: q.shuffledOpts 
+                };
             });
 
             // Award full normal marks regardless of retake status
