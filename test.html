@@ -249,11 +249,36 @@
         let isSubmitting = false;
         let isPaused = false;
 
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden && !isSubmitting && !isPaused && !isReviewMode) {
+        // Auto-save function to persist test progress across background reloads
+        function saveProgress() {
+            if (isReviewMode || isSubmitting) return;
+            const progress = {
+                userChoices,
+                markedQuestions,
+                currentIdx,
+                totalSecondsRemaining,
+                isPaused
+            };
+            localStorage.setItem(`test_progress_${activeSessionId}`, JSON.stringify(progress));
+        }
+
+        function clearProgress() {
+            localStorage.removeItem(`test_progress_${activeSessionId}`);
+        }
+
+        // Comprehensive background event handling
+        function handleBackgroundChange() {
+            if (!isSubmitting && !isPaused && !isReviewMode) {
                 togglePause();
+                saveProgress();
             }
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) handleBackgroundChange();
         });
+        window.addEventListener("blur", handleBackgroundChange);
+        window.addEventListener("pagehide", handleBackgroundChange);
 
         if (isRetake && !isReviewMode) {
             document.getElementById('retake-badge').style.display = 'inline-block';
@@ -441,6 +466,22 @@
                 };
             });
             
+            // Check for saved progress to restore test perfectly after background termination
+            const savedProgress = localStorage.getItem(`test_progress_${activeSessionId}`);
+            if (savedProgress) {
+                try {
+                    const parsed = JSON.parse(savedProgress);
+                    userChoices = parsed.userChoices || {};
+                    markedQuestions = parsed.markedQuestions || {};
+                    currentIdx = parsed.currentIdx || 0;
+                    if (parsed.totalSecondsRemaining && parsed.totalSecondsRemaining > 0) {
+                        totalSecondsRemaining = parsed.totalSecondsRemaining;
+                    }
+                } catch(e) {
+                    console.error("Could not restore saved progress.");
+                }
+            }
+
             initUI();
             document.getElementById('app-loader').classList.add('fade-out');
             startGlobalTimer();
@@ -464,6 +505,7 @@
 
         function toggleMark() {
             markedQuestions[currentIdx] = !markedQuestions[currentIdx];
+            saveProgress();
             showQ();
         }
 
@@ -476,6 +518,7 @@
             } else {
                 overlay.style.display = 'none';
             }
+            saveProgress();
         }
 
         function showQ() {
@@ -522,6 +565,7 @@
                     } else {
                         userChoices[currentIdx] = opt; 
                     }
+                    saveProgress();
                     showQ(); 
                 };
                 optBox.appendChild(div);
@@ -549,6 +593,7 @@
                 } else {
                     totalSecondsRemaining--;
                     updateTimerUI();
+                    if (totalSecondsRemaining % 5 === 0) saveProgress(); // Auto-save timer occasionally 
                 }
             }, 1000);
         }
@@ -557,6 +602,7 @@
             let next = currentIdx + dir;
             if (next >= 0 && next < questions.length) { 
                 currentIdx = next; 
+                saveProgress();
                 showQ(); 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -574,6 +620,7 @@
             if(isSubmitting) return;
             isSubmitting = true;
             clearInterval(timer);
+            clearProgress(); // Clear saved progress upon successful submission
 
             let correctCount = 0;
             const details = questions.map((q, i) => {
