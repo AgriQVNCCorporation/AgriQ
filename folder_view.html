@@ -21,6 +21,7 @@
             --bg: #f0f9ff; --surface: #ffffff;
             --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
             --daily-color: #10b981; --warning: #f59e0b;
+            --resume-color: #8b5cf6; /* New Purple color for Resume state */
             --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         
@@ -117,10 +118,11 @@
             border-radius: 8px; font-size: 10px; font-weight: 800; color: var(--text-dim);
             display: flex; align-items: center; gap: 4px;
         }
-        .stat-badge.blue { background: var(--primary-glow); color: var(--primary); border-color: transparent; }
         
-        /* Score Badge Styling */
+        /* Badges Styling */
+        .stat-badge.blue { background: var(--primary-glow); color: var(--primary); border-color: transparent; }
         .stat-badge.score-badge { background: rgba(16, 185, 129, 0.1); color: var(--daily-color); border-color: transparent; }
+        .stat-badge.resume-badge { background: rgba(139, 92, 246, 0.1); color: var(--resume-color); border-color: transparent; }
 
         .play-btn {
             width: 44px; height: 44px; border-radius: 14px; background: #f8fafc;
@@ -129,9 +131,12 @@
         }
         .module-card:hover .play-btn { background: var(--primary); color: white; transform: scale(1.05); border-color: transparent;}
         
-        /* Retake Button Styling */
+        /* Buttons Styling */
         .play-btn.retake-btn { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: transparent; }
         .module-card:hover .play-btn.retake-btn { background: var(--warning); color: white; }
+        
+        .play-btn.resume-btn { background: rgba(139, 92, 246, 0.1); color: var(--resume-color); border-color: transparent; }
+        .module-card:hover .play-btn.resume-btn { background: var(--resume-color); color: white; }
 
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
         .empty-state i { opacity: 0.5; margin-bottom: 10px; }
@@ -144,7 +149,7 @@
     <div id="preloader"><div class="loader-spinner"></div></div>
 
     <header>
-        <div class="back-btn" onclick="window.location.href='courses.html'"><i data-lucide="chevron-left" size="20"></i></div>
+        <div class="back-btn" onclick="goBack()"><i data-lucide="chevron-left" size="20"></i></div>
         <div class="folder-title" id="page-title">FOLDER <span>VIEW</span></div>
         <i data-lucide="folder-open" size="22" style="color:var(--primary);"></i>
     </header>
@@ -190,6 +195,14 @@
         const folderKey = urlParams.get('folder');
         let currentUserUid = null;
 
+        function goBack() {
+            if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+                window.history.back(); 
+            } else {
+                window.location.href = 'courses.html'; 
+            }
+        }
+
         window.addEventListener('load', () => {
             if(!folderKey) {
                 window.location.href = 'courses.html';
@@ -209,11 +222,8 @@
         });
 
         function fetchDataWithScores() {
-            // Check the 'results' node, matching the save location in test.html
             db.ref(`students/${currentUserUid}/results`).on('value', scoreSnap => {
                 const userScores = scoreSnap.val() || {};
-                
-                console.log("Your Saved Scores in DB:", userScores); 
                 
                 db.ref(`nested_subjects/${folderKey}`).on('value', snap => {
                     const container = document.getElementById('modules-container');
@@ -244,41 +254,61 @@
                         const timeSec = config.timeLimit || 600;
                         const timeMin = Math.floor(timeSec / 60);
 
-                        // Account for the custom session_id override from test.html
                         const targetSessionId = data.current_session_id ? data.current_session_id : `${folderKey}_${subtopicKey}`;
-                        
-                        // Check all possible names just to be safe
                         const pastAttempt = userScores[targetSessionId] || userScores[subtopicKey] || userScores[`${folderKey}_${subtopicKey}`];
-                        const hasAttempted = pastAttempt !== undefined && pastAttempt !== null; 
                         
+                        // --- UPDATED PROGRESS DETECTION LOGIC ---
+                        let testState = 'new'; 
                         let scoreText = "";
-                        if (hasAttempted) {
-                            scoreText = `${pastAttempt.score}/${qCount}`;
-                        }
 
-                        console.log(`Checking Module: ${subtopicKey} | Target ID: ${targetSessionId} | Match Found: ${hasAttempted}`);
+                        // Look exactly for the key that test.html saves to
+                        const savedLocalProgress = localStorage.getItem(`test_progress_${targetSessionId}`);
+
+                        if (savedLocalProgress) {
+                            // If they backed out mid-test, they need to resume
+                            testState = 'in_progress';
+                        } else if (pastAttempt) {
+                            // If no local save exists, but they have a completed score in Firebase
+                            testState = 'completed';
+                            scoreText = `${pastAttempt.score !== undefined ? pastAttempt.score : '--'}/${qCount}`;
+                        }
+                        // ----------------------------------------
+
+                        // Generate Dynamic UI Based on State
+                        let badgesHtml = `
+                            <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
+                            <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
+                        `;
+                        let buttonHtml = '';
+                        let urlQueryAppend = '';
+
+                        if (testState === 'completed') {
+                            badgesHtml += `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>`;
+                            buttonHtml = `<div class="play-btn retake-btn"><i data-lucide="rotate-ccw" size="20"></i></div>`;
+                            urlQueryAppend = '&retake=true';
+                        } else if (testState === 'in_progress') {
+                            badgesHtml += `<div class="stat-badge resume-badge"><i data-lucide="pause-circle" size="12"></i> In Progress</div>`;
+                            buttonHtml = `<div class="play-btn resume-btn"><i data-lucide="play-circle" size="20"></i></div>`;
+                        } else {
+                            buttonHtml = `<div class="play-btn"><i data-lucide="play" size="20" fill="currentColor"></i></div>`;
+                        }
 
                         const card = document.createElement('div');
                         card.className = "module-card";
                         
                         card.onclick = () => {
                             const isRandom = document.getElementById('randomToggle').checked;
-                            const retakeQuery = hasAttempted ? '&retake=true' : '';
-                            window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&random=${isRandom}${retakeQuery}`;
+                            window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&random=${isRandom}${urlQueryAppend}`;
                         };
 
                         card.innerHTML = `
                             <div class="mod-info">
                                 <div class="mod-title">${displayName}</div>
                                 <div class="mod-stats">
-                                    <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
-                                    <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
-                                    ${hasAttempted ? `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>` : ''}
+                                    ${badgesHtml}
                                 </div>
                             </div>
-                            <div class="play-btn ${hasAttempted ? 'retake-btn' : ''}">
-                                <i data-lucide="${hasAttempted ? 'rotate-ccw' : 'play'}" size="20" fill="${hasAttempted ? 'none' : 'currentColor'}"></i>
-                            </div>
+                            ${buttonHtml}
                         `;
                         
                         container.appendChild(card);
