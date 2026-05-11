@@ -284,6 +284,30 @@
             document.getElementById('retake-badge').style.display = 'inline-block';
         }
 
+        // --- BACK BUTTON INTERCEPTION --- //
+        // Push a dummy state so the browser has a history entry to "pop"
+        window.history.pushState({ page: 'test' }, null, window.location.href);
+
+        window.addEventListener('popstate', function(event) {
+            if (!isSubmitting && !isReviewMode) {
+                // Ensure latest progress is saved
+                saveProgress(); 
+                
+                // Construct the return URL based on current parameters
+                let returnUrl = 'folder_view.html';
+                if (folderKey) {
+                    returnUrl += `?folder=${folderKey}`;
+                }
+                
+                // Redirect user back to the folder view
+                window.location.replace(returnUrl);
+            } else if (isReviewMode) {
+                // If in review mode, go back to analysis
+                window.location.replace('analysis.html');
+            }
+        });
+        // -------------------------------- //
+
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'dashboard.html';
             db.ref(`students/${user.uid}`).once('value', snap => {
