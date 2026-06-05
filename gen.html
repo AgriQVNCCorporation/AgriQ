@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>AgriQ Pro | Test Engine</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff; --primary-glow: rgba(0, 132, 255, 0.15);
+            --bg: #f8fafc; --surface: #ffffff;
+            --text-main: #0f172a; --text-dim: #64748b; --border: #e2e8f0;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --purple: #8b5cf6;
+            --glass: rgba(255, 255, 255, 0.85);
+            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        html { scroll-behavior: smooth; }
+        
+        body { 
+            background-color: var(--bg); margin: 0; color: var(--text-main); 
+            padding-top: env(safe-area-inset-top); padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            display: none; overflow-x: hidden;
+        }
+
+        #admin-loader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #admin-loader.fade-out { opacity: 0; visibility: hidden; }
+        
+        header {
+            padding: 20px 24px; background: var(--glass); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid var(--border); position: sticky; top: env(safe-area-inset-top); z-index: 1000;
+        }
+
+        .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        main { padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+        .card { 
+            background: var(--surface); border-radius: 28px; padding: 24px; 
+            border: 1px solid var(--border); margin-bottom: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02); 
+            transition: var(--transition);
+        }
+
+        .card-header { 
+            font-size: 13px; font-weight: 900; text-transform: uppercase; 
+            letter-spacing: 1px; color: var(--text-main); margin-bottom: 20px; 
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .input-group { margin-bottom: 15px; position: relative; }
+        .input-label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; display: flex; padding-left: 5px; }
+        
+        input, textarea, select { 
+            width: 100%; background: #f8fafc; border: 1.5px solid var(--border); 
+            border-radius: 18px; padding: 16px; color: var(--text-main); 
+            outline: none; font-size: 14px; font-weight: 600; transition: var(--transition);
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 5px 15px var(--primary-glow); }
+        
+        .controls-row { display: flex; gap: 10px; }
+        .controls-row > div { flex: 1; }
+
+        .btn-primary { 
+            width: 100%; padding: 18px; border-radius: 20px; border: none; 
+            background: var(--primary); color: #fff; font-weight: 900;
+            cursor: pointer; box-shadow: 0 10px 25px var(--primary-glow); transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;
+        }
+        .btn-primary:active { transform: scale(0.97); }
+
+        .btn-outline { 
+            background: #fff; border: 1.5px solid var(--border); color: var(--text-dim); 
+            padding: 10px 16px; border-radius: 14px; font-size: 11px; font-weight: 800; 
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+
+        .data-pill { 
+            padding: 15px 20px; background: #fff; border-radius: 20px; margin-bottom: 10px; 
+            border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .question-card {
+            background: #fff; border: 1px solid var(--border); padding: 20px; 
+            margin-bottom: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+        }
+        .q-meta { font-size: 10px; font-weight: 800; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .q-text { font-size: 15px; font-weight: 700; margin-bottom: 15px; line-height: 1.5; }
+        .q-options { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .q-options li { background: #f8fafc; padding: 12px 15px; border-radius: 12px; font-size: 13px; font-weight: 600; border: 1px solid transparent; }
+
+        .bank-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .stat-badge { background: var(--primary-glow); color: var(--primary); padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 5px; }
+
+        /* Modals and Toasts */
+        #modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 24px; }
+        .modal { background: white; padding: 30px; border-radius: 32px; width: 100%; max-width: 350px; text-align: center; animation: slideDown 0.3s ease; }
+        .modal-btn { padding: 16px 24px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; flex: 1; transition: 0.2s; }
+        
+        #toast { 
+            position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px;
+            font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        @keyframes skel-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <div id="modal-overlay">
+        <div class="modal">
+            <h3 id="m-title" style="margin-top:0; font-weight:900;">Title</h3>
+            <div id="m-body"><p id="m-text" style="color:var(--text-dim); font-size:14px; line-height:1.5; font-weight:600;">Message</p></div>
+            <div style="display:flex; gap:12px; margin-top:25px;">
+                <button class="modal-btn" id="m-cancel" style="background:#f1f5f9; color:var(--text-dim);" onclick="closeModal()">CANCEL</button>
+                <button class="modal-btn" style="background:var(--primary); color:white" id="m-confirm">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-loader">
+        <div style="color:var(--primary); animation: skel-pulse 1.5s infinite;"><i data-lucide="cpu" size="54"></i></div>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">ENGINE_INIT</p>
+    </div>
+
+    <header>
+        <div class="brand"><i data-lucide="terminal" size="20"></i> AgriQ <span>Engine</span></div>
+        <button class="btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" onclick="auth.signOut()">EXIT</button>
+    </header>
+
+    <main>
+        <div class="bank-stats" id="bankStatsContainer">
+            </div>
+
+        <div class="card" style="border-color: var(--primary); border-width: 2px;">
+            <div class="card-header">
+                <div style="color: var(--primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="layers" size="18"></i> Test Compiler</div>
+            </div>
+            
+            <div class="controls-row">
+                <div class="input-group">
+                    <span class="input-label">Subject</span>
+                    <select id="gen-subject">
+                        <option value="Agronomy">Agronomy</option>
+                        <option value="Soil_Science">Soil Science</option>
+                        <option value="Botany">Botany</option>
+                        <option value="Extension">Extension</option>
+                    </select>
+                </div>
+                <div class="input-group" style="flex: 0.5;">
+                    <span class="input-label">Qs</span>
+                    <input type="number" id="gen-count" placeholder="No." min="1">
+                </div>
+            </div>
+            
+            <button class="btn-outline" style="width: 100%; justify-content: center; margin-bottom: 15px; border-color: var(--primary); color: var(--primary);" onclick="addToBlueprint()">
+                <i data-lucide="plus" size="16"></i> ADD TO QUEUE
+            </button>
+
+            <div id="blueprint-list" style="margin-bottom: 20px;"></div>
+
+            <button class="btn-primary" onclick="compileTest()">
+                <i data-lucide="play" size="18"></i> COMPILE MASTER TEST
+            </button>
+        </div>
+
+        <div id="testOutputContainer" style="display: none;">
+            <h3 style="font-weight: 900; color: var(--text-main); margin: 30px 0 15px 5px; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="file-check" size="20" style="color: var(--success);"></i> Compiled Paper
+            </h3>
+            <div id="testOutputArea"></div>
+        </div>
+
+        <div class="card" style="margin-top: 40px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
+            <div class="card-header">
+                <div style="color: var(--purple); display: flex; align-items: center; gap: 6px;"><i data-lucide="database" size="18"></i> Push to Cloud Bank</div>
+            </div>
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px; line-height: 1.5;">Paste JSON array below. System will merge it securely into Firebase, auto-assign IDs, and prevent data overwrite.</p>
+
+            <div class="input-group">
+                <span class="input-label">Target Subject Node</span>
+                <select id="db-subject">
+                    <option value="Agronomy">Agronomy</option>
+                    <option value="Soil_Science">Soil Science</option>
+                    <option value="Botany">Botany</option>
+                    <option value="Extension">Extension</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <span class="input-label">Questions JSON Array</span>
+                <textarea id="db-json" placeholder='[{"text": "...", "options": [...]}]' style="min-height: 120px; font-family: 'JetBrains Mono'; font-size: 12px;"></textarea>
+            </div>
+            
+            <button class="btn-primary" style="background: var(--purple); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);" onclick="pushToFirebaseBank()">
+                <i data-lucide="cloud-upload" size="18"></i> MERGE TO CLOUD
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // --- FIREBASE INIT ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar"
+        };
+        if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // --- GLOBAL STATE ---
+        let cloudBank = {}; // Holds the live snapshot of all banks
+        let testBlueprint = []; // User's requested test breakdown
+
+        // --- AUTH CHECK ---
+        auth.onAuthStateChanged(user => {
+            if (user && user.email === 'vishalchalse007@gmail.com') {
+                document.body.style.display = 'block';
+                lucide.createIcons();
+                initEngine();
+                setTimeout(() => document.getElementById('admin-loader').classList.add('fade-out'), 800);
+            } else {
+                window.location.href = "dashboard.html"; // Redirect if not admin
+            }
+        });
+
+        // --- CORE ENGINE LOGIC ---
+        function initEngine() {
+            // Listen to the live question_banks node in Firebase
+            db.ref('question_banks').on('value', snap => {
+                cloudBank = snap.val() || {};
+                updateBankStats();
+            });
+        }
+
+        function updateBankStats() {
+            const container = document.getElementById('bankStatsContainer');
+            container.innerHTML = '';
+            
+            if (Object.keys(cloudBank).length === 0) {
+                container.innerHTML = `<span class="stat-badge" style="color:var(--text-dim); background:#f1f5f9;">Database Empty</span>`;
+                return;
+            }
+
+            for (const [subject, questionsArray] of Object.entries(cloudBank)) {
+                if (questionsArray && Array.isArray(questionsArray)) {
+                    container.innerHTML += `<span class="stat-badge"><i data-lucide="server" size="12"></i> ${subject.replace('_', ' ')}: ${questionsArray.length}</span>`;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        // --- CLOUD PUSH (ADMIN TOOL) ---
+        function pushToFirebaseBank() {
+            const subject = document.getElementById('db-subject').value;
+            const jsonStr = document.getElementById('db-json').value.trim();
+
+            if (!jsonStr) return showAppModal("Empty Field", "Please paste a JSON array.", closeModal);
+
+            try {
+                let parsedArray = JSON.parse(jsonStr);
+                if (!Array.isArray(parsedArray)) throw new Error("Not an array");
+
+                // Get current bank length to generate IDs safely
+                let currentBank = cloudBank[subject] || [];
+                let currentLength = currentBank.length;
+                let prefix = subject.substring(0, 3).toUpperCase();
+
+                parsedArray.forEach((q, index) => {
+                    let newIdNumber = currentLength + index + 1;
+                    if (!q.id) q.id = `${prefix}_${newIdNumber}`; // Auto-assign ID if missing
+                });
+
+                // Merge and Push directly to Firebase
+                let mergedBank = currentBank.concat(parsedArray);
+                
+                db.ref(`question_banks/${subject}`).set(mergedBank).then(() => {
+                    document.getElementById('db-json').value = '';
+                    showToast(`Success! ${parsedArray.length} Qs merged into ${subject}.`);
+                }).catch(err => showAppModal("Database Error", err.message, closeModal));
+
+            } catch (error) {
+                showAppModal("Format Error", "Invalid JSON. Ensure it is a properly formatted array.", closeModal);
+            }
+        }
+
+        // --- TEST COMPILER ---
+        function addToBlueprint() {
+            const subject = document.getElementById('gen-subject').value;
+            const count = parseInt(document.getElementById('gen-count').value);
+
+            if (!count || count <= 0) return showToast("Enter a valid number!");
+
+            const existing = testBlueprint.find(item => item.subject === subject);
+            if (existing) {
+                existing.count += count;
+            } else {
+                testBlueprint.push({ subject, count });
+            }
+
+            document.getElementById('gen-count').value = '';
+            renderBlueprintUI();
+        }
+
+        function removeFromBlueprint(subjectName) {
+            testBlueprint = testBlueprint.filter(item => item.subject !== subjectName);
+            renderBlueprintUI();
+        }
+
+        function renderBlueprintUI() {
+            const listDiv = document.getElementById('blueprint-list');
+            listDiv.innerHTML = '';
+            testBlueprint.forEach(item => {
+                listDiv.innerHTML += `
+                    <div class="data-pill">
+                        <span style="font-size: 13px; font-weight: 800;">${item.subject.replace('_', ' ')} <span style="color:var(--primary);">(${item.count} Qs)</span></span>
+                        <button class="btn-outline" style="padding: 6px; border-color: rgba(239, 68, 68, 0.2); color: var(--danger);" onclick="removeFromBlueprint('${item.subject}')">
+                            <i data-lucide="x" size="14"></i>
+                        </button>
+                    </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        // Fisher-Yates Shuffle Algorithm
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex > 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function compileTest() {
+            if (testBlueprint.length === 0) return showAppModal("Queue Empty", "Add subjects to the queue first.", closeModal);
+
+            document.getElementById('admin-loader').classList.remove('fade-out'); // Show loader
+            document.querySelector('#admin-loader p').innerText = "COMPILING PAPER...";
+
+            setTimeout(() => {
+                let finalTestPaper = [];
+
+                for (let req of testBlueprint) {
+                    const availableBank = cloudBank[req.subject] || [];
+                    
+                    if (availableBank.length < req.count) {
+                        document.getElementById('admin-loader').classList.add('fade-out');
+                        return showAppModal('Bank Deficit', `You requested ${req.count} for ${req.subject.replace('_', ' ')}, but only ${availableBank.length} are in the cloud.`, closeModal);
+                    }
+
+                    // Shuffle specific subject and slice
+                    let shuffledBank = shuffleArray([...availableBank]);
+                    let selectedQs = shuffledBank.slice(0, req.count).map(q => ({...q, source_subject: req.subject}));
+                    finalTestPaper.push(...selectedQs);
+                }
+
+                // Final Master Shuffle
+                finalTestPaper = shuffleArray(finalTestPaper);
+                renderFinalTest(finalTestPaper);
+                
+                document.getElementById('admin-loader').classList.add('fade-out');
+                showToast(`Compiled ${finalTestPaper.length} Questions`);
+            }, 600); // UI delay for effect
+        }
+
+        function renderFinalTest(questionsArray) {
+            const container = document.getElementById('testOutputContainer');
+            const outputArea = document.getElementById('testOutputArea');
+            outputArea.innerHTML = '';
+            container.style.display = 'block';
+
+            questionsArray.forEach((q, index) => {
+                let optionsHtml = '';
+                if (q.options && Array.isArray(q.options)) {
+                    optionsHtml = q.options.map(opt => `<li><input type="radio" name="q_${q.id}"> ${opt}</li>`).join('');
+                }
+
+                outputArea.innerHTML += `
+                    <div class="question-card">
+                        <div class="q-meta">Q${index + 1} &nbsp;•&nbsp; ${q.source_subject.replace('_', ' ')} &nbsp;•&nbsp; ID: ${q.id}</div>
+                        <div class="q-text">${q.text || q.q || 'Question text missing'}</div>
+                        <ul class="q-options">${optionsHtml}</ul>
+                    </div>`;
+            });
+
+            // Smooth scroll down to test
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // --- UTILS ---
+        function showAppModal(title, text, onConfirm) {
+            document.getElementById('m-title').innerText = title; 
+            document.getElementById('m-text').innerText = text;
+            document.getElementById('m-cancel').style.display = 'block'; 
+            document.getElementById('m-confirm').innerText = "OKAY";
+            document.getElementById('modal-overlay').style.display = 'flex'; 
+            document.getElementById('m-confirm').onclick = () => { onConfirm(); closeModal(); };
+        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        function showToast(msg) { 
+            const t = document.getElementById('toast'); 
+            t.innerText = msg; t.style.display = 'block'; 
+            setTimeout(() => t.style.display = 'none', 3000); 
+        }
+    </script>
+</body>
+</html>
