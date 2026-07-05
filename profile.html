@@ -6,8 +6,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Profile | AgriQ Pro</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -15,13 +19,16 @@
 
     <style>
         :root {
-            --primary: #0084ff; --bg: #f0f9ff; --surface: #ffffff;
-            --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
+            --primary: #0084ff; --bg: #f8fafc; --surface: #ffffff;
+            --text-main: #0f172a; --text-dim: #64748b; --border: #e2e8f0;
             
             /* Premium Gamification Colors */
             --color-gold: #fbbf24;     
             --color-diamond: #a855f7;  
             --color-legend: #ef4444;   
+            --warning: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -35,23 +42,33 @@
             overflow-x: hidden;
         }
 
+        /* Ambient Background Mesh */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(0, 132, 255, 0.05), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05), transparent 25%);
+            animation: breathe 10s ease-in-out infinite alternate;
+        }
+        @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
         /* Header */
         header { 
-            padding: 20px 24px; background: rgba(255,255,255,0.85); 
-            backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100;
+            padding: 20px 24px; background: rgba(255,255,255,0.8); 
+            backdrop-filter: blur(20px); position: sticky; top: env(safe-area-inset-top); z-index: 100;
             display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.03);
         }
         .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
 
-        main { padding: 20px; max-width: 500px; margin: 0 auto; }
+        main { padding: 25px 20px; max-width: 500px; margin: 0 auto; position: relative; z-index: 1;}
 
-        /* --- NEW GAMIFIED PROFILE PALLET --- */
+        /* --- GAMIFIED PROFILE PALLET --- */
         .profile-pallet {
             background: var(--surface); padding: 35px 20px 25px; border-radius: 32px;
             text-align: center; border: 1px solid var(--border); margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03); position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03); position: relative;
             display: flex; flex-direction: column; align-items: center;
-            transition: all 0.5s ease; overflow: hidden;
+            transition: all 0.5s ease; overflow: hidden; backdrop-filter: blur(20px);
         }
         
         .admin-tag { 
@@ -95,7 +112,6 @@
             transition: all 0.5s ease;
         }
 
-        /* User Info Box */
         .tier-badge { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; padding: 6px 14px; border-radius: 20px; margin-bottom: 8px; background: #f1f5f9; color: var(--text-dim); transition: all 0.5s; }
         .user-name { font-weight: 900; font-size: 22px; text-transform: uppercase; letter-spacing: -0.5px; margin: 0 0 5px 0; transition: color 0.5s; }
         .user-email { color: var(--text-dim); font-size: 13px; font-weight: 600; margin: 0 0 15px 0; }
@@ -107,53 +123,50 @@
         .progress-track { width: 100%; height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; width: 0%; border-radius: 10px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s; }
 
-        /* --- ROADMAP MODULE (Visual Frames Only) --- */
-        .roadmap-container { width: 100%; padding: 15px; background: #f8fafc; border-radius: 16px; border: 1px solid var(--border); }
-        .roadmap-title { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; text-align: left; }
-        .roadmap-flex { display: flex; justify-content: space-between; position: relative; padding: 5px 10px; }
-        
-        .road-node { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; filter: grayscale(1) opacity(0.3); }
-        .road-node svg { width: 130%; height: 130%; position: absolute; pointer-events: none; }
-        
-        /* Node Activations */
-        .tier-gold .node-g { filter: grayscale(0) opacity(1); filter: drop-shadow(0 0 10px rgba(251,191,36,0.5)); }
-        
-        .tier-diamond .node-g, .tier-legend .node-g { filter: grayscale(0) opacity(1); filter: drop-shadow(0 0 5px rgba(251,191,36,0.3)); }
-        .tier-diamond .node-d { filter: grayscale(0) opacity(1); filter: drop-shadow(0 0 10px rgba(168,85,247,0.5)); }
-        
-        .tier-legend .node-d { filter: grayscale(0) opacity(1); filter: drop-shadow(0 0 5px rgba(168,85,247,0.3)); }
-        .tier-legend .node-l { filter: grayscale(0) opacity(1); filter: drop-shadow(0 0 15px rgba(239,68,68,0.8)); transform: scale(1.1); }
-
-
-        /* --- TIER SPECIFIC STYLES FOR LIGHT THEME --- */
+        /* --- TIER SPECIFIC STYLES --- */
         .tier-base .progress-fill { background: #94a3b8; }
-        .tier-base .avatar-initial { background: linear-gradient(135deg, #64748b, #94a3b8); }
-
-        /* Gold */
         .tier-gold .aura-layer { background: var(--color-gold); opacity: 0.25; }
         .tier-gold .tier-badge { color: #d97706; background: #fef3c7; }
         .tier-gold .progress-fill { background: linear-gradient(90deg, #d97706, #fde047); }
         .tier-gold .avatar-initial { border-color: #fbbf24; }
-        .tier-gold.profile-pallet { border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.1); }
-
-        /* Diamond */
         .tier-diamond .aura-layer { background: var(--color-diamond); opacity: 0.2; }
         .tier-diamond .tier-badge { color: #d946ef; background: #fae8ff; border: 1px solid rgba(217, 70, 239, 0.3); }
         .tier-diamond .progress-fill { background: linear-gradient(90deg, #7e22ce, #d946ef); }
         .tier-diamond .avatar-initial { border-color: #a855f7; }
-        .tier-diamond.profile-pallet { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 10px 40px rgba(168, 85, 247, 0.1); }
 
-        /* Legend */
-        .tier-legend .aura-layer { background: var(--color-legend); opacity: 0.15; animation: pulse-aura 2s infinite alternate; }
-        .tier-legend .tier-badge { color: white; background: var(--color-legend); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
-        .tier-legend .progress-fill { background: linear-gradient(90deg, #991b1b, #ef4444); }
-        .tier-legend .avatar-initial { border-color: #ef4444; }
-        .tier-legend.profile-pallet { border-color: rgba(239,68,68,0.4); background: linear-gradient(180deg, #ffffff 0%, #fff1f2 100%); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.15); }
-        .tier-legend .user-name { color: #b91c1c; }
-        .tier-legend .frame-container { animation: legend-pulse 1.5s infinite alternate; }
+        /* --- ADMIT CARD WIDGET --- */
+        .admit-card-widget {
+            background: var(--surface); border-radius: 24px; padding: 25px; border: 1px solid var(--border);
+            margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); backdrop-filter: blur(20px);
+            display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
+        }
+        .admit-card-widget::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+            background: var(--primary); border-radius: 24px 0 0 24px;
+        }
+        .ac-header { display: flex; justify-content: space-between; align-items: center; }
+        .ac-title { font-size: 16px; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;}
+        .ac-status { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 12px; letter-spacing: 1px; text-transform: uppercase;}
+        
+        .ac-status.pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .ac-status.rejected { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .ac-status.accepted { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
 
-        @keyframes legend-pulse { from { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.3)); transform: scale(1); } to { filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.6)); transform: scale(1.02); } }
-        @keyframes pulse-aura { from { filter: blur(20px); opacity: 0.15; } to { filter: blur(30px); opacity: 0.25; } }
+        .ac-body { font-size: 13px; color: var(--text-dim); line-height: 1.5; font-weight: 500; margin: 0; background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px dashed var(--border);}
+        .ac-body.error-text { color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2); }
+        
+        .btn-ac {
+            width: 100%; padding: 14px; border-radius: 14px; border: none; font-weight: 800; font-size: 13px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition);
+        }
+        .btn-apply { background: rgba(0, 132, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 132, 255, 0.2); }
+        .btn-apply:hover { background: var(--primary); color: white; }
+        
+        .btn-download { background: var(--primary); color: white; box-shadow: 0 5px 15px rgba(0, 132, 255, 0.2); }
+        .btn-download.locked { background: #f1f5f9; color: var(--text-dim); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border);}
+        .btn-download:not(.locked):hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 132, 255, 0.3); }
+
+        .dev-bypass { font-size: 10px; color: var(--text-dim); text-align: center; margin-top: -5px; cursor: pointer; text-decoration: underline;}
 
         /* Stats Grid */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
@@ -182,7 +195,6 @@
         .modal { background: white; padding: 30px; border-radius: 32px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .modal-btn { padding: 16px 24px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; flex: 1; transition: var(--transition); }
         .modal-input { width: 100%; padding: 16px; border-radius: 16px; border: 1.5px solid var(--border); margin-top: 15px; font-weight: 700; outline: none; text-align: center; text-transform: uppercase; }
-        .modal-input:focus { border-color: var(--primary); }
 
         #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); white-space: nowrap; }
 
@@ -192,7 +204,9 @@
 </head>
 <body>
 
+    <div class="ambient-bg"></div>
     <div id="toast"></div>
+
     <div id="modal-overlay">
         <div class="modal">
             <h3 id="m-title" style="margin-top:0; font-weight:900;">Title</h3>
@@ -218,14 +232,11 @@
             
             <div class="frame-container">
                 <div class="aura-layer"></div>
-                
                 <div class="avatar-initial" id="avatar-container">
                     <span id="user-initial">U</span>
                     <img id="user-photo" class="user-photo" alt="Profile">
                 </div>
-
                 <input type="file" id="photo-upload" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
-                
                 <div class="upload-btn" id="upload-btn" onclick="document.getElementById('photo-upload').click()">
                     <i data-lucide="camera" size="16"></i>
                 </div>
@@ -242,46 +253,16 @@
                     </defs>
                     <rect x="15" y="15" width="110" height="110" rx="28" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
                     <rect x="22" y="22" width="96" height="96" rx="22" fill="none" stroke="#fef3c7" stroke-width="1.5" opacity="0.8"/>
-                    <path d="M 10 40 L 10 10 L 40 10" fill="none" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="miter"/>
-                    <path d="M 130 40 L 130 10 L 100 10" fill="none" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="miter"/>
-                    <path d="M 10 100 L 10 130 L 40 130" fill="none" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="miter"/>
-                    <path d="M 130 100 L 130 130 L 100 130" fill="none" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="miter"/>
                 </svg>
 
                 <svg class="svg-frame frame-d" viewBox="0 0 140 140" width="100%" height="100%">
                     <defs>
                         <linearGradient id="diaGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#7e22ce" />
-                            <stop offset="50%" stop-color="#d946ef" />
-                            <stop offset="100%" stop-color="#06b6d4" />
+                            <stop offset="0%" stop-color="#7e22ce" /><stop offset="100%" stop-color="#06b6d4" />
                         </linearGradient>
                     </defs>
-                    <polygon points="70,5 135,35 135,105 70,135 5,105 5,35" fill="none" stroke="url(#diaGrad)" stroke-width="3" opacity="0.6"/>
                     <rect x="18" y="18" width="104" height="104" rx="26" fill="none" stroke="url(#diaGrad)" stroke-width="5"/>
-                    <rect x="25" y="25" width="90" height="90" rx="20" fill="none" stroke="#fdf4ff" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/>
-                    <polygon points="70,-5 80,8 70,20 60,8" fill="#d946ef" stroke="#fff" stroke-width="1"/>
-                    <polygon points="70,120 80,132 70,145 60,132" fill="#06b6d4" stroke="#fff" stroke-width="1"/>
-                    <polygon points="-5,70 8,80 20,70 8,60" fill="#a855f7" />
-                    <polygon points="120,70 132,80 145,70 132,60" fill="#a855f7" />
                 </svg>
-
-                <svg class="svg-frame frame-l" viewBox="0 0 200 200" width="100%" height="100%">
-                    <defs>
-                        <linearGradient id="legGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#fca5a5" />
-                            <stop offset="50%" stop-color="#dc2626" />
-                            <stop offset="100%" stop-color="#7f1d1d" />
-                        </linearGradient>
-                    </defs>
-                    <rect x="52" y="52" width="96" height="96" rx="28" fill="none" stroke="url(#legGrad)" stroke-width="5"/>
-                    <rect x="58" y="58" width="84" height="84" rx="22" fill="none" stroke="#fca5a5" stroke-width="1" opacity="0.5"/>
-                    <path d="M 40 40 L 100 5 L 160 40 L 130 55 L 100 40 L 70 55 Z" fill="url(#legGrad)" stroke="#fff" stroke-width="1"/>
-                    <polygon points="100,15 110,30 100,45 90,30" fill="#fff" filter="drop-shadow(0px 0px 5px #fff)"/>
-                    <path d="M 45 70 L 10 40 L 25 90 L 0 100 L 30 120 L 45 90 Z" fill="#991b1b" stroke="#ef4444" stroke-width="1.5"/>
-                    <path d="M 155 70 L 190 40 L 175 90 L 200 100 L 170 120 L 155 90 Z" fill="#991b1b" stroke="#ef4444" stroke-width="1.5"/>
-                    <path d="M 55 145 L 100 185 L 145 145 L 100 155 Z" fill="url(#legGrad)" stroke="#fca5a5" stroke-width="1.5"/>
-                </svg>
-
             </div>
 
             <div class="tier-badge" id="tier-text">Initiate Rank</div>
@@ -293,30 +274,18 @@
                     <span id="rank-dest">Next: Gold Tier</span>
                     <span class="val"><span id="current-xp">0</span> / <span id="target-xp">1000</span> XP</span>
                 </div>
-                <div class="progress-track">
-                    <div class="progress-fill" id="xp-bar"></div>
-                </div>
+                <div class="progress-track"><div class="progress-fill" id="xp-bar"></div></div>
             </div>
+        </div>
 
-            <div class="roadmap-container">
-                <div class="roadmap-title">Road to Elite</div>
-                <div class="roadmap-flex">
-                    
-                    <div class="road-node node-g">
-                        <svg viewBox="0 0 140 140"><rect x="15" y="15" width="110" height="110" rx="28" fill="none" stroke="url(#goldGrad)" stroke-width="6"/><path d="M 10 40 L 10 10 L 40 10" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round"/><path d="M 130 40 L 130 10 L 100 10" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round"/><path d="M 10 100 L 10 130 L 40 130" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round"/><path d="M 130 100 L 130 130 L 100 130" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round"/></svg>
-                    </div>
-                    
-                    <div class="road-node node-d">
-                        <svg viewBox="0 0 140 140"><polygon points="70,5 135,35 135,105 70,135 5,105 5,35" fill="none" stroke="url(#diaGrad)" stroke-width="5"/><rect x="18" y="18" width="104" height="104" rx="26" fill="none" stroke="url(#diaGrad)" stroke-width="8"/></svg>
-                    </div>
-                    
-                    <div class="road-node node-l">
-                        <svg viewBox="0 0 200 200" style="transform: scale(1.3);"><rect x="52" y="52" width="96" height="96" rx="28" fill="none" stroke="url(#legGrad)" stroke-width="8"/><path d="M 40 40 L 100 5 L 160 40 L 130 55 L 100 40 L 70 55 Z" fill="url(#legGrad)" stroke="#fff" stroke-width="2"/><polygon points="100,15 110,30 100,45 90,30" fill="#fff" /><path d="M 45 70 L 10 40 L 25 90 L 0 100 L 30 120 L 45 90 Z" fill="#991b1b" stroke="#ef4444" stroke-width="2"/><path d="M 155 70 L 190 40 L 175 90 L 200 100 L 170 120 L 155 90 Z" fill="#991b1b" stroke="#ef4444" stroke-width="2"/></svg>
-                    </div>
-
-                </div>
+        <div class="admit-card-widget" id="ac-widget">
+            <div class="ac-header">
+                <h3 class="ac-title"><i data-lucide="id-card" color="var(--primary)"></i> Sunday Grand Test</h3>
+                <span class="ac-status" id="ac-badge">CHECKING</span>
             </div>
-
+            <div id="ac-content">
+                <p class="ac-body"><i data-lucide="loader-2" class="spin" size="14"></i> Syncing status...</p>
+            </div>
         </div>
 
         <div class="stats-grid">
@@ -332,22 +301,15 @@
 
         <div class="menu-card">
             <div class="menu-item" id="admin-panel-btn" style="display: none;" onclick="window.location.href='admin.html'">
-                <div class="menu-left">
-                    <i data-lucide="shield" size="20" color="#8b5cf6"></i> Admin Control Panel
-                </div>
+                <div class="menu-left"><i data-lucide="shield" size="20" color="#8b5cf6"></i> Admin Control Panel</div>
                 <i data-lucide="chevron-right" size="16" color="var(--text-dim)"></i>
             </div>
-
             <div class="menu-item" onclick="requestNameChange()">
-                <div class="menu-left">
-                    <i data-lucide="user-square" size="20" color="var(--primary)"></i> Edit Display Name
-                </div>
+                <div class="menu-left"><i data-lucide="user-square" size="20" color="var(--primary)"></i> Edit Display Name</div>
                 <i data-lucide="chevron-right" size="16" color="var(--text-dim)"></i>
             </div>
             <div class="menu-item" onclick="showToast('Verification successful. Account is secure.', 'shield-check')">
-                <div class="menu-left">
-                    <i data-lucide="shield-check" size="20" color="#10b981"></i> Account Status
-                </div>
+                <div class="menu-left"><i data-lucide="shield-check" size="20" color="#10b981"></i> Account Status</div>
                 <span style="font-size:11px; color:#10b981; background:#ecfdf5; padding:4px 8px; border-radius:10px;">VERIFIED PRO</span>
             </div>
         </div>
@@ -360,7 +322,7 @@
     <nav class="nav-bar">
         <a href="dashboard.html" class="nav-item"><i data-lucide="layout-grid"></i>Dashboard</a>
         <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
-        <a href="courses.html" class="nav-item"><i data-lucide="library"></i>Courses</a>
+        <a href="courses.html" class="nav-item"><i data-lucide="library" size="22"></i>Courses</a>
         <a href="profile.html" class="nav-item active"><i data-lucide="user"></i>Profile</a>
     </nav>
 
@@ -371,27 +333,59 @@
             databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
             projectId: "agri-mcar",
             storageBucket: "agri-mcar.firebasestorage.app",
-            messagingSenderId: "823436752104",
-            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
         const storage = firebase.storage();
         lucide.createIcons();
 
-        // TIER SYSTEM LOGIC
+        let hasPurchased = false; // Updates dynamically from Firebase
+        let cachedAdmitData = null; // Store approved data for PDF generation
+
+        // TIER SYSTEM
         const tiers = [
             { id: "tier-base", name: "Initiate", threshold: 0, next: 1000 },
             { id: "tier-gold", name: "Gold Tier", threshold: 1000, next: 5000 },
             { id: "tier-diamond", name: "Diamond", threshold: 5000, next: 10000 },
-            { id: "tier-legend", name: "Mythic Legend", threshold: 10000, next: 10000 }
         ];
 
+        // --- INSTANT OFFLINE CACHE LOAD ---
+        function loadOfflineCache(uid) {
+            const cacheKey = `agriq_profile_cache_${uid}`;
+            const cached = JSON.parse(localStorage.getItem(cacheKey));
+            if (!cached) return;
+
+            if (cached.name) {
+                document.getElementById('user-name').innerText = cached.name;
+                document.getElementById('user-initial').innerText = cached.name[0].toUpperCase();
+            }
+            if (cached.photoURL) {
+                document.getElementById('user-photo').src = cached.photoURL;
+                document.getElementById('user-photo').style.display = 'block';
+                document.getElementById('user-initial').style.display = 'none';
+                document.getElementById('upload-btn').style.display = 'none';
+            }
+            if (cached.tests !== undefined) document.getElementById('tests-val').innerText = cached.tests;
+            if (cached.acc !== undefined) document.getElementById('acc-val').innerText = `${cached.acc}%`;
+            if (cached.xp !== undefined) applyTierSystem(cached.xp);
+            
+            if (cached.admitStatus) {
+                renderAdmitCardUI(cached.admitStatus, cached.admitData, cached.hasPurchased);
+            }
+        }
+
+        // --- SAVE TO LOCAL STORAGE CACHE ---
+        function updateOfflineCache(uid, partialData) {
+            const cacheKey = `agriq_profile_cache_${uid}`;
+            const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
+            const updated = { ...existing, ...partialData };
+            localStorage.setItem(cacheKey, JSON.stringify(updated));
+        }
+
         auth.onAuthStateChanged(user => {
-            if (!user) {
-                window.location.href = 'login.html';
-            } else {
+            if (!user) window.location.href = 'login.html';
+            else {
                 document.getElementById('user-email').innerText = user.email;
                 document.getElementById('user-initial').innerText = (user.displayName || user.email)[0].toUpperCase();
                 
@@ -400,36 +394,188 @@
                     document.getElementById('admin-badge').style.display = 'flex';
                 }
                 
+                // Load offline cache instantly before fetching live data
+                loadOfflineCache(user.uid);
+
                 fetchProfileData(user.uid);
+                fetchAdmitCardStatus(user.uid);
             }
         });
 
+        // --- DYNAMIC ADMIT CARD LOGIC ---
+        function renderAdmitCardUI(status, reqData, purchased) {
+            const badge = document.getElementById('ac-badge');
+            const content = document.getElementById('ac-content');
+            
+            if (!status || status === 'none') {
+                badge.style.display = 'none';
+                content.innerHTML = `
+                    <p class="ac-body" style="margin-bottom: 15px;">You have not applied for the Sunday Grand Test offline array access.</p>
+                    <button class="btn-ac btn-apply" onclick="window.location.href='admit-card-generator.html'">
+                        <i data-lucide="file-signature" size="16"></i> Apply for Admit Card
+                    </button>
+                `;
+            } else if (status === 'pending') {
+                badge.style.display = 'inline-block';
+                badge.className = 'ac-status pending'; badge.innerText = 'PENDING';
+                content.innerHTML = `<p class="ac-body"><i data-lucide="clock" size="14" style="display:inline; vertical-align:middle; margin-right:4px;"></i> Application submitted. Awaiting administrative review and verification.</p>`;
+            } else if (status === 'rejected') {
+                badge.style.display = 'inline-block';
+                badge.className = 'ac-status rejected'; badge.innerText = 'REJECTED';
+                content.innerHTML = `
+                    <p class="ac-body error-text" style="margin-bottom: 15px;"><strong>Reason:</strong> ${reqData?.feedback || 'Invalid details provided.'}</p>
+                    <button class="btn-ac btn-apply" onclick="window.location.href='admit-card-generator.html'">
+                        <i data-lucide="refresh-ccw" size="16"></i> Update & Re-Apply
+                    </button>
+                `;
+            } else if (status === 'accepted') {
+                cachedAdmitData = reqData; // Store for PDF generation
+                badge.style.display = 'inline-block';
+                badge.className = 'ac-status accepted'; badge.innerText = 'APPROVED';
+                
+                const lockIcon = purchased ? '<i data-lucide="download" size="16"></i>' : '<i data-lucide="lock" size="16"></i>';
+                const btnClass = purchased ? 'btn-ac btn-download' : 'btn-ac btn-download locked';
+                const btnText = purchased ? 'Download Official PDF' : 'Purchase Course to Unlock';
+
+                content.innerHTML = `
+                    <p class="ac-body" style="margin-bottom: 15px; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+                        <strong>App ID:</strong> <span style="font-family:'JetBrains Mono'; color:var(--primary); font-weight:800;">${reqData?.appId || ''}</span><br>
+                        Your identity is verified.
+                    </p>
+                    <div class="dev-bypass" onclick="toggleBypass()"></div>
+                    <button class="${btnClass}" id="dl-pdf-btn" onclick="generateStudentPDF()">
+                        ${lockIcon} ${btnText}
+                    </button>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function fetchAdmitCardStatus(uid) {
+            // Listen to real Firebase purchases to unlock the button
+            db.ref(`students/${uid}/purchases`).on('value', purchaseSnap => {
+                const purchases = purchaseSnap.val() || {};
+                hasPurchased = Object.keys(purchases).length > 0; 
+
+                // Listen to Admit Card application status
+                db.ref(`admit_card_requests/${uid}`).on('value', snap => {
+                    const req = snap.val();
+                    const status = req ? req.status : 'none';
+                    renderAdmitCardUI(status, req, hasPurchased);
+                    
+                    // Sync admit card status to offline cache
+                    updateOfflineCache(uid, { admitStatus: status, admitData: req, hasPurchased });
+                });
+            });
+        }
+
+        function generateStudentPDF() {
+            if(!hasPurchased) return showToast("You must purchase the course to download the admit card.");
+            if(!cachedAdmitData) return showToast("Data error. Cannot generate PDF.");
+
+            showToast("Rendering Official Admit Card...");
+            const btn = document.getElementById('dl-pdf-btn');
+            btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Rendering...`;
+            lucide.createIcons();
+
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.width;
+                    const pageHeight = doc.internal.pageSize.height;
+
+                    const pdfData = {
+                        'Application ID:': cachedAdmitData.appId,
+                        'Full Name:': cachedAdmitData.fullName,
+                        'Mother\'s Name:': cachedAdmitData.motherName,
+                        'Father\'s Name:': cachedAdmitData.fatherName,
+                        'Date of Birth:': cachedAdmitData.dob,
+                        'Gender:': cachedAdmitData.gender,
+                        'Category:': cachedAdmitData.category,
+                        'District:': cachedAdmitData.district,
+                        'Target Exam:': 'SUNDAY GRAND TEST - AGRIQ PRO',
+                    };
+                    
+                    // Design matching Admin generation
+                    doc.setFillColor(248, 250, 252); doc.rect(0, 0, pageWidth, pageHeight, 'F');
+                    doc.setFillColor(0, 114, 255); doc.rect(14, 14, pageWidth - 28, 40, 'F');
+                    
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(24); doc.setTextColor(255, 255, 255);
+                    doc.text("AGRIQ PRO PLATFORM", pageWidth / 2, 30, { align: "center", charSpace: 1 });
+                    doc.setFontSize(11); doc.setFont("helvetica", "normal"); doc.setTextColor(224, 242, 254);
+                    doc.text("SECURE ADMIT CARD & SUNDAY TEST ACCESS", pageWidth / 2, 38, { align: "center" });
+                    
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(15, 23, 42); 
+                    doc.text("CANDIDATE DETAILS", pageWidth / 2, 65, { align: "center" });
+
+                    let yPos = 75; const startX = 18; const labelW = 55; const valueW = 115; const rowH = 10;
+                    let rowCount = 0;
+
+                    for (const [key, val] of Object.entries(pdfData)) {
+                        if (rowCount % 2 === 0) doc.setFillColor(241, 245, 249); else doc.setFillColor(255, 255, 255); 
+                        doc.rect(startX, yPos, (rowCount < 5) ? labelW + valueW - 35 : labelW + valueW, rowH, 'F'); 
+                        doc.setFontSize(10); doc.setTextColor(71, 85, 105); doc.text(key, startX + 4, yPos + 7);
+                        doc.setTextColor(15, 23, 42); if (key === 'Target Exam:') doc.setTextColor(0, 114, 255); 
+                        doc.text(val ? val.toString().toUpperCase() : '-', startX + labelW, yPos + 7);
+                        yPos += rowH; rowCount++;
+                    }
+
+                    // Photo & Stamps
+                    const photoX = startX + labelW + valueW - 30; const photoY = 75;
+                    doc.setDrawColor(15, 23, 42); doc.setLineWidth(0.6); doc.rect(photoX - 1.5, photoY - 1.5, 33, 43, 'S');
+                    if(cachedAdmitData.photoBase64) doc.addImage(cachedAdmitData.photoBase64, 'JPEG', photoX, photoY, 30, 40);
+
+                    // Accepted Seal
+                    doc.setDrawColor(16, 185, 129); doc.setLineWidth(0.8);
+                    doc.circle(photoX + 25, photoY + 35, 10, 'S'); doc.circle(photoX + 25, photoY + 35, 8.5, 'S');
+                    doc.setFontSize(5); doc.setTextColor(16, 185, 129);
+                    doc.text("AGRIQ PRO", photoX + 25, photoY + 34, { align: "center", angle: -15 });
+                    doc.setFontSize(6); doc.text("ACCEPTED", photoX + 25, photoY + 37, { align: "center", angle: -15 });
+
+                    // Coordinator Signature
+                    const signY = yPos + 15;
+                    doc.setFont("times", "italic"); doc.setFontSize(18); doc.setTextColor(0, 85, 255);
+                    doc.text("Coordinator", photoX + 15, signY + 12, { align: "center", angle: -5 });
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(15, 23, 42);
+                    doc.text("Admissions Coordinator", photoX + 15, signY + 22, { align: "center" });
+
+                    doc.save(`AgriQ_AdmitCard_${cachedAdmitData.appId}.pdf`);
+                    
+                    btn.innerHTML = `<i data-lucide="download" size="16"></i> Download Official PDF`;
+                    lucide.createIcons();
+                } catch(e) {
+                    showToast("Error generating PDF.");
+                    btn.innerHTML = `<i data-lucide="download" size="16"></i> Download Official PDF`;
+                    lucide.createIcons();
+                }
+            }, 500);
+        }
+
+        // --- EXISTING PROFILE LOGIC + CACHE WRITING ---
         function fetchProfileData(uid) {
-            // Fetch Name & Photo
             db.ref(`students/${uid}`).on('value', snap => {
                 const data = snap.val();
                 if (data) {
-                    document.getElementById('user-name').innerText = data.name || "STUDENT";
-                    document.getElementById('user-initial').innerText = (data.name || "S")[0].toUpperCase();
-                    
-                    // Handle Profile Photo UI
+                    const name = data.name || "STUDENT";
+                    document.getElementById('user-name').innerText = name;
+                    document.getElementById('user-initial').innerText = name[0].toUpperCase();
                     if (data.photoURL) {
                         document.getElementById('user-photo').src = data.photoURL;
                         document.getElementById('user-photo').style.display = 'block';
                         document.getElementById('user-initial').style.display = 'none';
-                        document.getElementById('upload-btn').style.display = 'none'; // Hide button forever
+                        document.getElementById('upload-btn').style.display = 'none';
                     } else {
-                        document.getElementById('upload-btn').style.display = 'flex'; // Show button if no photo
+                        document.getElementById('upload-btn').style.display = 'flex'; 
                     }
+                    
+                    // Save Name & Photo to offline cache
+                    updateOfflineCache(uid, { name, photoURL: data.photoURL || null });
                 }
             });
 
-            // FETCH XP FROM LEADERBOARD
             db.ref('leaderboard').on('value', snap => {
-                let totalPoints = 0;
-                let userTotalAcc = 0;
-                let userTests = 0;
-
+                let totalPoints = 0; let userTotalAcc = 0; let userTests = 0;
                 snap.forEach(child => {
                     const entry = child.val();
                     if (entry.uid === uid) {
@@ -438,23 +584,21 @@
                         userTests++;
                     }
                 });
-
-                document.getElementById('tests-val').innerText = userTests;
-                document.getElementById('acc-val').innerText = userTests > 0 ? Math.round(userTotalAcc / userTests) + "%" : "0%";
                 
+                const avgAcc = userTests > 0 ? Math.round(userTotalAcc / userTests) : 0;
+                document.getElementById('tests-val').innerText = userTests;
+                document.getElementById('acc-val').innerText = `${avgAcc}%`;
                 applyTierSystem(totalPoints);
+                
+                // Save tests, accuracy, and XP to offline cache
+                updateOfflineCache(uid, { tests: userTests, acc: avgAcc, xp: totalPoints });
             });
         }
 
-        // ONE-TIME PHOTO UPLOAD FUNCTION
         function handlePhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
-            // Validate file size (Max 2MB) to save storage
-            if (file.size > 2 * 1024 * 1024) {
-                return showToast("Image too large. Max 2MB allowed.");
-            }
+            if (file.size > 2 * 1024 * 1024) return showToast("Image too large. Max 2MB allowed.");
 
             showToast("Uploading secure image...");
             const uid = auth.currentUser.uid;
@@ -464,9 +608,9 @@
                 (error) => { showToast("Upload failed: " + error.message); }, 
                 () => {
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                        // Save URL to Database
                         db.ref(`students/${uid}`).update({ photoURL: downloadURL }).then(() => {
                             showToast("Profile Photo Locked!");
+                            updateOfflineCache(uid, { photoURL: downloadURL });
                         });
                     });
                 }
@@ -475,33 +619,21 @@
 
         function applyTierSystem(userXP) {
             let activeTier = tiers[0];
-            
-            for (let i = 0; i < tiers.length; i++) {
-                if (userXP >= tiers[i].threshold) {
-                    activeTier = tiers[i];
-                }
-            }
+            for (let i = 0; i < tiers.length; i++) { if (userXP >= tiers[i].threshold) activeTier = tiers[i]; }
 
             const widget = document.getElementById('profile-widget');
             widget.className = `profile-pallet ${activeTier.id}`;
             document.getElementById('tier-text').innerText = activeTier.name;
             document.getElementById('current-xp').innerText = userXP.toLocaleString();
-
-            if (activeTier.id === "tier-legend") {
-                document.getElementById('target-xp').innerText = "MAX";
-                document.getElementById('rank-dest').innerText = "Top Rank Reached";
-                document.getElementById('xp-bar').style.width = "100%";
-            } else {
-                document.getElementById('target-xp').innerText = activeTier.next.toLocaleString();
-                const nextTierIndex = tiers.findIndex(t => t.id === activeTier.id) + 1;
-                document.getElementById('rank-dest').innerText = `Next: ${tiers[nextTierIndex].name}`;
-                
-                const xpInCurrentTier = userXP - activeTier.threshold;
-                const totalXpRequiredForNext = activeTier.next - activeTier.threshold;
-                const percentage = (xpInCurrentTier / totalXpRequiredForNext) * 100;
-                
-                document.getElementById('xp-bar').style.width = `${Math.min(percentage, 100)}%`;
-            }
+            document.getElementById('target-xp').innerText = activeTier.next.toLocaleString();
+            
+            const nextTierIndex = tiers.findIndex(t => t.id === activeTier.id) + 1;
+            if(tiers[nextTierIndex]) document.getElementById('rank-dest').innerText = `Next: ${tiers[nextTierIndex].name}`;
+            
+            const xpInCurrentTier = userXP - activeTier.threshold;
+            const totalXpRequiredForNext = activeTier.next - activeTier.threshold;
+            const percentage = (xpInCurrentTier / totalXpRequiredForNext) * 100;
+            document.getElementById('xp-bar').style.width = `${Math.min(percentage, 100)}%`;
         }
 
         function requestNameChange() {
@@ -516,29 +648,25 @@
             document.getElementById('m-confirm').onclick = () => {
                 const newName = document.getElementById('name-input').value.trim().toUpperCase();
                 if(newName.length < 3) return showToast("Name must be at least 3 characters!");
-                
-                db.ref(`students/${auth.currentUser.uid}`).update({ name: newName })
-                    .then(() => {
-                        showToast("Profile Updated!");
-                        closeModal();
-                    }).catch(err => showToast(err.message));
+                const uid = auth.currentUser.uid;
+                db.ref(`students/${uid}`).update({ name: newName }).then(() => { 
+                    showToast("Profile Updated!"); 
+                    updateOfflineCache(uid, { name: newName });
+                    closeModal(); 
+                });
             };
         }
 
         function confirmLogout() {
             document.getElementById('m-title').innerText = "END SESSION";
             document.getElementById('m-body').innerHTML = `<p style="color:var(--text-dim); font-size:14px; line-height:1.5; font-weight:600;">Are you sure you want to log out of AgriQ Pro?</p>`;
-            
             const confirmBtn = document.getElementById('m-confirm');
-            confirmBtn.style.background = '#e11d48'; 
-            confirmBtn.innerText = 'Logout';
-            
+            confirmBtn.style.background = '#e11d48'; confirmBtn.innerText = 'Logout';
             document.getElementById('modal-overlay').style.display = 'flex';
-            
-            confirmBtn.onclick = () => {
-                auth.signOut().then(() => {
-                    window.location.href = 'login.html';
-                });
+            confirmBtn.onclick = () => { 
+                // Clear local offline cache on logout
+                if (auth.currentUser) localStorage.removeItem(`agriq_profile_cache_${auth.currentUser.uid}`);
+                auth.signOut().then(() => { window.location.href = 'login.html'; }); 
             };
         }
 
@@ -550,8 +678,7 @@
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            t.innerHTML = msg; 
-            t.style.display = 'block';
+            t.innerHTML = msg; t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 3000);
         }
     </script>
