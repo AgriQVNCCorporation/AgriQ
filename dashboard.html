@@ -40,7 +40,7 @@
             overflow-x: hidden;
         }
 
-        /* Ambient Background Mesh (V7.0) */
+        /* Ambient Background Mesh */
         .ambient-bg {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
             background: radial-gradient(circle at 15% 50%, rgba(0, 198, 255, 0.08), transparent 25%),
@@ -110,12 +110,24 @@
             border-radius: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; 
             cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.03); text-decoration: none; 
             transition: var(--transition); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            position: relative;
         }
         .banner-card:hover { transform: translateY(-4px); border-color: rgba(16, 185, 129, 0.3); box-shadow: 0 15px 40px rgba(16, 185, 129, 0.1); }
         
         .daily-icon { background: rgba(16, 185, 129, 0.1); padding: 14px; border-radius: 20px; display: flex; align-items: center; justify-content: center; transition: var(--transition); border: 1px solid rgba(16, 185, 129, 0.2); }
         .banner-card:hover .daily-icon { background: var(--daily-color); color: white !important;}
         .banner-card:hover .daily-icon svg { color: white !important; }
+
+        /* Refresh Button inside Banner */
+        .refresh-btn {
+            background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--daily-color); padding: 8px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: var(--transition); z-index: 5;
+        }
+        .refresh-btn:hover { background: var(--daily-color); color: white; transform: rotate(180deg); }
+        .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* --- SUNDAY TEST SECURE LOGIN CARD --- */
         .secure-card { 
@@ -152,29 +164,6 @@
         .btn-black:hover { background: #1e293b; transform: translateY(-3px); box-shadow: 0 15px 35px rgba(15, 23, 42, 0.3); }
         .btn-black:active { transform: scale(0.97); }
 
-        /* --- COMMUNITY RATINGS (Circle Scroller) --- */
-        .section-title { font-weight: 900; font-size: 18px; margin: 30px 0 15px; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px;}
-        
-        .rating-scroller {
-            display: flex; gap: 16px; overflow-x: auto; padding-bottom: 20px;
-            scroll-snap-type: x mandatory; scrollbar-width: none; /* Firefox */
-        }
-        .rating-scroller::-webkit-scrollbar { display: none; } /* Chrome */
-        
-        .rating-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
-            padding: 20px; min-width: 280px; max-width: 280px; scroll-snap-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.02); flex-shrink: 0; backdrop-filter: blur(10px);
-            animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        
-        .rc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .rc-avatar { width: 40px; height: 40px; border-radius: 14px; background: var(--primary-glow); display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 900; font-size: 16px;}
-        .rc-meta h4 { margin: 0; font-size: 14px; font-weight: 800; color: var(--text-main); }
-        .rc-stars { display: flex; gap: 2px; color: var(--gold); margin-top: 4px; }
-        .rc-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; font-weight: 500; margin: 0; }
-
         /* --- BOTTOM NAV --- */
         .nav-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); 
@@ -187,25 +176,12 @@
         .nav-item.active { color: var(--primary); transform: translateY(-4px); }
 
         /* --- MODALS --- */
-        #modal-overlay, #rating-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; }
+        #modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; }
         .modal { background: white; padding: 35px; border-radius: 32px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         
         .modal-btn { padding: 16px 24px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; flex: 1; transition: var(--transition); font-size: 14px;}
         .modal-btn:active { transform: scale(0.95); }
         
-        /* Rating Specifics (Updated to target SVG) */
-        .star-container { display: flex; justify-content: center; gap: 8px; margin: 20px 0; direction: rtl;}
-        .star-container svg { color: var(--border); cursor: pointer; transition: 0.2s; }
-        .star-container svg:hover, .star-container svg:hover ~ svg { color: var(--gold); fill: var(--gold); transform: scale(1.1); }
-        .star-container svg.selected, .star-container svg.selected ~ svg { color: var(--gold); fill: var(--gold); }
-        
-        .rate-text { 
-            width: 100%; height: 100px; padding: 16px; border-radius: 16px; border: 2px solid var(--border);
-            background: #f8fafc; font-family: 'Plus Jakarta Sans'; font-size: 13px; font-weight: 600;
-            resize: none; outline: none; transition: var(--transition); margin-bottom: 20px; color: var(--text-main);
-        }
-        .rate-text:focus { border-color: var(--primary); background: #fff; box-shadow: 0 5px 15px var(--primary-glow); }
-
         #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
         @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -233,31 +209,6 @@
 
     <div id="toast"></div>
 
-    <!-- Rating Modal --
-    <div id="rating-overlay">
-        <div class="modal">
-            <h3 style="margin-top:0; font-weight:900; font-size: 22px; letter-spacing: -0.5px;">Rate AgriQ Pro</h3>
-            <p style="color:var(--text-dim); font-size:14px; font-weight:500; margin-top:5px;">How was your experience preparing with us today?</p>
-            >
-            <div class="star-container">
-                <!-- Data-val attribute preserved for JS targeting --
-                <i data-lucide="star" size="32" data-val="5" onclick="setRating(5)"></i>
-                <i data-lucide="star" size="32" data-val="4" onclick="setRating(4)"></i>
-                <i data-lucide="star" size="32" data-val="3" onclick="setRating(3)"></i>
-                <i data-lucide="star" size="32" data-val="2" onclick="setRating(2)"></i>
-                <i data-lucide="star" size="32" data-val="1" onclick="setRating(1)"></i>
-            </div>
-
-            <textarea class="rate-text" id="review-text" placeholder="Tell us what you think..."></textarea>
-
-            <div style="display:flex; gap:12px;">
-                <button class="modal-btn" style="background:rgba(15, 23, 42, 0.05); color:var(--text-main);" onclick="closeRatingModal()">Cancel</button>
-                <button class="modal-btn" style="background:var(--primary-gradient); color:white; box-shadow: 0 5px 15px var(--primary-glow);" onclick="submitRating()">Submit</button>
-            </div>
-        </div>
-    </div>
- >
-    <!-- General Alert Modal -->
     <div id="modal-overlay">
         <div class="modal">
             <h3 id="m-title" style="margin-top:0; font-weight:900; font-size: 20px;">Title</h3>
@@ -266,7 +217,6 @@
                 <button class="modal-btn" style="background:var(--primary-gradient); color:white" onclick="closeModal()">Okay</button>
             </div>
         </div>
-        
     </div>
   
     <header>
@@ -274,9 +224,9 @@
             <i data-lucide="menu" size="24" style="cursor:pointer; color:var(--text-main);" onclick="toggleSidebar()"></i>
             <div class="brand">AGRI<span>Q</span> PRO</div>
         </div>
-        <div class="user-profile-btn" onclick="openRatingModal()">
+        <div class="user-profile-btn" onclick="window.location.href='profile.html'">
             <span class="u-name" id="user-display-name">USER</span>
-            <i data-lucide="star" size="16" style="color:var(--primary)"></i>
+            <i data-lucide="user" size="16" style="color:var(--primary)"></i>
         </div>
     </header>
 
@@ -296,15 +246,18 @@
             </a>
         </div>
 
-        <a href="daily.html" class="banner-card">
+        <div class="banner-card" onclick="window.location.href='daily.html'">
             <div class="daily-icon"><i data-lucide="zap" color="var(--daily-color)" size="26"></i></div>
             <div style="flex:1;">
                 <h3 style="margin:0 0 4px 0; font-size:16px; font-weight:900; color: var(--text-main);">Daily Rapid Drill</h3>
                 <p style="margin:0; font-size:12px; color:var(--text-dim); font-weight:600;">10 Questions • 5 Mins • Fresh</p>
             </div>
-            <i data-lucide="chevron-right" color="var(--text-dim)"></i>
-        </a>
- <!-- SUNDAY TEST LOGIN CARD (BLACK BUTTON) -->
+            <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh(event)" title="Refresh Ranks">
+                <i data-lucide="refresh-cw" size="18"></i>
+            </button>
+            <i data-lucide="chevron-right" color="var(--text-dim)" style="margin-left: 8px;"></i>
+        </div>
+        
         <div class="secure-card">
             <h3 style="color: var(--primary);"><i data-lucide="shield-check" size="24"></i> Sunday Grand Test</h3>
             <p>Authentication required. Enter your specific credentials to unlock this week's live examination array.</p>
@@ -322,44 +275,6 @@
                 AUTHENTICATE & START <i data-lucide="lock" size="18"></i>
             </button>
         </div>
-        <!-- COMMUNITY RATINGS 
-        <div class="section-title"><i data-lucide="message-square-heart" size="22" color="var(--danger)"></i> Student Feedback</div>
-        <div class="rating-scroller" id="rating-scroller">
-            
-            <div class="rating-card">
-                <div class="rc-header">
-                    <div class="rc-avatar">SS</div>
-                    <div class="rc-meta">
-                        <h4></h4>
-                        <div class="rc-stars"><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i></div>
-                    </div>
-                </div>
-                <p class="rc-text">The daily drills are exactly what I needed for ICAR prep. Fast, responsive, and the UI is incredibly smooth!</p>
-            </div>
-            
-            <div class="rating-card">
-                <div class="rc-header">
-                    <div class="rc-avatar" style="background: rgba(16, 185, 129, 0.1); color: var(--daily-color);">AK</div>
-                    <div class="rc-meta">
-                        <h4>Kshirsagar Aarti Krushna</h4>
-                        <div class="rc-stars"><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" size="12"></i></div>
-                    </div>
-                </div>
-                <p class="rc-text">Leaderboards keep me competitive. The offline array syncing is brilliant for when I travel.</p>
-            </div>
-
-            <div class="rating-card">
-                <div class="rc-header">
-                    <div class="rc-avatar" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">PS</div>
-                    <div class="rc-meta">
-                        <h4>Patil Sanket</h4>
-                        <div class="rc-stars"><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i><i data-lucide="star" fill="var(--gold)" size="12"></i></div>
-                    </div>
-                </div>
-                <p class="rc-text">Best agronomy platform out there. The UI makes studying actually enjoyable.</p>
-            </div>
-        </div>
--->
     </main>
 
     <nav class="nav-bar">
@@ -398,75 +313,6 @@
             setTimeout(() => overlay.style.display = 'none', 300);
         }
 
-        // --- Rating Modal & Submission Logic ---
-        let currentRating = 0;
-        function openRatingModal() { document.getElementById('rating-overlay').style.display = 'flex'; }
-        function closeRatingModal() { document.getElementById('rating-overlay').style.display = 'none'; resetStars(); }
-        
-        function setRating(val) {
-            currentRating = val;
-            // Now targeting the SVG elements created by Lucide
-            const stars = document.querySelectorAll('.star-container svg');
-            stars.forEach(s => {
-                if(parseInt(s.getAttribute('data-val')) <= val) {
-                    s.classList.add('selected');
-                } else {
-                    s.classList.remove('selected');
-                }
-            });
-        }
-        function resetStars() {
-            currentRating = 0;
-            document.querySelectorAll('.star-container svg').forEach(s => s.classList.remove('selected'));
-            document.getElementById('review-text').value = '';
-        }
-
-        function submitRating() {
-            if(currentRating === 0) return showToast("Please select a star rating!");
-            
-            const reviewText = document.getElementById('review-text').value.trim();
-            const userName = document.getElementById('user-display-name').innerText;
-            const initials = userName.substring(0, 2).toUpperCase();
-
-            // Generate Star SVG HTML
-            let starsHtml = '';
-            for(let i=0; i<5; i++) {
-                if(i < currentRating) {
-                    starsHtml += '<i data-lucide="star" fill="var(--gold)" size="12" style="color:var(--gold)"></i>';
-                } else {
-                    starsHtml += '<i data-lucide="star" size="12" style="color:var(--gold)"></i>';
-                }
-            }
-
-            // Create New Rating Card
-            const newCard = document.createElement('div');
-            newCard.className = 'rating-card';
-            newCard.innerHTML = `
-                <div class="rc-header">
-                    <div class="rc-avatar">${initials}</div>
-                    <div class="rc-meta">
-                        <h4>${userName}</h4>
-                        <div class="rc-stars">${starsHtml}</div>
-                    </div>
-                </div>
-                <p class="rc-text">${reviewText || "Great platform! Highly recommended for agriculture exams."}</p>
-            `;
-
-            // Prepend to Scroller
-            const scroller = document.getElementById('rating-scroller');
-            scroller.insertBefore(newCard, scroller.firstChild);
-            
-            // Re-initialize icons for the new card
-            lucide.createIcons();
-
-            // Reset and close
-            closeRatingModal();
-            showToast("Thank you for your feedback!");
-
-            // Optional: Push to Firebase here
-            // db.ref('ratings').push({ rating: currentRating, text: reviewText, name: userName, uid: auth.currentUser.uid });
-        }
-
         // --- Sunday Test Logic ---
         function startSundayTest() {
             const appId = document.getElementById('sunday-app-id').value.trim();
@@ -479,7 +325,6 @@
             showToast("Authenticating secure connection...");
             
             setTimeout(() => {
-                // Route to the test engine with the specific sunday parameter
                 window.location.href = `tst.html?type=sunday&auth=${btoa(appId)}`;
             }, 1000);
         }
@@ -500,11 +345,98 @@
             setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        // --- Auth & Data Fetching ---
+        // --- Manual Refresh Button Logic ---
+        function manualRefresh(e) {
+            e.stopPropagation(); // Prevents clicking the banner from redirecting to daily.html
+            const btn = document.getElementById('refresh-btn');
+            btn.classList.add('spinning');
+            showToast("Syncing latest ranks...");
+            
+            if (auth.currentUser) {
+                fetchAndSyncRanks(auth.currentUser.uid, () => {
+                    setTimeout(() => btn.classList.remove('spinning'), 600);
+                    showToast("Ranks updated!");
+                });
+            } else {
+                btn.classList.remove('spinning');
+            }
+        }
+
+        // --- Core Leaderboard & Local Storage Sync ---
+        function fetchAndSyncRanks(uid, callback = null) {
+            const cacheKey = `agriq_tracker_${uid}`;
+
+            db.ref('leaderboard').once('value', snap => {
+                const rawData = snap.val();
+                if (!rawData) {
+                    if (callback) callback();
+                    return;
+                }
+
+                const globalAgg = {};
+                const dailyAgg = {};
+                
+                Object.values(rawData).forEach(entry => {
+                    if (!entry.uid) return;
+                    const score = parseInt(entry.score) || 0;
+
+                    // 1. Global Aggregation (All entries)
+                    if (!globalAgg[entry.uid]) globalAgg[entry.uid] = { uid: entry.uid, score: 0 };
+                    globalAgg[entry.uid].score += score;
+
+                    // 2. Daily Drill Aggregation (Only DAILY_DRILL module)
+                    if (entry.module === "DAILY_DRILL") {
+                        if (!dailyAgg[entry.uid]) dailyAgg[entry.uid] = { uid: entry.uid, score: 0 };
+                        dailyAgg[entry.uid].score += score;
+                    }
+                });
+
+                // Calculate Global Ranks
+                const sortedGlobal = Object.values(globalAgg).sort((a, b) => b.score - a.score);
+                const globalIndex = sortedGlobal.findIndex(u => u.uid === uid);
+                const myGlobalRank = globalIndex !== -1 ? globalIndex + 1 : '-';
+                const myGlobalScore = globalAgg[uid] ? globalAgg[uid].score : 0;
+
+                // Calculate Daily Ranks
+                const sortedDaily = Object.values(dailyAgg).sort((a, b) => b.score - a.score);
+                const dailyIndex = sortedDaily.findIndex(u => u.uid === uid);
+                const myDailyRank = dailyIndex !== -1 ? dailyIndex + 1 : '-';
+                const myDailyScore = dailyAgg[uid] ? dailyAgg[uid].score : 0;
+
+                // Update DOM instantly
+                document.getElementById('rank-val').innerHTML = myGlobalRank;
+                document.getElementById('points-val').innerHTML = myGlobalScore.toLocaleString() + ' XP';
+                
+                document.getElementById('daily-rank-val').innerHTML = myDailyRank;
+                document.getElementById('daily-points-val').innerHTML = myDailyScore.toLocaleString() + ' XP';
+
+                // Save fresh computed stats back to local storage
+                localStorage.setItem(cacheKey, JSON.stringify({ 
+                    score: myGlobalScore, 
+                    rank: myGlobalRank,
+                    dailyScore: myDailyScore,
+                    dailyRank: myDailyRank
+                }));
+
+                if (callback) callback();
+            });
+        }
+
+        // --- Auth & Initial Load ---
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'login.html';
             
-            // Set Username
+            // 1. INSTANT LOAD: Read Local Storage first so skeletons disappear instantly
+            const cacheKey = `agriq_tracker_${user.uid}`;
+            const cached = JSON.parse(localStorage.getItem(cacheKey));
+            if (cached && cached.score !== undefined) {
+                document.getElementById('points-val').innerHTML = cached.score.toLocaleString() + ' XP';
+                if (cached.rank) document.getElementById('rank-val').innerHTML = cached.rank;
+                if (cached.dailyScore) document.getElementById('daily-points-val').innerHTML = cached.dailyScore.toLocaleString() + ' XP';
+                if (cached.dailyRank) document.getElementById('daily-rank-val').innerHTML = cached.dailyRank;
+            }
+
+            // Fetch user profile name
             db.ref(`students/${user.uid}`).once('value', snap => {
                 const userData = snap.val();
                 if (userData && userData.name) {
@@ -514,13 +446,10 @@
                 }
             });
 
-            // Mock Data Loading for Skeletons
-            setTimeout(() => {
-                document.getElementById('rank-val').innerHTML = '42';
-                document.getElementById('points-val').innerHTML = '2,450 XP';
-                document.getElementById('daily-rank-val').innerHTML = '12';
-                document.getElementById('daily-points-val').innerHTML = '380 XP';
-            }, 1500);
+            // 2. REAL-TIME LISTENER: Keep ranks updated automatically in the background
+            db.ref('leaderboard').on('value', () => {
+                fetchAndSyncRanks(user.uid);
+            });
         });
 
     </script>
