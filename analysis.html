@@ -51,15 +51,8 @@
             position: sticky; top: 0; z-index: 100;
         }
 
-        .icon-btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 40px; height: 40px; background: #fff;
-            border: 1.5px solid var(--border); border-radius: 12px;
-            color: var(--primary); text-decoration: none; transition: var(--transition);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
-        .icon-btn:active { transform: scale(0.9); background: var(--primary-glow); }
         .profile-container { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
+        .user-tag-badge { font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono'; background: var(--primary-glow); padding: 8px 14px; border-radius: 12px; }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
@@ -126,15 +119,6 @@
         .data-row { display: flex; align-items: center; gap: 12px; font-size: 13px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; }
         .data-label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
 
-        .btn-group { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
-        .btn-action { 
-            padding: 20px; border-radius: 20px; border: none; font-weight: 900; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            gap: 10px; transition: 0.2s; font-size: 15px;
-        }
-        .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
-        .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
-        
         .view-options-btn {
             margin-top: 15px; display: inline-flex; align-items: center; gap: 6px;
             font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none;
@@ -142,6 +126,28 @@
             transition: 0.2s; font-family: 'JetBrains Mono';
         }
         .view-options-btn:active { transform: scale(0.95); }
+
+        /* WhatsApp Admin Notice & Buttons */
+        .whatsapp-notice {
+            background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3);
+            border-radius: 20px; padding: 18px 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 16px; margin-top: 25px;
+        }
+        .w-icon {
+            background: #25D366; color: white; width: 44px; height: 44px;
+            border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .whatsapp-notice p { margin: 0; font-size: 13px; font-weight: 800; color: #166534; line-height: 1.5; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+        .btn-action { 
+            padding: 20px; border-radius: 20px; border: none; font-weight: 900; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            gap: 10px; transition: 0.2s; font-size: 15px;
+        }
+        .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
+        .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
+        .btn-action:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
@@ -156,13 +162,7 @@
             <div class="profile-container" id="user-initial">U</div>
             <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">ANALYSIS</span></div>
         </div>
-        
-        <div style="display:flex; align-items:center; gap:10px;">
-            <a href="leaderboard.html" class="icon-btn">
-                <i data-lucide="trophy" size="20"></i>
-            </a>
-            <div id="user-tag" style="font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono';">STUDENT</div>
-        </div>
+        <div id="user-tag" class="user-tag-badge">STUDENT</div>
     </header>
 
     <main>
@@ -224,12 +224,14 @@
 
         <div id="review-container"></div>
 
+        <div class="whatsapp-notice">
+            <div class="w-icon"><i data-lucide="bell-ring" size="22"></i></div>
+            <p>Your result will be declared as soon as possible by the Admin on the WhatsApp group. Thank you!</p>
+        </div>
+
         <div class="btn-group">
-            <button class="btn-action outline" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
+            <button class="btn-action primary" onclick="downloadMissedQuestionsPDF()">
                 <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
-            </button>
-            <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
-                <i data-lucide="award" size="20"></i> VIEW RANKINGS
             </button>
             <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
                 <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
@@ -255,13 +257,27 @@
 
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'dashboard.html';
-            db.ref(`students/${user.uid}`).once('value', snap => {
-                const d = snap.val();
-                if(d) {
-                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
-                    document.getElementById('user-initial').innerText = d.name[0];
+            
+            // --- OFFLINE / ONLINE FETCH FOR USERNAME ---
+            if (navigator.onLine) {
+                db.ref(`students/${user.uid}`).once('value').then(snap => {
+                    const d = snap.val();
+                    if(d && d.name) {
+                        document.getElementById('user-tag').innerText = d.name.toUpperCase();
+                        document.getElementById('user-initial').innerText = d.name[0].toUpperCase();
+                        // Cache it for offline use
+                        localStorage.setItem('agriq_cached_username', d.name);
+                    }
+                }).catch(e => console.warn("Failed to fetch user profile data."));
+            } else {
+                // If offline, check if we have a saved name
+                const cachedName = localStorage.getItem('agriq_cached_username');
+                if (cachedName) {
+                    document.getElementById('user-tag').innerText = cachedName.toUpperCase();
+                    document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
                 }
-            });
+            }
+
             loadAnalysis();
         });
 
@@ -411,6 +427,12 @@
 
         // --- ENHANCED PDF GENERATION FUNCTION ---
         function downloadMissedQuestionsPDF() {
+            // Check if the jsPDF CDN successfully loaded (in case of offline mode)
+            if (!window.jspdf) {
+                alert("The PDF generator is not available offline. Please connect to the internet to download this report.");
+                return;
+            }
+
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data || !data.details) return;
 
@@ -516,23 +538,36 @@
                         let yOffset = row === 0 ? 0 : rowMaxY[0];
                         let currentY = optStartY + yOffset;
 
-                        // Conditional formatting based on correct vs user answer
-                        if (opt === item.actual) {
-                            doc.setFont("helvetica", "bold"); doc.setTextColor(22, 163, 74); 
-                            doc.text(`[${optionLabels[optIndex]}] (Correct)`, xPos, currentY); 
-                            doc.setTextColor(22, 163, 74);
-                        } else if (opt === item.user) {
-                            doc.setFont("helvetica", "bold"); doc.setTextColor(220, 38, 38); 
-                            doc.text(`[${optionLabels[optIndex]}] (Yours)`, xPos, currentY); 
-                            doc.setTextColor(220, 38, 38);
-                        } else {
-                            doc.setFont("helvetica", "bold"); doc.setTextColor(0, 132, 255); 
-                            doc.text(`[${optionLabels[optIndex]}]`, xPos, currentY);
-                            doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 70); 
-                        }
+                        let isCorrect = (opt === item.actual);
+                        let isUser = (opt === item.user);
+                        let markerText = `[${optionLabels[optIndex]}]`;
+                        let optString = opt;
+
+                        // Set Marker Color & Draw
+                        if (isCorrect) doc.setTextColor(22, 163, 74);
+                        else if (isUser) doc.setTextColor(220, 38, 38);
+                        else doc.setTextColor(0, 132, 255);
                         
-                        const optText = doc.splitTextToSize(`      ${opt}`, colWidth - 10);
-                        doc.text(optText, xPos + 10, currentY);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(markerText, xPos, currentY);
+
+                        // Set Suffix and Text Color
+                        if (isCorrect) {
+                            optString += " (Correct)";
+                            doc.setTextColor(22, 163, 74); 
+                            doc.setFont("helvetica", "bold");
+                        } else if (isUser) {
+                            optString += " (Yours)";
+                            doc.setTextColor(220, 38, 38);
+                            doc.setFont("helvetica", "bold");
+                        } else {
+                            doc.setTextColor(70, 70, 70);
+                            doc.setFont("helvetica", "normal");
+                        }
+
+                        // Split option string and align 8 units to the right of the marker
+                        const optText = doc.splitTextToSize(optString, colWidth - 12);
+                        doc.text(optText, xPos + 8, currentY);
 
                         let optHeight = (optText.length * 4.5) + 2;
                         if (optHeight > rowMaxY[row]) rowMaxY[row] = optHeight;
