@@ -181,7 +181,7 @@
 <body>
 
     <div id="preloader">
-        <div class="loader-brand">AGRI<span>Q</span>PRO</div>
+        <div class="loader-brand">AGRI<span>Q</span> PRO</div>
         <div class="loader-spinner"></div>
     </div>
 
@@ -245,13 +245,6 @@
                 <i data-lucide="zap" size="100" class="bg-symbol"></i>
                 <div class="icon-box"><i data-lucide="zap" size="26"></i></div>
                 <div class="course-title">Daily Test</div>
-                <div class="badge"><i data-lucide="unlock" size="10"></i> Unlocked</div>
-            </div>
-
-            <div class="course-card card-coak" onclick="window.location.href='coakmonks.html'" data-title="COAK Module Unlock">
-                <i data-lucide="book-open-check" size="100" class="bg-symbol"></i>
-                <div class="icon-box"><i data-lucide="book-open-check" size="26"></i></div>
-                <div class="course-title">COAK Module</div>
                 <div class="badge"><i data-lucide="unlock" size="10"></i> Unlocked</div>
             </div>
 
@@ -468,7 +461,7 @@
                         <div class="badge"><i data-lucide="lock" size="10"></i> ₹${data.price}</div>
                     `;
                 } else {
-                    card.onclick = () => { window.location.href = `test.html?mod=${data.key}`; };
+                    card.onclick = () => { window.location.href = `folder_view.html?mod=${data.key}`; };
                     card.innerHTML = `
                         <i data-lucide="${data.icon}" size="100" class="bg-symbol"></i>
                         <div class="icon-box"><i data-lucide="${data.icon}" size="26"></i></div>
