@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <title>AgriQ Pro | Premium Courses</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #0084ff; --bg: #f0f9ff; --surface: #ffffff;
+            --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
+            --folder-color: #f43f5e; 
+            --transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        
+        body { 
+            background: var(--bg); color: var(--text-main); 
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            overflow-x: hidden; min-height: 100vh;
+        }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .loader-brand { font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 20px; animation: pulse 1.5s infinite alternate; }
+        .loader-brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(0, 132, 255, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.05); opacity: 1; } }
+
+        /* --- HEADER --- */
+        header { 
+            padding: 20px 24px; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); 
+            position: sticky; top: env(safe-area-inset-top); z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        main { padding: 20px; max-width: 500px; margin: 0 auto; perspective: 1000px; }
+
+        /* --- SEARCH BAR --- */
+        .search-wrapper { position: relative; margin-bottom: 25px; transform-style: preserve-3d; }
+        .search-input {
+            width: 100%; padding: 18px 20px 18px 55px; border-radius: 20px; border: 2px solid transparent; 
+            background: var(--surface); box-shadow: 0 10px 25px rgba(0,0,0,0.03); 
+            font-weight: 700; font-size: 14px; color: var(--text-main); outline: none; transition: 0.3s;
+        }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 10px 30px rgba(0, 132, 255, 0.1); }
+        .search-input::placeholder { color: var(--text-dim); font-weight: 600; }
+        .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-dim); transition: 0.3s; }
+        .search-input:focus + .search-icon { color: var(--primary); }
+
+        /* --- 3D SQUARE GRID --- */
+        .section-title { font-weight: 900; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        
+        .course-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; 
+            perspective: 1200px; 
+        }
+
+        .course-card {
+            background: var(--surface); border-radius: 28px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            text-align: center; aspect-ratio: 1; 
+            position: relative; border: 1px solid var(--border);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+            transition: var(--transition);
+            transform-style: preserve-3d; cursor: pointer; overflow: hidden;
+        }
+
+        .course-card::before {
+            content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(255,255,255,0.8), transparent);
+            opacity: 0; transition: 0.4s; z-index: 1; pointer-events: none;
+        }
+        .course-card:hover, .course-card:active {
+            transform: translateY(-8px) rotateX(8deg) rotateY(-8deg) scale(1.02);
+            box-shadow: 15px 20px 30px rgba(0,0,0,0.08), -5px -5px 15px rgba(255,255,255,1);
+            border-color: rgba(0, 132, 255, 0.3); z-index: 10;
+        }
+        .course-card:hover::before { opacity: 1; }
+
+        .bg-symbol { position: absolute; opacity: 0.04; transition: 0.5s; transform: translateZ(-10px); }
+        .course-card:hover .bg-symbol { opacity: 0.1; transform: translateZ(0) scale(1.2) rotate(15deg); }
+
+        .icon-box {
+            width: 54px; height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 15px; transform: translateZ(30px); transition: var(--transition);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); z-index: 2;
+        }
+        .course-card:hover .icon-box { transform: translateZ(50px) scale(1.15) translateY(-5px); }
+
+        .course-title { font-weight: 800; font-size: 13px; color: var(--text-main); transform: translateZ(20px); z-index: 2; transition: 0.3s;}
+        .course-card:hover .course-title { color: var(--primary); }
+        
+        .badge {
+            font-size: 9px; font-weight: 900; padding: 5px 10px; border-radius: 10px; 
+            margin-top: 10px; transform: translateZ(15px); text-transform: uppercase; z-index: 2;
+            display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Dynamic Folders (Course Content) */
+        .card-folder .icon-box { background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%); color: white; }
+        .card-folder .badge { background: rgba(244, 63, 94, 0.1); color: var(--folder-color); border: 1px solid rgba(244, 63, 94, 0.2); }
+
+        /* Bottom Navigation */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(15px); display: flex; justify-content: space-around; 
+            padding: 15px 5px calc(15px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border); box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 100;
+        }
+        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; transition: var(--transition); flex: 1; }
+        .nav-item.active { color: var(--primary); transform: translateY(-2px); }
+
+        /* Toast Notice */
+        #toast { 
+            position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: white; padding: 12px 20px; border-radius: 50px;
+            font-size: 12px; font-weight: 700; display: none; z-index: 10001; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="preloader">
+        <div class="loader-brand">AGRI<span>Q</span> PRO</div>
+        <div class="loader-spinner"></div>
+    </div>
+    <div id="toast"></div>
+
+    <header>
+        <div class="header-left">
+            <i data-lucide="layout-grid" size="24" style="color:var(--text-main);"></i>
+            <div class="brand">AGRI<span>Q</span> PRO</div>
+        </div>
+        <div style="display:flex; gap:18px; align-items:center;">
+            <i data-lucide="search" size="20" style="color:var(--text-main);"></i>
+            <i data-lucide="bell" size="20" style="color:var(--text-dim)"></i>
+        </div>
+    </header>
+
+    <main>
+        <div class="search-wrapper">
+            <input type="text" id="course-search" class="search-input" placeholder="Search premium content...">
+            <i data-lucide="search" size="20" class="search-icon"></i>
+        </div>
+
+        <div class="section-title">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="layers" size="20" color="var(--primary)"></i> Premium Course Content
+            </div>
+            <i data-lucide="refresh-cw" size="16" style="color:var(--text-dim); cursor:pointer;" onclick="forceRefreshData()" title="Force Sync from Cloud"></i>
+        </div>
+
+        <div class="course-grid" id="grid-container">
+            </div>
+
+        <div style="height: 40px;"></div> 
+    </main>
+
+    <nav class="nav-bar">
+        <a href="dashboard.html" class="nav-item"><i data-lucide="layout-grid"></i>Dash</a>
+        <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
+        <a href="courses.html" class="nav-item active"><i data-lucide="library"></i>Courses</a>
+        <a href="profile.html" class="nav-item"><i data-lucide="user"></i>Profile</a>
+    </nav>
+
+    <script>
+        // --- Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let allNestedFolders = [];
+        const CACHE_TTL = 3600000; // 1 hour in milliseconds
+
+        window.addEventListener('load', () => {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    initDataWithCache();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        /**
+         * Checks LocalStorage first. If valid data exists, renders instantly.
+         * Otherwise, fetches from Firebase and caches it locally.
+         */
+        function initDataWithCache() {
+            const cacheKeyFolders = `agriq_premium_folders`;
+            const cacheKeyTime = `agriq_premium_last_fetch`;
+
+            const lastFetch = localStorage.getItem(cacheKeyTime);
+            const now = Date.now();
+
+            if (lastFetch && (now - parseInt(lastFetch)) < CACHE_TTL) {
+                const cachedFolders = localStorage.getItem(cacheKeyFolders);
+
+                if (cachedFolders) {
+                    try {
+                        allNestedFolders = JSON.parse(cachedFolders);
+                        renderGrid();
+                        hideLoader();
+                        return; // Exit early! Zero database reads used.
+                    } catch (e) {
+                        console.warn("Cache parsing failed, fetching from DB:", e);
+                    }
+                }
+            }
+
+            fetchFromFirebaseAndCache();
+        }
+
+        /**
+         * Fetches data via one-time read (.once) from course_content and caches it locally
+         */
+        function fetchFromFirebaseAndCache() {
+            db.ref('course_content').once('value').then(snap => {
+                allNestedFolders = [];
+                if (snap.exists()) {
+                    snap.forEach(folderSnap => {
+                        const folderKey = folderSnap.key;
+                        const subtopicCount = folderSnap.numChildren();
+                        
+                        let folderIcon = 'folder-tree'; 
+                        folderSnap.forEach(subSnap => {
+                            const data = subSnap.val();
+                            if (data.config && data.config.icon) {
+                                folderIcon = data.config.icon;
+                            }
+                        });
+
+                        allNestedFolders.push({
+                            key: folderKey,
+                            count: subtopicCount,
+                            icon: folderIcon
+                        });
+                    });
+                }
+
+                // Save to localStorage
+                localStorage.setItem(`agriq_premium_folders`, JSON.stringify(allNestedFolders));
+                localStorage.setItem(`agriq_premium_last_fetch`, Date.now().toString());
+
+                renderGrid();
+                hideLoader();
+            }).catch(error => {
+                console.error("Firebase fetch error:", error);
+                showToast("Failed to load content. Check internet connection.");
+                hideLoader();
+            });
+        }
+
+        /**
+         * Manual Refresh utility for users to force a cloud re-sync
+         */
+        function forceRefreshData() {
+            if (!auth.currentUser) return;
+            showToast("Syncing premium content from cloud...");
+            document.getElementById('preloader').style.display = 'flex';
+            document.getElementById('preloader').style.opacity = '1';
+            fetchFromFirebaseAndCache();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid-container');
+            grid.innerHTML = "";
+
+            if (allNestedFolders.length === 0) {
+                grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 40px 20px; color: var(--text-dim); font-weight: 600; font-size: 13px;">No premium content available yet.</div>`;
+                return;
+            }
+
+            // Render Folders from course_content
+            allNestedFolders.forEach(folder => {
+                const displayName = folder.key.charAt(0).toUpperCase() + folder.key.slice(1).replace(/_/g, ' ');
+
+                const card = document.createElement('div');
+                card.className = `course-card dynamic-card card-folder`;
+                card.setAttribute('data-title', folder.key);
+                card.id = `folder-${folder.key}`;
+
+                const h = Math.floor(Math.random() * 360);
+                const iconBg = `linear-gradient(135deg, hsl(${h}, 85%, 60%) 0%, hsl(${h}, 85%, 70%) 100%)`;
+                const badgeBg = `hsla(${h}, 85%, 60%, 0.1)`;
+                const badgeText = `hsl(${h}, 85%, 45%)`;
+                const badgeBorder = `1px solid hsla(${h}, 85%, 60%, 0.2)`;
+
+                // Redirects to your new local store folder view (pfolder.html)
+                card.onclick = () => { window.location.href = `pfolder.html?folder=${folder.key}`; };
+                
+                card.innerHTML = `
+                    <i data-lucide="${folder.icon}" size="100" class="bg-symbol"></i>
+                    <div class="icon-box" style="background: ${iconBg}; color: white;">
+                        <i data-lucide="${folder.icon}" size="26"></i>
+                    </div>
+                    <div class="course-title">${displayName}</div>
+                    <div class="badge" style="background: ${badgeBg}; color: ${badgeText}; border: ${badgeBorder};">
+                        <i data-lucide="layers" size="10"></i> ${folder.count} Topics
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+                attach3DEffect(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function attach3DEffect(card) {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; 
+                const y = e.clientY - rect.top;  
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+            });
+        }
+        
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function hideLoader() {
+            setTimeout(() => {
+                document.getElementById('preloader').style.opacity = '0';
+                setTimeout(() => document.getElementById('preloader').style.display = 'none', 400);
+            }, 300);
+        }
+
+        // --- SEARCH FUNCTIONALITY ---
+        document.getElementById('course-search').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.course-card').forEach(card => {
+                const title = card.getAttribute('data-title') || '';
+                if (title.toLowerCase().includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        lucide.createIcons();
+    </script>
+</body>
+</html>
