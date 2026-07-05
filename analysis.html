@@ -255,35 +255,52 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        auth.onAuthStateChanged(user => {
-            if (!user) return window.location.href = 'dashboard.html';
-            
-            // --- OFFLINE / ONLINE FETCH FOR USERNAME ---
-            if (navigator.onLine) {
-                db.ref(`students/${user.uid}`).once('value').then(snap => {
-                    const d = snap.val();
-                    if(d && d.name) {
-                        document.getElementById('user-tag').innerText = d.name.toUpperCase();
-                        document.getElementById('user-initial').innerText = d.name[0].toUpperCase();
-                        // Cache it for offline use
-                        localStorage.setItem('agriq_cached_username', d.name);
-                    }
-                }).catch(e => console.warn("Failed to fetch user profile data."));
-            } else {
-                // If offline, check if we have a saved name
-                const cachedName = localStorage.getItem('agriq_cached_username');
-                if (cachedName) {
-                    document.getElementById('user-tag').innerText = cachedName.toUpperCase();
-                    document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
-                }
-            }
+        // --- INSTANT OFFLINE LOAD ---
+        function loadOfflineResults() {
+            // Instantly load the cached name from prior visits
+            const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
+            document.getElementById('user-tag').innerText = cachedName.toUpperCase();
+            document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
 
+            // Load analysis immediately from local storage
             loadAnalysis();
+        }
+
+        // Trigger instant offline load before Firebase Auth even resolves
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOfflineResults();
+        });
+
+        // --- BACKGROUND FIREBASE SYNC ---
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // If there's no user and no cached offline test data, boot them
+                if (!localStorage.getItem('agriq_last_result')) {
+                    window.location.href = 'dashboard.html';
+                }
+                return;
+            }
+            
+            // Sync fresh profile name in the background
+            db.ref(`students/${user.uid}`).once('value').then(snap => {
+                const d = snap.val();
+                if(d && d.name) {
+                    const freshName = d.name.toUpperCase();
+                    document.getElementById('user-tag').innerText = freshName;
+                    document.getElementById('user-initial').innerText = freshName[0];
+                    
+                    // Update global caches for next offline load
+                    localStorage.setItem('agriq_cached_username', freshName);
+                    const cacheKey = `agriq_profile_cache_${user.uid}`;
+                    const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
+                    localStorage.setItem(cacheKey, JSON.stringify({ ...existing, name: d.name }));
+                }
+            }).catch(e => console.warn("Background fetch skipped. User is offline."));
         });
 
         function loadAnalysis() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (!data) return window.location.href = 'dashboard.html';
+            if (!data) return; // Silent return if nothing to load; auth listener will redirect if needed
 
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
             const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
@@ -308,6 +325,7 @@
 
             let cCount = 0, wCount = 0, sCount = 0;
             const container = document.getElementById('review-container');
+            container.innerHTML = ''; // Clear container to avoid duplicate rendering
             
             data.details.forEach((item, i) => {
                 let status = "wrong";
@@ -375,7 +393,7 @@
             }, 100);
             
             lucide.createIcons();
-            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 800);
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 400);
         }
 
         function filterCards(type, btn) {
