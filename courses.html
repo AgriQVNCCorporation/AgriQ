@@ -9,7 +9,9 @@
     <title>AgriQ Pro | Courses & Modules</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -23,7 +25,7 @@
             --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
             --daily-color: #10b981; --coak-color: #8b5cf6; --warning: #f59e0b;
             --folder-color: #f43f5e; 
-            --monk-color: #ef4444; /* Fiery color for Monk Mode */
+            --monk-color: #ef4444; 
             --transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
@@ -47,6 +49,7 @@
         .loader-brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
         .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(0, 132, 255, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         
+        .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.05); opacity: 1; } }
 
@@ -63,7 +66,7 @@
         main { padding: 20px; max-width: 500px; margin: 0 auto; perspective: 1000px; }
 
         /* --- SEARCH BAR --- */
-        .search-wrapper { position: relative; margin-bottom: 25px; transform-style: preserve-3d; }
+        .search-wrapper { position: relative; margin-bottom: 20px; transform-style: preserve-3d; }
         .search-input {
             width: 100%; padding: 18px 20px 18px 55px; border-radius: 20px; border: 2px solid transparent; 
             background: var(--surface); box-shadow: 0 10px 25px rgba(0,0,0,0.03); 
@@ -73,6 +76,15 @@
         .search-input::placeholder { color: var(--text-dim); font-weight: 600; }
         .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-dim); transition: 0.3s; }
         .search-input:focus + .search-icon { color: var(--primary); }
+
+        /* --- OFFLINE BUTTON --- */
+        #btn-offline {
+            width: 100%; padding: 16px; border-radius: 20px; border: none; 
+            background: var(--primary); color: white; font-weight: 800; font-size: 13px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; 
+            margin-bottom: 25px; box-shadow: 0 10px 25px rgba(0, 132, 255, 0.2); transition: 0.3s;
+        }
+        #btn-offline:active { transform: scale(0.98); }
 
         /* --- 3D SQUARE GRID --- */
         .section-title { font-weight: 900; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
@@ -132,20 +144,8 @@
         .card-practice .icon-box { background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); color: white; }
         .card-practice .badge { background: rgba(0, 132, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 132, 255, 0.2); }
 
-        /* Monk Mode Card Styling */
         .card-monk .icon-box { background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; }
         .card-monk .badge { background: rgba(239, 68, 68, 0.1); color: var(--monk-color); border: 1px solid rgba(239, 68, 68, 0.2); }
-
-        /* Dynamic Folders (Nested Subjects) */
-        .card-folder .icon-box { background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%); color: white; }
-        .card-folder .badge { background: rgba(244, 63, 94, 0.1); color: var(--folder-color); border: 1px solid rgba(244, 63, 94, 0.2); }
-
-        /* Dynamic Free/Owned Card (Store Modules) */
-        .card-dynamic-free .icon-box { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: white; }
-        .card-dynamic-free .badge { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
-        
-        .card-owned .icon-box { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); color: white; }
-        .card-owned .badge { background: rgba(139, 92, 246, 0.1); color: var(--coak-color); border: 1px solid rgba(139, 92, 246, 0.2); }
 
         /* Locked Card Styling */
         .card-locked { background: #f8fafc; border-color: transparent; }
@@ -153,7 +153,6 @@
         .card-locked .course-title { color: var(--text-dim); }
         .card-locked .badge { background: #e2e8f0; color: var(--text-dim); border: none; }
         .card-locked:hover { transform: translateY(-3px) rotateX(3deg) rotateY(-3deg); border-color: var(--border); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .card-locked:hover .course-title { color: var(--text-dim); }
         
         .lock-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.4); z-index: 5; border-radius: 28px; pointer-events: none; }
 
@@ -226,6 +225,10 @@
             <i data-lucide="search" size="20" class="search-icon"></i>
         </div>
 
+        <button id="btn-offline" onclick="syncOfflineData()">
+            <i data-lucide="download-cloud" size="20"></i> DOWNLOAD ALL FOR OFFLINE
+        </button>
+
         <div class="section-title"><i data-lucide="layers" size="20" color="var(--primary)"></i> Study Modules & Subjects</div>
 
         <div class="course-grid" id="grid-container">
@@ -256,7 +259,6 @@
                 <div class="course-title">Daily Practice</div>
                 <div class="badge"><i data-lucide="unlock" size="10"></i> Unlocked</div>
             </div>
-            
         </div>
 
         <div style="height: 40px;"></div> 
@@ -292,70 +294,160 @@
                     setTimeout(() => {
                         document.getElementById('preloader').style.display = 'none';
                     }, 800);
+                    
+                    if(localStorage.getItem('agriq_offline_content')) {
+                        const btn = document.getElementById('btn-offline');
+                        if(btn) {
+                            btn.innerHTML = `<i data-lucide="check-circle" size="20"></i> AVAILABLE OFFLINE (TAP TO UPDATE)`;
+                            btn.style.background = "#0f172a";
+                            btn.style.boxShadow = "0 10px 25px rgba(0, 45, 77, 0.2)";
+                            lucide.createIcons();
+                        }
+                    }
                 } else {
                     window.location.href = 'login.html';
                 }
             });
         });
 
+        // --- 1. OFFLINE-FIRST DATA LISTENER ---
         function initDataListeners(uid) {
-            // Listen for Purchases
-            db.ref(`students/${uid}/purchases`).on('value', snap => {
+            const cachedFolders = localStorage.getItem('agriq_offline_content');
+            const cachedModules = localStorage.getItem('agriq_store_modules');
+            const cachedPurchases = localStorage.getItem(`agriq_purchases_${uid}`);
+
+            let loadedFromCache = false;
+
+            // A. INSTANT RENDER FROM LOCAL STORAGE (Zero Database Reads!)
+            if (cachedFolders) {
+                parseFoldersFromData(JSON.parse(cachedFolders));
+                loadedFromCache = true;
+            }
+            if (cachedModules) {
+                allStoreModules = JSON.parse(cachedModules);
+                loadedFromCache = true;
+            }
+            if (cachedPurchases) {
+                myPurchases = JSON.parse(cachedPurchases);
+                loadedFromCache = true;
+            }
+
+            if (loadedFromCache) {
+                renderGrid();
+                console.log("⚡ Loaded from Offline Cache! Zero folder reads incurred.");
+            }
+
+            // B. CONDITIONAL NETWORK SYNC
+            if (!cachedFolders) {
+                console.log("📥 No local cache found. Fetching folders from Firebase...");
+                db.ref('nested_subjects').once('value').then(snap => {
+                    if (snap.exists()) {
+                        const data = snap.val();
+                        localStorage.setItem('agriq_offline_content', JSON.stringify(data));
+                        parseFoldersFromData(data);
+                        renderGrid();
+                    }
+                }).catch(err => console.error("Offline fetch error:", err));
+            }
+
+            // C. LIGHTWEIGHT ACCESS CHECK
+            db.ref(`students/${uid}/purchases`).once('value').then(snap => {
                 myPurchases = [];
                 if (snap.exists()) {
-                    snap.forEach(child => {
-                        myPurchases.push(child.key);
-                    });
+                    snap.forEach(child => myPurchases.push(child.key));
                 }
+                localStorage.setItem(`agriq_purchases_${uid}`, JSON.stringify(myPurchases));
                 renderGrid();
             });
 
-            // Listen for Store Modules
-            db.ref('store_modules').on('value', snap => {
+            db.ref('store_modules').once('value').then(snap => {
                 allStoreModules = [];
                 if (snap.exists()) {
-                    snap.forEach(child => {
-                        allStoreModules.push({ key: child.key, ...child.val() });
-                    });
+                    snap.forEach(child => allStoreModules.push({ key: child.key, ...child.val() }));
                 }
                 allStoreModules.sort((a, b) => b.timestamp - a.timestamp);
+                localStorage.setItem('agriq_store_modules', JSON.stringify(allStoreModules));
                 renderGrid();
             });
+        }
 
-            // Listen for Nested Subject Folders & Icons
-            db.ref('nested_subjects').on('value', snap => {
-                allNestedFolders = [];
-                if (snap.exists()) {
-                    snap.forEach(folderSnap => {
-                        const folderKey = folderSnap.key;
-                        const subtopicCount = folderSnap.numChildren();
-                        
-                        // Extract icon from the first subtopic's config
-                        let folderIcon = 'folder-tree'; // Default Fallback
-                        folderSnap.forEach(subSnap => {
-                            const data = subSnap.val();
-                            if (data.config && data.config.icon) {
-                                folderIcon = data.config.icon;
-                            }
-                        });
-
-                        allNestedFolders.push({
-                            key: folderKey,
-                            count: subtopicCount,
-                            icon: folderIcon
-                        });
-                    });
+        function parseFoldersFromData(data) {
+            allNestedFolders = [];
+            for (const [folderKey, folderVal] of Object.entries(data)) {
+                const subtopicCount = Object.keys(folderVal || {}).length;
+                let folderIcon = 'folder-tree'; 
+                
+                for (const subKey of Object.keys(folderVal || {})) {
+                    const subData = folderVal[subKey];
+                    if (subData && subData.config && subData.config.icon) {
+                        folderIcon = subData.config.icon;
+                        break;
+                    }
                 }
+
+                allNestedFolders.push({
+                    key: folderKey,
+                    count: subtopicCount,
+                    icon: folderIcon
+                });
+            }
+        }
+
+        // --- 2. UPDATED MANUAL SYNC BUTTON ---
+        function syncOfflineData() {
+            const btn = document.getElementById('btn-offline');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" size="20" class="spin"></i> SYNCING LATEST QUESTIONS...`;
+            lucide.createIcons();
+
+            const uid = auth.currentUser ? auth.currentUser.uid : null;
+
+            Promise.all([
+                db.ref('nested_subjects').once('value'),
+                db.ref('store_modules').once('value'),
+                uid ? db.ref(`students/${uid}/purchases`).once('value') : Promise.resolve(null)
+            ]).then(([foldersSnap, modulesSnap, purchasesSnap]) => {
+                
+                if (foldersSnap.exists()) {
+                    const folderData = foldersSnap.val();
+                    localStorage.setItem('agriq_offline_content', JSON.stringify(folderData));
+                    parseFoldersFromData(folderData);
+                }
+
+                if (modulesSnap.exists()) {
+                    allStoreModules = [];
+                    modulesSnap.forEach(child => allStoreModules.push({ key: child.key, ...child.val() }));
+                    allStoreModules.sort((a, b) => b.timestamp - a.timestamp);
+                    localStorage.setItem('agriq_store_modules', JSON.stringify(allStoreModules));
+                }
+
+                if (purchasesSnap && purchasesSnap.exists()) {
+                    myPurchases = [];
+                    purchasesSnap.forEach(child => myPurchases.push(child.key));
+                    localStorage.setItem(`agriq_purchases_${uid}`, JSON.stringify(myPurchases));
+                }
+
                 renderGrid();
+                btn.innerHTML = `<i data-lucide="check-circle" size="20"></i> SAVED FOR OFFLINE`;
+                btn.style.background = "var(--daily-color)"; 
+                btn.style.boxShadow = "0 10px 25px rgba(16, 185, 129, 0.2)";
+                showToast("All courses and questions successfully synced!");
+                lucide.createIcons();
+
+            }).catch(err => {
+                console.error("Sync error:", err);
+                showToast("Storage full or network error! Could not save.");
+                btn.innerHTML = `<i data-lucide="alert-triangle" size="20"></i> SYNC FAILED`;
+                btn.style.background = "var(--monk-color)";
+                lucide.createIcons();
             });
         }
 
         function renderGrid() {
             const grid = document.getElementById('grid-container');
-            // Remove previous dynamic cards to prevent duplicates
             document.querySelectorAll('.dynamic-card').forEach(card => card.remove());
 
-            // 1. Render Folders (Nested Subjects)
+            // 1. Render Folders
             allNestedFolders.forEach(folder => {
                 const displayName = folder.key.charAt(0).toUpperCase() + folder.key.slice(1).replace(/_/g, ' ');
 
@@ -364,17 +456,18 @@
                 card.setAttribute('data-title', folder.key);
                 card.id = `folder-${folder.key}`;
 
-                // --- Generate Random Color (Hue) ---
-                const h = Math.floor(Math.random() * 360);
+                // Generate Hash Color (Fixed static color per folder)
+                let hash = 0;
+                for (let i = 0; i < folder.key.length; i++) { hash = folder.key.charCodeAt(i) + ((hash << 5) - hash); }
+                const h = Math.abs(hash) % 360;
+                
                 const iconBg = `linear-gradient(135deg, hsl(${h}, 85%, 60%) 0%, hsl(${h}, 85%, 70%) 100%)`;
                 const badgeBg = `hsla(${h}, 85%, 60%, 0.1)`;
                 const badgeText = `hsl(${h}, 85%, 45%)`;
                 const badgeBorder = `1px solid hsla(${h}, 85%, 60%, 0.2)`;
 
-                // Redirect to a sub-view page passing the folder name
                 card.onclick = () => { window.location.href = `folder_view.html?folder=${folder.key}`; };
                 
-                // Inject the dynamic styles inline to override the CSS
                 card.innerHTML = `
                     <i data-lucide="${folder.icon}" size="100" class="bg-symbol"></i>
                     <div class="icon-box" style="background: ${iconBg}; color: white;">
@@ -404,19 +497,35 @@
                     card.onclick = () => openCheckout(data.key, data.title, data.price);
                     card.innerHTML = `
                         <div class="lock-overlay"></div>
-                        <i data-lucide="${data.icon}" size="100" class="bg-symbol"></i>
+                        <i data-lucide="${data.icon || 'lock'}" size="100" class="bg-symbol"></i>
                         <div class="icon-box"><i data-lucide="lock" size="26"></i></div>
                         <div class="course-title">${data.title}</div>
                         <div class="badge"><i data-lucide="lock" size="10"></i> ₹${data.price}</div>
                     `;
                 } else {
-                    card.onclick = () => { window.location.href = `test.html?mod=${data.key}`; };
-                    card.innerHTML = `
-                        <i data-lucide="${data.icon}" size="100" class="bg-symbol"></i>
-                        <div class="icon-box"><i data-lucide="${data.icon}" size="26"></i></div>
-                        <div class="course-title">${data.title}</div>
-                        <div class="badge"><i data-lucide="check-circle" size="10"></i> ${hasBought ? 'OWNED' : 'FREE'}</div>
-                    `;
+                    // Check if they own it AND if it is an Exam Module requiring an Admit Card
+                    if (hasBought && (data.isExamModule || data.title.toLowerCase().includes("test") || data.title.toLowerCase().includes("mcaer"))) {
+                        card.onclick = () => downloadAdmitCard(data.key, data.title);
+                        card.innerHTML = `
+                            <i data-lucide="id-card" size="100" class="bg-symbol"></i>
+                            <div class="icon-box" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                                <i data-lucide="file-badge" size="26"></i>
+                            </div>
+                            <div class="course-title">${data.title}</div>
+                            <div class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--daily-color); border: 1px solid rgba(16, 185, 129, 0.2);">
+                                <i data-lucide="download" size="10"></i> ADMIT CARD
+                            </div>
+                        `;
+                    } else {
+                        // Standard owned/free course behavior
+                        card.onclick = () => { window.location.href = `co.html?mod=${data.key}`; };
+                        card.innerHTML = `
+                            <i data-lucide="${data.icon || 'book-open'}" size="100" class="bg-symbol"></i>
+                            <div class="icon-box"><i data-lucide="${data.icon || 'book-open'}" size="26"></i></div>
+                            <div class="course-title">${data.title}</div>
+                            <div class="badge"><i data-lucide="check-circle" size="10"></i> ${hasBought ? 'OWNED' : 'FREE'}</div>
+                        `;
+                    }
                 }
                 grid.appendChild(card);
                 attach3DEffect(card);
@@ -425,24 +534,115 @@
             lucide.createIcons();
         }
 
-        // --- NEW: MONK MODE LOGIC ---
+        // --- ADMIT CARD PDF GENERATOR ---
+        function downloadAdmitCard(moduleKey, moduleTitle) {
+            showToast("Generating Official Admit Card PDF...");
+            const uid = auth.currentUser.uid;
+
+            Promise.all([
+                db.ref(`students/${uid}`).once('value'),
+                db.ref(`admit_card_requests/${uid}`).once('value')
+            ]).then(([studentSnap, reqSnap]) => {
+                const student = studentSnap.val() || {};
+                const req = reqSnap.val() || {};
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.width;
+                    const pageHeight = doc.internal.pageSize.height;
+
+                    const appId = req.appId || ("AGRI-" + Math.floor(100000 + Math.random() * 900000));
+
+                    const pdfData = {
+                        'Application ID:': appId,
+                        'Full Name:': req.fullName || student.name || "EXAM CANDIDATE",
+                        'Mother\'s Name:': req.motherName || "-",
+                        'Father\'s Name:': req.fatherName || "-",
+                        'Date of Birth:': req.dob || "-",
+                        'Gender:': req.gender || "-",
+                        'Category:': req.category || "-",
+                        'District:': req.district || "-",
+                        'Target Exam:': moduleTitle.toUpperCase()
+                    };
+                    
+                    doc.setFillColor(248, 250, 252); doc.rect(0, 0, pageWidth, pageHeight, 'F');
+                    doc.setFillColor(0, 132, 255); doc.rect(14, 14, pageWidth - 28, 40, 'F');
+                    
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(24); doc.setTextColor(255, 255, 255);
+                    doc.text("AGRIQ PRO PLATFORM", pageWidth / 2, 30, { align: "center", charSpace: 1 });
+                    doc.setFontSize(11); doc.setFont("helvetica", "normal"); doc.setTextColor(224, 242, 254);
+                    doc.text("OFFICIAL EXAM ADMIT CARD", pageWidth / 2, 38, { align: "center" });
+                    
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(15, 23, 42); 
+                    doc.text("CANDIDATE DETAILS", pageWidth / 2, 65, { align: "center" });
+
+                    let yPos = 75; const startX = 18; const labelW = 55; const valueW = 115; const rowH = 10;
+                    let rowCount = 0;
+
+                    for (const [key, val] of Object.entries(pdfData)) {
+                        if (rowCount % 2 === 0) doc.setFillColor(241, 245, 249); else doc.setFillColor(255, 255, 255); 
+                        doc.rect(startX, yPos, (rowCount < 5) ? labelW + valueW - 35 : labelW + valueW, rowH, 'F'); 
+                        doc.setFontSize(10); doc.setTextColor(71, 85, 105); doc.text(key, startX + 4, yPos + 7);
+                        doc.setTextColor(15, 23, 42); if (key === 'Target Exam:') doc.setTextColor(0, 132, 255); 
+                        doc.text(val ? val.toString().toUpperCase() : '-', startX + labelW, yPos + 7);
+                        yPos += rowH; rowCount++;
+                    }
+
+                    const photoX = startX + labelW + valueW - 30; const photoY = 75;
+                    doc.setDrawColor(15, 23, 42); doc.setLineWidth(0.6); doc.rect(photoX - 1.5, photoY - 1.5, 33, 43, 'S');
+                    
+                    if(req.photoBase64) {
+                        doc.addImage(req.photoBase64, 'JPEG', photoX, photoY, 30, 40);
+                    }
+
+                    doc.setDrawColor(16, 185, 129); doc.setLineWidth(0.8);
+                    doc.circle(photoX + 25, photoY + 35, 10, 'S'); doc.circle(photoX + 25, photoY + 35, 8.5, 'S');
+                    doc.setFontSize(5); doc.setTextColor(16, 185, 129);
+                    doc.text("AGRIQ PRO", photoX + 25, photoY + 34, { align: "center", angle: -15 });
+                    doc.setFontSize(6); doc.text("VERIFIED", photoX + 25, photoY + 37, { align: "center", angle: -15 });
+
+                    const signY = yPos + 15;
+                    doc.setFont("times", "italic"); doc.setFontSize(18); doc.setTextColor(0, 85, 255);
+                    doc.text("Coordinator", photoX + 15, signY + 12, { align: "center", angle: -5 });
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(15, 23, 42);
+                    doc.text("Admissions Coordinator", photoX + 15, signY + 22, { align: "center" });
+
+                    doc.save(`AgriQ_AdmitCard_${appId}.pdf`);
+                    showToast("Admit Card PDF downloaded successfully!");
+                } catch (error) {
+                    console.error("PDF Engine Error:", error);
+                    showToast("Failed to render PDF. Check console for details.");
+                }
+            }).catch(err => {
+                showToast("Error loading user profile data.");
+            });
+        }
+
+        // --- COMPLETELY OFFLINE MONK MODE LOGIC ---
         function startMonkMode() {
             showToast("Igniting Monk Mode... Gathering questions!");
             
-            db.ref('nested_subjects').once('value').then(snap => {
+            const cachedContent = localStorage.getItem('agriq_offline_content');
+            if (!cachedContent) {
+                showToast("Please tap 'DOWNLOAD ALL FOR OFFLINE' first!");
+                return;
+            }
+
+            try {
+                const data = JSON.parse(cachedContent);
                 let allQuestions = [];
                 
-                if (snap.exists()) {
-                    snap.forEach(folderSnap => {
-                        folderSnap.forEach(subSnap => {
-                            const data = subSnap.val();
-                            if (data.questions) {
-                                // Support both direct array and nested {data: []} format
-                                const qs = Array.isArray(data.questions) ? data.questions : (data.questions.data || []);
-                                allQuestions = allQuestions.concat(qs);
-                            }
-                        });
-                    });
+                // Aggregate questions completely locally
+                for (const folderKey of Object.keys(data)) {
+                    const folder = data[folderKey];
+                    for (const subKey of Object.keys(folder)) {
+                        const subData = folder[subKey];
+                        if (subData.questions) {
+                            const qs = Array.isArray(subData.questions) ? subData.questions : (subData.questions.data || []);
+                            allQuestions = allQuestions.concat(qs);
+                        }
+                    }
                 }
                 
                 if (allQuestions.length === 0) {
@@ -450,29 +650,23 @@
                     return;
                 }
                 
-                // Shuffle Array (Fisher-Yates)
                 for (let i = allQuestions.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
                 }
                 
-                // Slice the first 200 questions
                 const monkQuestions = allQuestions.slice(0, 200);
-                
-                // Save them to localStorage so the test page can grab them
                 localStorage.setItem('monkModeQuestions', JSON.stringify(monkQuestions));
                 
                 showToast(`Monk Mode Ready! Loaded ${monkQuestions.length} Questions.`);
-                
-                // Redirect to test page with a special mod flag
                 setTimeout(() => {
                     window.location.href = 'unlimitedtest.html?mod=monk';
                 }, 1000);
                 
-            }).catch(err => {
+            } catch(err) {
                 console.error("Monk Mode Error:", err);
                 showToast("Failed to initialize Monk Mode.");
-            });
+            }
         }
 
         function openCheckout(moduleKey, moduleTitle, modulePrice) {
@@ -488,7 +682,8 @@
 
         function processRealPayment(moduleKey, moduleTitle, modulePrice) {
             const btn = document.getElementById('btn-pay');
-            btn.innerHTML = `Processing...`;
+            btn.innerHTML = `<i data-lucide="loader-2" size="20" class="spin"></i> Processing...`;
+            lucide.createIcons();
 
             var options = {
                 "key": "rzp_test_Sc8VUR3pXHh9Qp",
@@ -500,6 +695,9 @@
                     
                     if (!myPurchases.includes(moduleKey)) {
                         myPurchases.push(moduleKey);
+                        // Save directly to cache so UI updates immediately
+                        const uid = auth.currentUser.uid;
+                        localStorage.setItem(`agriq_purchases_${uid}`, JSON.stringify(myPurchases));
                     }
                     
                     renderGrid();
