@@ -294,9 +294,7 @@
                 // Auto-fill email if available
                 if(user.email) document.getElementById('email').value = user.email;
             } else {
-                // If not logged in, mock UID for UI testing purposes if needed, or redirect
-                console.warn("User not logged in. Mocking UID for UI testing.");
-                currentUserUid = "test_user_" + Date.now();
+                window.location.href = "login.html";
             }
         });
 
@@ -360,7 +358,7 @@
                     <h3 style="margin:0 0 12px; font-size:22px; font-weight:900;">${title}</h3>
                     <p style="color:var(--text-dim); font-size:14px; font-weight:500; line-height:1.6; margin-bottom:24px;">${text}</p>
                     <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 12px; border-radius: 12px; margin-bottom: 24px;">
-                        <p style="color:var(--warning); font-size:12px; font-weight:700; margin:0;">Your Test Code will be unlocked on your Profile page once an Admin verifies your identity and course purchase.</p>
+                        <p style="color:var(--warning); font-size:12px; font-weight:700; margin:0;">Your Test Code will be securely unlocked on your Profile page once an Admin verifies your identity and course purchase.</p>
                     </div>
                     <button class="modal-btn confirm" onclick="window.location.href='dashboard.html'">Return to Dashboard</button>
                 `;
@@ -399,12 +397,13 @@
             lucide.createIcons();
 
             // 3. Generate Random 8-Digit App ID
+            // The code is generated and saved to the database, but NEVER output to the screen
             const generatedAppId = Math.floor(10000000 + Math.random() * 90000000);
             const formattedAppId = `AQ-${generatedAppId}`;
 
             // 4. Create Payload
             const payload = {
-                appId: formattedAppId,
+                appId: formattedAppId, // Securely saved in DB
                 status: 'pending',
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 fullName: document.getElementById('fullName').value.trim(),
@@ -416,7 +415,7 @@
                 district: document.getElementById('district').value,
                 mobile: document.getElementById('mobile').value.trim(),
                 email: document.getElementById('email').value.trim(),
-                photoBase64: uploadedPhotoBase64 // Storing base64 directly
+                photoBase64: uploadedPhotoBase64 
             };
 
             // 5. Push to Firebase
@@ -424,6 +423,8 @@
                 .then(() => {
                     btn.innerHTML = `SUBMIT APPLICATION <i data-lucide="send" size="18"></i>`;
                     btn.style.pointerEvents = 'auto';
+                    
+                    // Code is intentionally omitted from the success message
                     showModal('success', 'Application Submitted!', 'Your request has been securely forwarded to the administration for review.');
                 })
                 .catch((error) => {
