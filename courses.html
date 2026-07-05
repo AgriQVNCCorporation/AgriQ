@@ -35,6 +35,7 @@
             padding-top: env(safe-area-inset-top);
             padding-bottom: calc(100px + env(safe-area-inset-bottom));
             overflow-x: hidden; min-height: 100vh;
+            overscroll-behavior-y: none; /* Prevents mobile pull-to-refresh interference */
         }
 
         /* --- PRELOADER --- */
@@ -199,8 +200,8 @@
             </div>
 
             <div style="display:flex; gap:12px;">
-                <button onclick="closeCheckout()" style="padding: 16px 20px; border-radius: 16px; border: none; background: #f1f5f9; color: var(--text-dim); font-weight: 800; cursor: pointer; flex: 1;">CANCEL</button>
-                <button id="btn-pay" style="padding: 16px 20px; border-radius: 16px; border: none; background: var(--coak-color); color: white; font-weight: 900; cursor: pointer; flex: 1.5; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);">
+                <button type="button" onclick="closeCheckout()" style="padding: 16px 20px; border-radius: 16px; border: none; background: #f1f5f9; color: var(--text-dim); font-weight: 800; cursor: pointer; flex: 1;">CANCEL</button>
+                <button type="button" id="btn-pay" style="padding: 16px 20px; border-radius: 16px; border: none; background: var(--coak-color); color: white; font-weight: 900; cursor: pointer; flex: 1.5; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);">
                     PAY NOW
                 </button>
             </div>
@@ -284,7 +285,7 @@
         let allNestedFolders = [];
 
         // --- CACHE CONFIGURATION ---
-        const CACHE_TTL = 3600000; // 1 hour in milliseconds (change to whatever duration you prefer)
+        const CACHE_TTL = 3600000; // 1 hour in milliseconds
 
         window.addEventListener('load', () => {
             auth.onAuthStateChanged(user => {
@@ -296,10 +297,6 @@
             });
         });
 
-        /**
-         * Checks LocalStorage first. If valid data exists, renders instantly.
-         * Otherwise, fetches from Firebase and caches it locally.
-         */
         function initDataWithCache(uid) {
             const cacheKeyPurchases = `agriq_purchases_${uid}`;
             const cacheKeyStore = `agriq_store_modules`;
@@ -309,7 +306,6 @@
             const lastFetch = localStorage.getItem(cacheKeyTime);
             const now = Date.now();
 
-            // Check if valid cache exists and has not expired
             if (lastFetch && (now - parseInt(lastFetch)) < CACHE_TTL) {
                 const cachedPurchases = localStorage.getItem(cacheKeyPurchases);
                 const cachedStore = localStorage.getItem(cacheKeyStore);
@@ -323,42 +319,35 @@
                         
                         renderGrid();
                         setTimeout(() => { document.getElementById('preloader').style.display = 'none'; }, 400);
-                        return; // Exit early! Zero database reads used.
+                        return; 
                     } catch (e) {
                         console.warn("Cache parsing failed, fetching from DB:", e);
                     }
                 }
             }
 
-            // If no cache or cache expired, fetch from Firebase using .once() instead of .on()
             fetchFromFirebaseAndCache(uid);
         }
 
-        /**
-         * Fetches data via one-time database read and saves locally
-         */
         function fetchFromFirebaseAndCache(uid) {
             const p1 = db.ref(`students/${uid}/purchases`).once('value');
             const p2 = db.ref('store_modules').once('value');
             const p3 = db.ref('nested_subjects').once('value');
 
             Promise.all([p1, p2, p3]).then(([purchasesSnap, storeSnap, foldersSnap]) => {
-                // 1. Process Purchases
                 myPurchases = [];
                 if (purchasesSnap.exists()) {
                     purchasesSnap.forEach(child => { myPurchases.push(child.key); });
                 }
 
-                // 2. Process Store Modules
                 allStoreModules = [];
                 if (storeSnap.exists()) {
                     storeSnap.forEach(child => {
                         allStoreModules.push({ key: child.key, ...child.val() });
                     });
                 }
-                allStoreModules.sort((a, b) => b.timestamp - a.timestamp);
+                allStoreModules.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-                // 3. Process Nested Folders
                 allNestedFolders = [];
                 if (foldersSnap.exists()) {
                     foldersSnap.forEach(folderSnap => {
@@ -368,7 +357,7 @@
                         let folderIcon = 'folder-tree';
                         folderSnap.forEach(subSnap => {
                             const data = subSnap.val();
-                            if (data.config && data.config.icon) { folderIcon = data.config.icon; }
+                            if (data && data.config && data.config.icon) { folderIcon = data.config.icon; }
                         });
 
                         allNestedFolders.push({
@@ -379,7 +368,6 @@
                     });
                 }
 
-                // Save everything to localStorage
                 localStorage.setItem(`agriq_purchases_${uid}`, JSON.stringify(myPurchases));
                 localStorage.setItem(`agriq_store_modules`, JSON.stringify(allStoreModules));
                 localStorage.setItem(`agriq_nested_folders`, JSON.stringify(allNestedFolders));
@@ -394,9 +382,6 @@
             });
         }
 
-        /**
-         * Allows user or system to force a fresh pull from Firebase
-         */
         function forceRefreshData() {
             if (!auth.currentUser) return;
             showToast("Syncing latest courses from cloud...");
@@ -409,7 +394,7 @@
             const grid = document.getElementById('grid-container');
             document.querySelectorAll('.dynamic-card').forEach(card => card.remove());
 
-            // 1. Render Folders (Nested Subjects)
+            // 1. Normal Folders -> Link to folder_view.html
             allNestedFolders.forEach(folder => {
                 const displayName = folder.key.charAt(0).toUpperCase() + folder.key.slice(1).replace(/_/g, ' ');
 
@@ -424,7 +409,10 @@
                 const badgeText = `hsl(${h}, 85%, 45%)`;
                 const badgeBorder = `1px solid hsla(${h}, 85%, 60%, 0.2)`;
 
-                card.onclick = () => { window.location.href = `folder_view.html?folder=${folder.key}`; };
+                card.onclick = (e) => { 
+                    e.preventDefault();
+                    window.location.href = `folder_view.html?folder=${folder.key}`; 
+                };
                 
                 card.innerHTML = `
                     <i data-lucide="${folder.icon}" size="100" class="bg-symbol"></i>
@@ -441,10 +429,15 @@
                 attach3DEffect(card);
             });
 
-            // 2. Render Store Modules
+            // 2. Render Store Modules (SPLIT LOGIC: Purchased vs Free vs Locked)
             allStoreModules.forEach(data => {
                 const hasBought = myPurchases.includes(data.key);
-                const isLocked = data.accessType === 'locked' && !hasBought;
+                
+                // BULLETPROOF CHECK: Case-insensitive 'locked' text OR price > 0 locks the card!
+                const isLocked = (!hasBought) && (
+                    (data.accessType && data.accessType.toLowerCase() === 'locked') || 
+                    (Number(data.price) > 0)
+                );
 
                 const card = document.createElement('div');
                 card.className = `course-card dynamic-card ${isLocked ? 'card-locked' : (hasBought ? 'card-owned' : 'card-dynamic-free')}`;
@@ -452,21 +445,41 @@
                 card.id = `card-${data.key}`;
 
                 if (isLocked) {
-                    card.onclick = () => openCheckout(data.key, data.title, data.price);
+                    // LOCKED: Opens checkout overlay without page refresh
+                    card.onclick = (e) => {
+                        e.preventDefault(); 
+                        openCheckout(data.key, data.title, data.price);
+                    };
                     card.innerHTML = `
                         <div class="lock-overlay"></div>
-                        <i data-lucide="${data.icon}" size="100" class="bg-symbol"></i>
+                        <i data-lucide="${data.icon || 'lock'}" size="100" class="bg-symbol"></i>
                         <div class="icon-box"><i data-lucide="lock" size="26"></i></div>
                         <div class="course-title">${data.title}</div>
                         <div class="badge"><i data-lucide="lock" size="10"></i> ₹${data.price}</div>
                     `;
-                } else {
-                    card.onclick = () => { window.location.href = `folder_view.html?mod=${data.key}`; };
+                } else if (hasBought) {
+                    // PURCHASED MODULE: Links to co.html
+                    card.onclick = (e) => { 
+                        e.preventDefault();
+                        window.location.href = `co.html?mod=${data.key}`; 
+                    };
                     card.innerHTML = `
-                        <i data-lucide="${data.icon}" size="100" class="bg-symbol"></i>
-                        <div class="icon-box"><i data-lucide="${data.icon}" size="26"></i></div>
+                        <i data-lucide="${data.icon || 'folder'}" size="100" class="bg-symbol"></i>
+                        <div class="icon-box"><i data-lucide="${data.icon || 'folder'}" size="26"></i></div>
                         <div class="course-title">${data.title}</div>
-                        <div class="badge"><i data-lucide="check-circle" size="10"></i> ${hasBought ? 'OWNED' : 'FREE'}</div>
+                        <div class="badge"><i data-lucide="check-circle" size="10"></i> OWNED</div>
+                    `;
+                } else {
+                    // NORMAL / FREE MODULE: Links to folder_view.html
+                    card.onclick = (e) => { 
+                        e.preventDefault();
+                        window.location.href = `folder_view.html?mod=${data.key}`; 
+                    };
+                    card.innerHTML = `
+                        <i data-lucide="${data.icon || 'folder'}" size="100" class="bg-symbol"></i>
+                        <div class="icon-box"><i data-lucide="${data.icon || 'folder'}" size="26"></i></div>
+                        <div class="course-title">${data.title}</div>
+                        <div class="badge"><i data-lucide="check-circle" size="10"></i> FREE</div>
                     `;
                 }
                 grid.appendChild(card);
@@ -487,7 +500,7 @@
                     snap.forEach(folderSnap => {
                         folderSnap.forEach(subSnap => {
                             const data = subSnap.val();
-                            if (data.questions) {
+                            if (data && data.questions) {
                                 const qs = Array.isArray(data.questions) ? data.questions : (data.questions.data || []);
                                 allQuestions = allQuestions.concat(qs);
                             }
@@ -523,7 +536,11 @@
             document.getElementById('checkout-title').innerText = moduleTitle;
             document.getElementById('checkout-price').innerText = "₹" + modulePrice;
             document.getElementById('checkout-overlay').style.display = 'flex';
-            document.getElementById('btn-pay').onclick = () => processRealPayment(moduleKey, moduleTitle, modulePrice);
+            
+            document.getElementById('btn-pay').onclick = (e) => {
+                e.preventDefault();
+                processRealPayment(moduleKey, moduleTitle, modulePrice);
+            };
         }
 
         function closeCheckout() {
@@ -534,41 +551,47 @@
             const btn = document.getElementById('btn-pay');
             btn.innerHTML = `Processing...`;
 
-            var options = {
-                "key": "rzp_test_Sc8VUR3pXHh9Qp",
-                "amount": modulePrice * 100,
-                "currency": "INR",
-                "name": "AgriQ Pro",
-                "handler": function (response) {
-                    showToast("Payment Successful! Module Unlocked.");
-                    
-                    const uid = auth.currentUser.uid;
-                    if (!myPurchases.includes(moduleKey)) {
-                        myPurchases.push(moduleKey);
-                        // Update local cache immediately so no DB reload is needed!
-                        localStorage.setItem(`agriq_purchases_${uid}`, JSON.stringify(myPurchases));
-                    }
-                    
-                    renderGrid();
-                    closeCheckout();
+            try {
+                var options = {
+                    "key": "rzp_test_Sc8VUR3pXHh9Qp",
+                    "amount": Math.round(Number(modulePrice) * 100), // Clean conversion to integers (paise)
+                    "currency": "INR",
+                    "name": "AgriQ Pro",
+                    "description": moduleTitle,
+                    "handler": function (response) {
+                        showToast("Payment Successful! Module Unlocked.");
+                        
+                        const uid = auth.currentUser.uid;
+                        if (!myPurchases.includes(moduleKey)) {
+                            myPurchases.push(moduleKey);
+                            localStorage.setItem(`agriq_purchases_${uid}`, JSON.stringify(myPurchases));
+                        }
+                        
+                        renderGrid();
+                        closeCheckout();
 
-                    db.ref(`students/${uid}/purchases/${moduleKey}`).set({
-                        paymentId: response.razorpay_payment_id,
-                        timestamp: Date.now()
-                    }).catch(error => {
-                        console.error("Database sync error:", error);
-                    });
-                },
-                "theme": { "color": "#8b5cf6" }
-            };
-            var rzp1 = new Razorpay(options);
+                        db.ref(`students/${uid}/purchases/${moduleKey}`).set({
+                            paymentId: response.razorpay_payment_id,
+                            timestamp: Date.now()
+                        }).catch(error => {
+                            console.error("Database sync error:", error);
+                        });
+                    },
+                    "theme": { "color": "#8b5cf6" }
+                };
+                var rzp1 = new Razorpay(options);
+                
+                rzp1.on('payment.failed', function (response){
+                    showToast("Payment Failed: " + response.error.description);
+                    btn.innerText = "PAY NOW";
+                });
+                
+                rzp1.open();
+            } catch(err) {
+                console.error("Razorpay Error:", err);
+                showToast("Gateway error. Check network connection.");
+            }
             
-            rzp1.on('payment.failed', function (response){
-                showToast("Payment Failed: " + response.error.description);
-                btn.innerText = "PAY NOW";
-            });
-            
-            rzp1.open();
             setTimeout(() => { btn.innerText = "PAY NOW"; }, 2000);
         }
 
