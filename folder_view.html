@@ -108,6 +108,7 @@
         .stat-badge.blue { background: var(--primary-glow); color: var(--primary); border-color: transparent; }
         .stat-badge.score-badge { background: rgba(16, 185, 129, 0.1); color: var(--daily-color); border-color: transparent; }
         .stat-badge.resume-badge { background: rgba(139, 92, 246, 0.1); color: var(--resume-color); border-color: transparent; }
+        .stat-badge.dept-badge { background: #f1f5f9; color: var(--text-dim); font-family: 'JetBrains Mono'; font-size: 9px; border: none; }
 
         .card-actions {
             display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
@@ -135,13 +136,19 @@
         .empty-state i { opacity: 0.5; margin-bottom: 10px; }
         .empty-state p { font-size: 13px; font-weight: 600; }
 
+        /* Toast Notice */
+        #toast { 
+            position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: white; padding: 12px 20px; border-radius: 50px;
+            font-size: 12px; font-weight: 700; display: none; z-index: 10001; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
 
     <div id="preloader"><div class="loader-spinner"></div></div>
+    <div id="toast"></div>
 
-    <!-- CUSTOM CONFIRMATION MODAL -->
     <div id="custom-modal">
         <div class="modal-content">
             <div id="modal-title" style="font-weight:900; margin-bottom:10px; text-transform:uppercase; color:var(--danger);">Alert</div>
@@ -156,6 +163,7 @@
     <header>
         <div class="back-btn" onclick="goBack()"><i data-lucide="chevron-left" size="20"></i></div>
         <div class="folder-title" id="page-title">FOLDER <span>VIEW</span></div>
+        <i data-lucide="refresh-cw" size="20" style="color:var(--text-dim); cursor:pointer; margin-right:5px;" onclick="forceRefreshFolder()" title="Force Sync from Cloud"></i>
         <i data-lucide="folder-open" size="22" style="color:var(--primary);"></i>
     </header>
 
@@ -189,6 +197,11 @@
         const folderKey = urlParams.get('folder');
         let currentUserUid = null;
 
+        // --- CACHE CONFIGURATION ---
+        const CACHE_TTL = 3600000; // 1 hour in milliseconds
+        let mergedModules = [];
+        let userScores = {};
+
         function goBack() {
             if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
                 window.history.back(); 
@@ -221,15 +234,16 @@
                 "Are you sure you want to terminate this test?<br><br><span style='color:var(--danger); font-size:12px; font-weight:700;'>All unsubmitted progress will be lost.</span>",
                 () => {
                     localStorage.removeItem(`test_progress_${sessionId}`);
-                    fetchDataWithScores(); 
+                    renderModules(); // Re-render UI locally without DB read
+                    showToast("Test terminated.");
                 }
             );
         };
 
         // --- START TEST FUNCTION ---
-        window.startTest = function(subtopicKey, urlQueryAppend) {
-            // Default random to false since toggle is removed
-            window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&random=false${urlQueryAppend}`;
+        window.startTest = function(subtopicKey, sourcePath, urlQueryAppend) {
+            // Include &source=sourcePath so test.html knows whether to read from nested_subjects or course_content
+            window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&source=${sourcePath}&random=false${urlQueryAppend}`;
         };
 
         window.addEventListener('load', () => {
@@ -238,116 +252,220 @@
                 return;
             }
             
-            document.getElementById('page-title').innerHTML = folderKey.replace(/_/g, ' ').toUpperCase();
+            document.getElementById('page-title').innerHTML = folderKey.replace(/_/g, ' ').toUpperCase() + ' <span>VIEW</span>';
 
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUserUid = user.uid;
-                    fetchDataWithScores();
+                    initDataWithCache();
                 } else {
                     window.location.href = 'login.html';
                 }
             });
         });
 
-        function fetchDataWithScores() {
-            db.ref(`students/${currentUserUid}/results`).on('value', scoreSnap => {
-                const userScores = scoreSnap.val() || {};
-                
-                db.ref(`nested_subjects/${folderKey}`).on('value', snap => {
-                    const container = document.getElementById('modules-container');
-                    container.innerHTML = "";
-                    
-                    if (!snap.exists()) {
-                        container.innerHTML = `
-                            <div class="empty-state">
-                                <i data-lucide="inbox" size="40"></i>
-                                <p>No study modules found in this folder yet.</p>
-                            </div>
-                        `;
-                        document.getElementById('total-count').innerText = "0 Modules";
-                        lucide.createIcons();
+        /**
+         * Checks LocalStorage first for instant offline loading.
+         * If expired or missing, triggers a one-time Firebase fetch.
+         */
+        function initDataWithCache() {
+            const cacheKeyData = `agriq_folder_data_${folderKey}`;
+            const cacheKeyScores = `agriq_user_scores_${currentUserUid}`;
+            const cacheKeyTime = `agriq_folder_time_${currentUserUid}_${folderKey}`;
+
+            const lastFetch = localStorage.getItem(cacheKeyTime);
+            const now = Date.now();
+
+            if (lastFetch && (now - parseInt(lastFetch)) < CACHE_TTL) {
+                const cachedData = localStorage.getItem(cacheKeyData);
+                const cachedScores = localStorage.getItem(cacheKeyScores);
+
+                if (cachedData && cachedScores) {
+                    try {
+                        mergedModules = JSON.parse(cachedData);
+                        userScores = JSON.parse(cachedScores);
+                        renderModules();
                         hideLoader();
-                        return;
+                        return; // Exit early! Zero database reads used.
+                    } catch (e) {
+                        console.warn("Cache parse failed, querying Firebase...", e);
                     }
+                }
+            }
 
-                    let count = 0;
-                    snap.forEach(child => {
-                        count++;
-                        const subtopicKey = child.key;
-                        const data = child.val();
-                        const config = data.config || {};
-                        
-                        const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
-                        const qCount = config.questionCount || (data.questions ? data.questions.length : 0);
-                        const timeSec = config.timeLimit || 600;
-                        const timeMin = Math.floor(timeSec / 60);
+            fetchFromFirebaseAndCache();
+        }
 
-                        const targetSessionId = data.current_session_id ? data.current_session_id : `${folderKey}_${subtopicKey}`;
-                        const pastAttempt = userScores[targetSessionId] || userScores[subtopicKey] || userScores[`${folderKey}_${subtopicKey}`];
-                        
-                        let testState = 'new'; 
-                        let scoreText = "";
-                        const savedLocalProgress = localStorage.getItem(`test_progress_${targetSessionId}`);
+        /**
+         * Fetches data via one-time read (.once) from both department paths:
+         * 1) nested_subjects/{folderKey}
+         * 2) course_content/{folderKey}
+         */
+        function fetchFromFirebaseAndCache() {
+            const pScores = db.ref(`students/${currentUserUid}/results`).once('value');
+            const pNested = db.ref(`nested_subjects/${folderKey}`).once('value');
+            const pCourse = db.ref(`course_content/${folderKey}`).once('value');
 
-                        if (savedLocalProgress) {
-                            testState = 'in_progress';
-                        } else if (pastAttempt) {
-                            testState = 'completed';
-                            scoreText = `${pastAttempt.score !== undefined ? pastAttempt.score : '--'}/${qCount}`;
-                        }
+            Promise.all([pScores, pNested, pCourse]).then(([scoresSnap, nestedSnap, courseSnap]) => {
+                userScores = scoresSnap.exists() ? scoresSnap.val() : {};
+                mergedModules = [];
+                const seenKeys = new Set();
 
-                        let badgesHtml = `
-                            <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
-                            <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
-                        `;
-                        let buttonHtml = '';
-                        let urlQueryAppend = '';
-
-                        // Set up buttons to call startTest directly
-                        if (testState === 'completed') {
-                            badgesHtml += `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>`;
-                            buttonHtml = `<div class="play-btn retake-btn" title="Retake Test" onclick="startTest('${subtopicKey}', '&retake=true')"><i data-lucide="rotate-ccw" size="20"></i></div>`;
-                            urlQueryAppend = '&retake=true';
-                        } else if (testState === 'in_progress') {
-                            badgesHtml += `<div class="stat-badge resume-badge"><i data-lucide="pause-circle" size="12"></i> In Progress</div>`;
-                            buttonHtml = `
-                                <div style="display: flex; gap: 8px;">
-                                    <div class="play-btn terminate-btn" onclick="terminateTest(event, '${targetSessionId}')" title="Terminate Test">
-                                        <i data-lucide="x" size="20"></i>
-                                    </div>
-                                    <div class="play-btn resume-btn" title="Resume Test" onclick="startTest('${subtopicKey}', '')">
-                                        <i data-lucide="play-circle" size="20"></i>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            buttonHtml = `<div class="play-btn" onclick="startTest('${subtopicKey}', '')"><i data-lucide="play" size="20" fill="currentColor"></i></div>`;
-                        }
-
-                        const card = document.createElement('div');
-                        card.className = "module-card";
-                        
-                        card.innerHTML = `
-                            <div class="mod-info" onclick="startTest('${subtopicKey}', '${urlQueryAppend}')">
-                                <div class="mod-title">${displayName}</div>
-                                <div class="mod-stats">
-                                    ${badgesHtml}
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                ${buttonHtml}
-                            </div>
-                        `;
-                        
-                        container.appendChild(card);
+                // 1. Process nested_subjects (Department A)
+                if (nestedSnap.exists()) {
+                    nestedSnap.forEach(child => {
+                        seenKeys.add(child.key);
+                        mergedModules.push({
+                            key: child.key,
+                            source: 'nested_subjects',
+                            ...child.val()
+                        });
                     });
+                }
 
-                    document.getElementById('total-count').innerText = `${count} Modules`;
-                    lucide.createIcons();
-                    hideLoader();
-                });
+                // 2. Process course_content (Department B)
+                if (courseSnap.exists()) {
+                    courseSnap.forEach(child => {
+                        // Avoid duplicates if both nodes happen to contain the same module key
+                        if (!seenKeys.has(child.key)) {
+                            seenKeys.add(child.key);
+                            mergedModules.push({
+                                key: child.key,
+                                source: 'course_content',
+                                ...child.val()
+                            });
+                        }
+                    });
+                }
+
+                // Cache results in localStorage
+                localStorage.setItem(`agriq_user_scores_${currentUserUid}`, JSON.stringify(userScores));
+                localStorage.setItem(`agriq_folder_data_${folderKey}`, JSON.stringify(mergedModules));
+                localStorage.setItem(`agriq_folder_time_${currentUserUid}_${folderKey}`, Date.now().toString());
+
+                renderModules();
+                hideLoader();
+            }).catch(err => {
+                console.error("Firebase fetch error:", err);
+                showToast("Failed to load topics. Check connection.");
+                hideLoader();
             });
+        }
+
+        /**
+         * Manual Refresh utility for users to force a cloud re-sync
+         */
+        function forceRefreshFolder() {
+            if (!currentUserUid) return;
+            showToast("Syncing latest topics from cloud...");
+            document.getElementById('preloader').style.display = 'flex';
+            document.getElementById('preloader').style.opacity = '1';
+            fetchFromFirebaseAndCache();
+        }
+
+        /**
+         * Renders the modules into the DOM using local or freshly cached data
+         */
+        function renderModules() {
+            const container = document.getElementById('modules-container');
+            container.innerHTML = "";
+            
+            if (mergedModules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="inbox" size="40"></i>
+                        <p>No study modules found in this folder yet.</p>
+                    </div>
+                `;
+                document.getElementById('total-count').innerText = "0 Modules";
+                lucide.createIcons();
+                return;
+            }
+
+            mergedModules.forEach(data => {
+                const subtopicKey = data.key;
+                const sourcePath = data.source;
+                const config = data.config || {};
+                
+                const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
+                
+                // Support direct arrays, data arrays, or manual config counts
+                let qCount = config.questionCount || 0;
+                if (!qCount && data.questions) {
+                    qCount = Array.isArray(data.questions) ? data.questions.length : (data.questions.data ? data.questions.data.length : 0);
+                }
+                
+                const timeSec = config.timeLimit || 600;
+                const timeMin = Math.floor(timeSec / 60);
+
+                const targetSessionId = data.current_session_id ? data.current_session_id : `${folderKey}_${subtopicKey}`;
+                const pastAttempt = userScores[targetSessionId] || userScores[subtopicKey] || userScores[`${folderKey}_${subtopicKey}`];
+                
+                let testState = 'new'; 
+                let scoreText = "";
+                const savedLocalProgress = localStorage.getItem(`test_progress_${targetSessionId}`);
+
+                if (savedLocalProgress) {
+                    testState = 'in_progress';
+                } else if (pastAttempt) {
+                    testState = 'completed';
+                    scoreText = `${pastAttempt.score !== undefined ? pastAttempt.score : '--'}/${qCount}`;
+                }
+
+                let badgesHtml = `
+                    <div class="stat-badge blue"><i data-lucide="help-circle" size="12"></i> ${qCount} Qs</div>
+                    <div class="stat-badge"><i data-lucide="timer" size="12"></i> ${timeMin} Mins</div>
+                `;
+                let buttonHtml = '';
+                let urlQueryAppend = '';
+
+                if (testState === 'completed') {
+                    badgesHtml += `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>`;
+                    buttonHtml = `<div class="play-btn retake-btn" title="Retake Test" onclick="startTest('${subtopicKey}', '${sourcePath}', '&retake=true')"><i data-lucide="rotate-ccw" size="20"></i></div>`;
+                    urlQueryAppend = '&retake=true';
+                } else if (testState === 'in_progress') {
+                    badgesHtml += `<div class="stat-badge resume-badge"><i data-lucide="pause-circle" size="12"></i> In Progress</div>`;
+                    buttonHtml = `
+                        <div style="display: flex; gap: 8px;">
+                            <div class="play-btn terminate-btn" onclick="terminateTest(event, '${targetSessionId}')" title="Terminate Test">
+                                <i data-lucide="x" size="20"></i>
+                            </div>
+                            <div class="play-btn resume-btn" title="Resume Test" onclick="startTest('${subtopicKey}', '${sourcePath}', '')">
+                                <i data-lucide="play-circle" size="20"></i>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    buttonHtml = `<div class="play-btn" onclick="startTest('${subtopicKey}', '${sourcePath}', '')"><i data-lucide="play" size="20" fill="currentColor"></i></div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "module-card";
+                
+                card.innerHTML = `
+                    <div class="mod-info" onclick="startTest('${subtopicKey}', '${sourcePath}', '${urlQueryAppend}')">
+                        <div class="mod-title">${displayName}</div>
+                        <div class="mod-stats">
+                            ${badgesHtml}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        ${buttonHtml}
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+
+            document.getElementById('total-count').innerText = `${mergedModules.length} Modules`;
+            lucide.createIcons();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         }
 
         function hideLoader() {
