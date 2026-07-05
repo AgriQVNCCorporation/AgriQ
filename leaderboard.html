@@ -55,9 +55,19 @@
         .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; text-transform: uppercase; }
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .refresh-btn {
+            background: rgba(0, 132, 255, 0.1); border: 1px solid rgba(0, 132, 255, 0.2);
+            color: var(--primary); padding: 8px; border-radius: 12px; display: flex;
+            align-items: center; justify-content: center; cursor: pointer; transition: var(--transition);
+        }
+        .refresh-btn:hover { background: var(--primary); color: white; transform: rotate(180deg); }
+        .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
         main { padding: 0 20px; max-width: 500px; margin: 0 auto; width: 100%; }
 
-        /* --- PODIUM STYLING (Tier-linked glows) --- */
+        /* --- PODIUM STYLING --- */
         .podium { 
             display: flex; justify-content: center; align-items: flex-end; 
             gap: 12px; margin: 40px 0 30px; min-height: 220px; 
@@ -74,23 +84,10 @@
         .podium-2 { height: 180px; }
         .podium-3 { height: 160px; }
 
-        /* Podium Gamification Colors based on Tier */
         .podium-item.tier-base { border-color: var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.04); }
-        
-        .podium-item.tier-gold {
-            border-color: var(--color-gold); background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
-            box-shadow: 0 0 30px rgba(251, 191, 36, 0.3), inset 0 0 15px rgba(251, 191, 36, 0.1);
-        }
-        
-        .podium-item.tier-diamond {
-            border-color: var(--color-diamond); background: linear-gradient(180deg, #faf5ff 0%, #fff 100%);
-            box-shadow: 0 0 30px rgba(168, 85, 247, 0.3), inset 0 0 15px rgba(168, 85, 247, 0.1);
-        }
-        
-        .podium-item.tier-legend {
-            border-color: var(--color-legend); background: linear-gradient(180deg, #fef2f2 0%, #fff 100%);
-            box-shadow: 0 0 40px rgba(239, 68, 68, 0.3), inset 0 0 20px rgba(239, 68, 68, 0.15);
-        }
+        .podium-item.tier-gold { border-color: var(--color-gold); background: linear-gradient(180deg, #fffbeb 0%, #fff 100%); box-shadow: 0 0 30px rgba(251, 191, 36, 0.3), inset 0 0 15px rgba(251, 191, 36, 0.1); }
+        .podium-item.tier-diamond { border-color: var(--color-diamond); background: linear-gradient(180deg, #faf5ff 0%, #fff 100%); box-shadow: 0 0 30px rgba(168, 85, 247, 0.3), inset 0 0 15px rgba(168, 85, 247, 0.1); }
+        .podium-item.tier-legend { border-color: var(--color-legend); background: linear-gradient(180deg, #fef2f2 0%, #fff 100%); box-shadow: 0 0 40px rgba(239, 68, 68, 0.3), inset 0 0 20px rgba(239, 68, 68, 0.15); }
 
         .crown { position: absolute; top: -35px; font-size: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); animation: float 3s ease-in-out infinite; z-index: 10; }
         @keyframes float { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-8px) rotate(5deg); } }
@@ -106,7 +103,6 @@
 
         .svg-frame { position: absolute; z-index: 2; pointer-events: none; opacity: 0; transition: all 0.5s ease; transform: scale(0.8); }
         
-        /* Apply Tier Logic (Frames & Avatars) */
         .tier-gold .frame-g { opacity: 1; transform: scale(1.05); }
         .tier-gold .aura-layer { background: var(--color-gold); opacity: 0.3; }
         .tier-gold .user-avatar { border-color: var(--color-gold); color: var(--color-gold); }
@@ -122,15 +118,9 @@
         @keyframes pulse-aura { from { filter: blur(15px); opacity: 0.15; } to { filter: blur(25px); opacity: 0.3; } }
 
         /* Podium Text Box */
-        .p-name { 
-            font-weight: 900; font-size: 10px; text-transform: uppercase; color: var(--text-main); 
-            width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; 
-            padding: 4px; border-radius: 8px; background: rgba(0,0,0,0.03); display: block;
-        }
-        
+        .p-name { font-weight: 900; font-size: 10px; text-transform: uppercase; color: var(--text-main); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; padding: 4px; border-radius: 8px; background: rgba(0,0,0,0.03); display: block; }
         .p-score { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 14px; color: var(--primary); background: rgba(0,132,255,0.1); padding: 4px 10px; border-radius: 12px; }
         
-        /* Podium Text Gamification Colors */
         .podium-item.tier-gold .p-name { color: #b45309; border: 1px solid rgba(251,191,36,0.4); background: rgba(251,191,36,0.1); }
         .podium-item.tier-gold .p-score { background: var(--color-gold); color: white; box-shadow: 0 4px 10px rgba(251, 191, 36, 0.4); }
         
@@ -148,31 +138,15 @@
         
         .rank-card {
             background: var(--surface); border: 1px solid var(--border);
-            padding: 12px 16px; border-radius: 20px;
-            display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
+            padding: 12px 16px; border-radius: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
             transition: var(--transition); animation: slideUp 0.4s ease forwards; opacity: 0; transform: translateY(10px);
             position: relative; overflow: hidden;
         }
         
-        /* Pallet Colored Glows (Respecting Light Theme) */
         .rank-card.tier-base { box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
-        
-        .rank-card.tier-gold { 
-            border-color: rgba(251,191,36,0.5); 
-            box-shadow: inset 0 0 15px rgba(251,191,36,0.1), 0 5px 15px rgba(251,191,36,0.1); 
-            background: linear-gradient(90deg, #ffffff 0%, #fffbeb 100%);
-        }
-        .rank-card.tier-diamond { 
-            border-color: rgba(168,85,247,0.5); 
-            box-shadow: inset 0 0 15px rgba(168,85,247,0.1), 0 5px 15px rgba(168,85,247,0.1); 
-            background: linear-gradient(90deg, #ffffff 0%, #faf5ff 100%);
-        }
-        .rank-card.tier-legend { 
-            border-color: rgba(239,68,68,0.5); 
-            box-shadow: inset 0 0 20px rgba(239,68,68,0.15), 0 5px 20px rgba(239,68,68,0.15); 
-            background: linear-gradient(90deg, #ffffff 0%, #fef2f2 100%); 
-        }
-        
+        .rank-card.tier-gold { border-color: rgba(251,191,36,0.5); box-shadow: inset 0 0 15px rgba(251,191,36,0.1), 0 5px 15px rgba(251,191,36,0.1); background: linear-gradient(90deg, #ffffff 0%, #fffbeb 100%); }
+        .rank-card.tier-diamond { border-color: rgba(168,85,247,0.5); box-shadow: inset 0 0 15px rgba(168,85,247,0.1), 0 5px 15px rgba(168,85,247,0.1); background: linear-gradient(90deg, #ffffff 0%, #faf5ff 100%); }
+        .rank-card.tier-legend { border-color: rgba(239,68,68,0.5); box-shadow: inset 0 0 20px rgba(239,68,68,0.15), 0 5px 20px rgba(239,68,68,0.15); background: linear-gradient(90deg, #ffffff 0%, #fef2f2 100%); }
         .rank-card.is-me { border-color: var(--primary); background: #f0f9ff; box-shadow: inset 0 0 15px rgba(0,132,255,0.1), 0 8px 20px rgba(0,132,255,0.15); }
         
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
@@ -184,13 +158,10 @@
         .user-meta { font-size: 10px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
         .score-val { font-family: 'JetBrains Mono'; font-weight: 900; color: var(--text-dim); font-size: 18px; text-align: right; flex-shrink: 0; }
         
-        /* Pallet Text Gamification Colors */
         .rank-card.tier-gold .user-meta { color: #d97706; }
         .rank-card.tier-gold .score-val { color: var(--color-gold); }
-        
         .rank-card.tier-diamond .user-meta { color: #9333ea; }
         .rank-card.tier-diamond .score-val { color: var(--color-diamond); }
-        
         .rank-card.tier-legend .user-meta { color: #dc2626; }
         .rank-card.tier-legend .score-val { color: var(--color-legend); }
 
@@ -226,6 +197,9 @@
         .level-badge { background: linear-gradient(135deg, var(--gold), #f59e0b); color: #fff; display: inline-block; padding: 8px 20px; border-radius: 50px; font-weight: 900; font-size: 14px; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4); margin-bottom: 25px; }
         .btn-awesome { width: 100%; padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: #fff; font-weight: 900; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 0 10px 20px rgba(0, 132, 255, 0.2); }
         .btn-awesome:active { transform: scale(0.96); }
+
+        #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -234,6 +208,8 @@
         <i data-lucide="trophy" size="48" color="var(--primary)" style="animation: float 2s infinite;"></i>
         <p style="font-family:'JetBrains Mono'; font-size:11px; margin-top:20px; letter-spacing:2px; color:var(--primary); font-weight: 800;">SYNCING RANKS...</p>
     </div>
+
+    <div id="toast"></div>
 
     <div id="reward-modal">
         <div class="reward-content" id="reward-content">
@@ -247,7 +223,12 @@
 
     <header>
         <div class="brand">GLOBAL <span>RANKS</span></div>
-        <i data-lucide="bar-chart-2" size="22" color="var(--primary)"></i>
+        <div class="header-actions">
+            <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()" title="Refresh Ranks">
+                <i data-lucide="refresh-cw" size="18"></i>
+            </button>
+            <i data-lucide="bar-chart-2" size="22" color="var(--primary)"></i>
+        </div>
     </header>
 
     <main>
@@ -304,12 +285,43 @@
             return active;
         }
 
+        // --- INSTANT OFFLINE LEADERBOARD LOAD ---
+        function loadOfflineLeaderboard() {
+            const cached = JSON.parse(localStorage.getItem('agriq_global_leaderboard_cache'));
+            if (cached && cached.length > 0) {
+                renderUI(cached);
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function manualRefresh() {
+            const btn = document.getElementById('refresh-btn');
+            btn.classList.add('spinning');
+            showToast("Syncing live rankings...");
+            
+            db.ref('leaderboard').once('value', snap => {
+                const data = snap.val();
+                if (data) processData(data);
+                setTimeout(() => {
+                    btn.classList.remove('spinning');
+                    showToast("Leaderboard updated!");
+                }, 600);
+            });
+        }
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUid = user.uid;
+                // 1. INSTANT LOAD: Render from localStorage before network requests finish
+                loadOfflineLeaderboard();
                 initGlobalSync();
             } else {
-                window.location.href = 'rankers.html';
+                window.location.href = 'login.html';
             }
         });
 
@@ -354,8 +366,9 @@
             });
 
             let currentUserStats = null;
+            let myRank = '-';
 
-            const sorted = Object.values(aggregated).map(u => {
+            const sorted = Object.values(aggregated).map((u, idx) => {
                 const level = Math.floor(u.score / 500) + 1;
                 const tierInfo = getTierClassAndColor(u.score);
                 
@@ -383,6 +396,26 @@
                 };
             }).sort((a, b) => b.score - a.score);
 
+            // Find current user's exact sorted rank for dashboard synchronization
+            const myIndex = sorted.findIndex(u => u.uid === currentUid);
+            if (myIndex !== -1) myRank = myIndex + 1;
+
+            // 2. CACHE LEADERBOARD: Save sorted standings for lightning-fast offline visits
+            localStorage.setItem('agriq_global_leaderboard_cache', JSON.stringify(sorted));
+
+            // 3. CACHE USER TRACKER: Keep user's rank/score synced for dashboard.html & profile.html
+            if (currentUid && currentUserStats) {
+                const trackerKey = `agriq_tracker_${currentUid}`;
+                const existingTracker = JSON.parse(localStorage.getItem(trackerKey)) || {};
+                localStorage.setItem(trackerKey, JSON.stringify({
+                    ...existingTracker,
+                    score: currentUserStats.score,
+                    rank: myRank,
+                    tierId: currentUserStats.tierId,
+                    level: currentUserStats.level
+                }));
+            }
+
             renderUI(sorted);
 
             if (currentUserStats) {
@@ -391,7 +424,7 @@
         }
 
         function checkAndTriggerRewards(stats) {
-            const cacheKey = `agriq_tracker_${currentUid}`;
+            const cacheKey = `agriq_rewards_checked_${currentUid}`;
             const cached = JSON.parse(localStorage.getItem(cacheKey));
 
             if (cached) {
@@ -477,12 +510,10 @@
             const list = document.getElementById('leaderboard-list');
             document.getElementById('list-title').style.display = 'flex';
 
-            // HTML Builder for Avatar + Frame
             const getGamifiedAvatarHtml = (u, isList = false) => {
                 if (!u) return `<div class="frame-container tier-base ${isList ? 'list-avatar' : ''}"><div class="user-avatar">?</div></div>`;
                 
                 let initial = u.displayName ? u.displayName[0] : '?';
-
                 const content = u.photo 
                     ? `<img src="${u.photo}" class="user-avatar" style="border:none;">` 
                     : `<div class="user-avatar">${initial}</div>`;
@@ -498,7 +529,6 @@
 
             const first = users[0], second = users[1], third = users[2];
 
-            // Render Podium
             podium.innerHTML = `
                 <div class="podium-item podium-2 ${second ? second.tierClass : 'tier-base'}">
                     <div style="font-size:10px; font-weight:900; color:var(--silver); margin-bottom:5px;">#2</div>
@@ -520,7 +550,6 @@
                 </div>
             `;
 
-            // Render List Items
             list.innerHTML = users.map((u, i) => {
                 const rank = i + 1;
                 const isMe = u.uid === currentUid;
@@ -529,9 +558,7 @@
                 return `
                     <div class="rank-card ${isMe ? 'is-me' : ''} ${u.tierClass}" style="animation-delay: ${delay}s">
                         <div class="rank-num">${rank}</div>
-                        
                         ${getGamifiedAvatarHtml(u, true)}
-                        
                         <div class="user-info">
                             <div class="user-name">
                                 <span class="name-text">${u.displayName}</span>
@@ -563,9 +590,8 @@
         }
 
         function finishLoading() {
-            setTimeout(() => { document.getElementById('leader-loader').classList.add('fade-out'); }, 500);
+            setTimeout(() => { document.getElementById('leader-loader').classList.add('fade-out'); }, 300);
         }
     </script>
 </body>
 </html>
-
