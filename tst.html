@@ -159,13 +159,11 @@
 </head>
 <body>
 
-    <!-- LOADER -->
     <div id="app-loader">
         <div id="loader-icon" style="color:var(--primary);"><i data-lucide="cloud-lightning" size="64" fill="currentColor"></i></div>
         <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">SYNCING SCALES...</p>
     </div>
 
-    <!-- PAUSE OVERLAY -->
     <div id="pause-overlay">
         <i data-lucide="pause-circle" size="72" color="var(--primary)" style="margin-bottom: 20px;"></i>
         <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main); margin-bottom: 10px;">TEST PAUSED</h2>
@@ -173,7 +171,6 @@
         <button class="btn-primary" style="width: auto; padding: 16px 40px;" onclick="togglePause()">RESUME TEST</button>
     </div>
 
-    <!-- ALERT MODAL -->
     <div id="custom-modal">
         <div class="modal-content">
             <div id="modal-title" style="font-weight:900; margin-bottom:10px; text-transform:uppercase; color:var(--primary);">Alert</div>
@@ -185,13 +182,10 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- SCREEN 1: MODE SELECTION                   -->
-    <!-- ========================================== -->
     <div id="screen-select" class="screen">
         <header class="online-header">
             <div class="back-btn" onclick="requestExit()"><i data-lucide="chevron-left" size="20"></i></div>
-            <div class="brand"><i data-lucide="shield-check" size="24" color="var(--primary)"></i> AgriQ <span>Test</span></div>
+            <div class="brand" style="font-weight: 900; font-size: 20px;"><i data-lucide="shield-check" size="24" color="var(--primary)"></i> AgriQ <span style="color: var(--primary);">Test</span></div>
             <div style="width: 40px;"></div>
         </header>
 
@@ -214,21 +208,17 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- SCREEN 2: ONLINE TEST ENGINE               -->
-    <!-- ========================================== -->
     <div id="screen-online" class="screen">
         <header class="online-header">
             <div style="display:flex; align-items:center; gap:12px;">
                 <div class="back-btn" onclick="requestExit()"><i data-lucide="chevron-left" size="20"></i></div>
                 <div class="profile-container" id="user-initial">U</div>
                 <div>
-                    <div style="font-weight: 900; font-size: 9px; letter-spacing: 1px; color: var(--primary);">LIVE ASSESSMENT</div>
+                    <div id="assessment-type-label" style="font-weight: 900; font-size: 9px; letter-spacing: 1px; color: var(--primary);">LIVE ASSESSMENT</div>
                     <span id="user-display-name" style="font-weight:800; font-size:14px; color:var(--text-main);">STUDENT</span>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <!-- Updated visual default to 2 Hours -->
                 <div id="q-timer" class="timer-badge">02:00:00</div>
                 <button onclick="togglePause()" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:5px; display:flex;">
                     <i data-lucide="pause-circle" size="24"></i>
@@ -264,9 +254,6 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- SCREEN 3: OFFLINE PDF VIEWER               -->
-    <!-- ========================================== -->
     <div id="screen-offline" class="screen" style="padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; width: 100%;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -299,20 +286,21 @@
 
         // --- GLOBAL VARIABLES ---
         let questions = [], currentIdx = 0, userChoices = {}, markedQuestions = {}, timer;
-        
-        // DEFAULT STRICTLY SET TO 2 HOURS (7200 seconds)
-        let totalSecondsRemaining = 7200; 
+        let totalSecondsRemaining = 7200; // DEFAULT 2 HOURS
         
         const params = new URLSearchParams(window.location.search);
         const testType = params.get('type');
         const moduleKey = params.get('mod');
         const folderKey = params.get('folder') || 'Unknown';
+        const sourceParam = params.get('source'); // Can be course_content or nested_subjects
+        const dbVersion = params.get('v');
+        const isRandomMode = params.get('random') === 'true';
         
         let activeSessionId = `${folderKey}_${moduleKey}`; 
+        if (dbVersion === '2') activeSessionId += '_v2';
         
         const retakeParam = params.get('retake');
         const isRetake = retakeParam === 'true' || retakeParam === 'half';
-        const isHalfXP = retakeParam === 'half';
         
         let isSubmitting = false;
         let isPaused = false;
@@ -325,9 +313,18 @@
                 window.history.pushState({ noBackExitsApp: true }, ''); 
                 requestExit();
             } else {
-                window.location.href = 'dashboard.html';
+                returnToPrevious();
             }
         });
+
+        function returnToPrevious() {
+            let returnUrl = 'dashboard.html';
+            if (folderKey && folderKey !== 'Unknown') {
+                returnUrl = (sourceParam === 'course_content') ? `pfolder.html?folder=${folderKey}` : `folder_view.html?folder=${folderKey}`;
+                if (dbVersion === '2') returnUrl += `&v=2`;
+            }
+            window.location.href = returnUrl;
+        }
 
         // Auto-pause on tab change
         document.addEventListener("visibilitychange", () => {
@@ -352,54 +349,137 @@
         async function loadQuestions() {
             try {
                 const user = auth.currentUser;
-                const isOfflineFlag = params.get('offline') === 'true';
-                const cachedData = localStorage.getItem(`offline_bank_${activeSessionId}`);
+                const isOfflineFlag = params.get('offline') === 'true' || !navigator.onLine;
                 let rawQuestions = [];
 
-                // 1. Determine Source & ID
+                // 1. Check Special Modes (Sunday Test or Revision)
                 if(testType === 'sunday') {
                     activeSessionId = "SUNDAY_GRAND_TEST";
                     const snap = await db.ref('sunday_test').once('value');
                     if(snap.exists() && snap.val().status === 'active') {
                         rawQuestions = snap.val().questions || [];
-                        totalSecondsRemaining = 7200; // Force 2 Hours for Sunday Test
+                        totalSecondsRemaining = 7200; 
                     } else {
-                        return showModal("ACCESS DENIED", "The Sunday Grand Test is currently inactive or locked.", "alert", () => window.location.href='dashboard.html');
+                        return showModal("ACCESS DENIED", "The Sunday Grand Test is currently inactive or locked.", "alert", () => returnToPrevious());
                     }
                 } 
-                else if (isOfflineFlag && cachedData) {
-                    rawQuestions = JSON.parse(cachedData);
-                    totalSecondsRemaining = 7200; // Default to 2 hours if strictly offline
-                } 
-                else {
-                    const snap = await db.ref(`subjects/${moduleKey}`).once('value');
-                    if (snap.exists()) {
-                        const data = snap.val();
-                        if (data.current_session_id) activeSessionId = data.current_session_id;
-                        rawQuestions = data.questions?.data || data.questions || [];
-                        
-                        // Check if admin set a specific time limit, otherwise default to 7200
-                        if (data.config && data.config.timeLimit) {
-                            totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
+                else if (moduleKey === 'revision' || localStorage.getItem('isRevision') === 'true') {
+                    const storedQs = localStorage.getItem('revisionQuestions');
+                    if (storedQs) {
+                        document.getElementById('assessment-type-label').innerText = "🔥 QUICK REVISION";
+                        document.getElementById('assessment-type-label').style.color = "var(--warning)";
+                        rawQuestions = JSON.parse(storedQs);
+                        localStorage.removeItem('isRevision');
+                        localStorage.removeItem('revisionQuestions');
+                        totalSecondsRemaining = rawQuestions.length * 60;
+                    } else {
+                        return showModal("ERROR", "Revision data expired. Please restart from the folder.", "alert", () => returnToPrevious());
+                    }
+                }
+                // 2. UNIFIED LOCAL STORAGE / OFFLINE CACHE CHECK
+                else if (folderKey && folderKey !== 'Unknown') {
+                    // Inspect caches created by folder_view.html, pfolder.html, and pcourses.html
+                    const cachedData = localStorage.getItem(`agriq_folder_data_${folderKey}`) || 
+                                       localStorage.getItem(`agriq_pfolder_data_${folderKey}`) ||
+                                       localStorage.getItem(`offline_bank_${activeSessionId}`);
+                    
+                    if (cachedData) {
+                        try {
+                            const parsedCache = JSON.parse(cachedData);
+                            // Can be an array of modules (folder view cache) or direct questions array (legacy offline bank)
+                            if (Array.isArray(parsedCache)) {
+                                const targetModule = parsedCache.find(m => m.key === moduleKey || m.id === moduleKey);
+                                if (targetModule && targetModule.questions) {
+                                    if (targetModule.current_session_id) {
+                                        activeSessionId = dbVersion === '2' ? targetModule.current_session_id + '_v2' : targetModule.current_session_id;
+                                    }
+                                    rawQuestions = targetModule.questions?.data || targetModule.questions || [];
+                                    if (targetModule.config && targetModule.config.timeLimit) {
+                                        totalSecondsRemaining = parseInt(targetModule.config.timeLimit, 10);
+                                    }
+                                    document.getElementById('assessment-type-label').innerText = !navigator.onLine ? "⚡ OFFLINE ASSESSMENT" : "⚡ INSTANT CACHED TEST";
+                                    document.getElementById('assessment-type-label').style.color = "#10b981";
+                                }
+                            } else if (parsedCache.questions || Array.isArray(parsedCache)) {
+                                rawQuestions = parsedCache.questions || parsedCache;
+                                totalSecondsRemaining = 7200;
+                            }
+                        } catch(err) {
+                            console.warn("Local storage cache parse failed, falling back to Firebase cloud:", err);
+                        }
+                    }
+                }
+
+                // 3. Fallback to Firebase Cloud Fetch (if not loaded from local storage)
+                if (rawQuestions.length === 0) {
+                    if (!navigator.onLine) {
+                        return showModal("OFFLINE ERROR", "This test has not been downloaded for offline access yet. Please connect to the internet.", "alert", () => returnToPrevious());
+                    }
+
+                    let dbPath = `subjects/${moduleKey}`;
+                    let snap = null;
+
+                    if (folderKey && folderKey !== 'Unknown') {
+                        if (dbVersion === '2') {
+                            dbPath = `nested_subjects_v2/${folderKey}/${moduleKey}`;
+                            snap = await db.ref(dbPath).once('value');
+                            if (snap.exists()) document.getElementById('assessment-type-label').innerText = "LIVE ASSESSMENT V2";
+                        } else if (sourceParam === 'course_content') {
+                            dbPath = `course_content/${folderKey}/${moduleKey}`;
+                            snap = await db.ref(dbPath).once('value');
+                            if (snap.exists()) document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
+                        } else if (sourceParam === 'nested_subjects') {
+                            dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
+                            snap = await db.ref(dbPath).once('value');
                         } else {
-                            totalSecondsRemaining = 7200; 
+                            dbPath = `course_content/${folderKey}/${moduleKey}`;
+                            snap = await db.ref(dbPath).once('value');
+                            if (snap.exists()) {
+                                document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
+                            } else {
+                                dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
+                                snap = await db.ref(dbPath).once('value');
+                            }
                         }
                     } else {
-                        return showModal("ERROR", "Module not found in database.", "alert", () => window.location.href='dashboard.html');
+                        snap = await db.ref(dbPath).once('value');
+                    }
+
+                    if (snap && snap.exists()) {
+                        const data = snap.val();
+                        if (data.current_session_id) activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
+                        rawQuestions = data.questions?.data || data.questions || [];
+                        if (data.config && data.config.timeLimit) {
+                            totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
+                        }
                     }
                 }
 
                 if(rawQuestions.length === 0) {
-                    return showModal("ERROR", "No questions found.", "alert", () => window.location.href='dashboard.html');
+                    return showModal("ERROR", "No questions found in this module.", "alert", () => returnToPrevious());
                 }
 
-                // 2. ANTI-REATTEMPT GATEKEEPER
-                const attemptSnap = await db.ref(`students/${user.uid}/results/${activeSessionId}`).once('value');
-                if (attemptSnap.exists()) {
-                    return showModal("ATTEMPT EXHAUSTED", "You have already completed this test. Re-attempts are not permitted.", "alert", () => window.location.href='dashboard.html');
+                // 4. ANTI-REATTEMPT GATEKEEPER (Checks Local Storage FIRST, then Cloud)
+                if (!isRetake) {
+                    const cacheKeyScores = `agriq_user_scores_${user.uid}`;
+                    const localScoresStr = localStorage.getItem(cacheKeyScores);
+                    const localScores = localScoresStr ? JSON.parse(localScoresStr) : {};
+                    
+                    if (localScores[activeSessionId]) {
+                        return showModal("ATTEMPT EXHAUSTED", "You have already completed this test. Re-attempts are not permitted.", "alert", () => returnToPrevious());
+                    }
+
+                    if (navigator.onLine) {
+                        const attemptSnap = await db.ref(`students/${user.uid}/results/${activeSessionId}`).once('value');
+                        if (attemptSnap.exists()) {
+                            return showModal("ATTEMPT EXHAUSTED", "You have already completed this test. Re-attempts are not permitted.", "alert", () => returnToPrevious());
+                        }
+                    }
+                } else {
+                    document.getElementById('retake-badge').style.display = 'inline-block';
                 }
 
-                // 3. CHECK FOR SAVED PROGRESS (Resume Engine)
+                // 5. CHECK FOR SAVED PROGRESS (Resume Engine)
                 const savedProgress = localStorage.getItem(`test_progress_${activeSessionId}`);
                 
                 if (savedProgress) {
@@ -419,19 +499,26 @@
                     return;
                 }
 
-                // 4. New Test Setup
-                const shuffledQuestions = shuffleArray([...rawQuestions]);
-                questions = shuffledQuestions.map(q => ({
-                    ...q,
-                    displayQ: q.question || q.q,
-                    correct: q.answer || q.ans,
-                    shuffledOpts: shuffleArray([...(q.options || [])])
-                }));
+                // 6. New Test Setup
+                const processedQuestions = isRandomMode ? shuffleArray([...rawQuestions]) : [...rawQuestions];
+                questions = processedQuestions.map(q => {
+                    const opts = q.options || [];
+                    const finalOptions = isRandomMode ? shuffleArray([...opts]) : [...opts];
+                    return {
+                        ...q,
+                        displayQ: q.question || q.q,
+                        correct: q.answer || q.ans,
+                        shuffledOpts: finalOptions
+                    };
+                });
 
                 document.getElementById('app-loader').classList.add('fade-out');
                 document.getElementById('screen-select').classList.add('active');
 
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e); 
+                showModal("ERROR", "Failed to load test. Please check your connection.", "alert", () => returnToPrevious());
+            }
         }
 
         function shuffleArray(array) {
@@ -452,13 +539,13 @@
                 isPaused = true; 
                 showModal(
                     "PAUSE & EXIT", 
-                    "Do you want to save your progress and exit? You can resume this exact session later from the dashboard.", 
+                    "Do you want to save your progress and exit? You can resume this exact session later.", 
                     "confirm", 
                     saveAndExit,
                     "SAVE & EXIT"
                 );
             } else {
-                window.location.href = 'dashboard.html';
+                returnToPrevious();
             }
         }
 
@@ -471,7 +558,7 @@
                 timeLeft: totalSecondsRemaining
             };
             localStorage.setItem(`test_progress_${activeSessionId}`, JSON.stringify(progress));
-            window.location.href = 'dashboard.html';
+            returnToPrevious();
         }
 
         // --- MODE HANDLERS ---
@@ -552,7 +639,6 @@
         }
 
         function updateTimerUI() {
-            // Updated to handle Hours correctly
             let h = Math.floor(totalSecondsRemaining / 3600).toString().padStart(2, '0');
             let m = Math.floor((totalSecondsRemaining % 3600) / 60).toString().padStart(2, '0');
             let s = (totalSecondsRemaining % 60).toString().padStart(2, '0');
@@ -592,13 +678,36 @@
                 uid: auth.currentUser.uid,
                 score: correctCount, rawScore: correctCount, total: questions.length, 
                 accuracy: Math.round((correctCount / (questions.length || 1)) * 100),
-                module: moduleKey, session_id: activeSessionId, timestamp: Date.now(), isRetake: false
+                module: moduleKey, session_id: activeSessionId, timestamp: Date.now(), isRetake: isRetake
             };
 
-            try {
-                // Clear the saved progress since the test is finished
-                localStorage.removeItem(`test_progress_${activeSessionId}`);
+            // 1. Clear saved resume progress
+            localStorage.removeItem(`test_progress_${activeSessionId}`);
 
+            // 2. Save locally for analysis.html
+            localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
+
+            // 3. INSTANT SCORE CACHE SYNC: Update local score cache immediately
+            const cacheKeyScores = `agriq_user_scores_${auth.currentUser.uid}`;
+            try {
+                const cachedScoresStr = localStorage.getItem(cacheKeyScores);
+                const cachedScores = cachedScoresStr ? JSON.parse(cachedScoresStr) : {};
+                cachedScores[activeSessionId] = { score: correctCount, timestamp: Date.now() };
+                localStorage.setItem(cacheKeyScores, JSON.stringify(cachedScores));
+            } catch(err) {
+                console.warn("Could not update local score cache:", err);
+            }
+
+            // 4. If Offline: Skip network calls and redirect instantly
+            if (!navigator.onLine) {
+                db.ref('leaderboard').push(resultData);
+                const userRef = db.ref(`students/${auth.currentUser.uid}`);
+                userRef.child(`results/${activeSessionId}`).set({ score: correctCount, timestamp: Date.now() });
+                window.location.replace('analysis.html');
+                return;
+            }
+
+            try {
                 await db.ref('leaderboard').push(resultData);
                 const userRef = db.ref(`students/${auth.currentUser.uid}`);
                 const snap = await userRef.once('value');
@@ -610,10 +719,7 @@
                     avgAccuracy: Math.round(((d.avgAccuracy || 0) * (newTests - 1) + resultData.accuracy) / newTests)
                 });
                 
-                // Write the completion record to block future attempts
                 await userRef.child(`results/${activeSessionId}`).set({ score: correctCount, timestamp: Date.now() });
-
-                localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
                 window.location.replace('analysis.html');
             } catch (e) { window.location.replace('analysis.html'); }
         }
