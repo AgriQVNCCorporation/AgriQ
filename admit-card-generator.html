@@ -35,7 +35,7 @@
             overflow-x: hidden;
         }
 
-        /* Ambient Background Mesh (V7.0) */
+        /* Ambient Background Mesh */
         .ambient-bg {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
             background: radial-gradient(circle at 15% 50%, rgba(0, 198, 255, 0.08), transparent 25%),
@@ -144,8 +144,6 @@
         .modal-btn.confirm { background: var(--primary-gradient); color: white; box-shadow: 0 8px 20px var(--primary-glow);}
         .modal-btn.error-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .modal-btn:active { transform: scale(0.95); }
-        
-        .app-id-display { font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 900; color: var(--primary); background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px dashed var(--border); margin: 15px 0; letter-spacing: 1px; user-select: all;}
 
         @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -345,7 +343,7 @@
         }
 
         // --- Modals ---
-        function showModal(type, title, text, appId = null) {
+        function showModal(type, title, text) {
             const overlay = document.getElementById('modal-overlay');
             const content = document.getElementById('modal-content');
             
@@ -358,11 +356,12 @@
                 `;
             } else if (type === 'success') {
                 content.innerHTML = `
-                    <div class="modal-icon success"><i data-lucide="check-circle-2" size="32"></i></div>
+                    <div class="modal-icon success"><i data-lucide="clock" size="32"></i></div>
                     <h3 style="margin:0 0 12px; font-size:22px; font-weight:900;">${title}</h3>
-                    <p style="color:var(--text-dim); font-size:14px; font-weight:500; line-height:1.6; margin-bottom:10px;">${text}</p>
-                    <div class="app-id-display">${appId}</div>
-                    <p style="color:var(--warning); font-size:12px; font-weight:700; margin-bottom:24px;">Please save this ID. You will need it and your DOB to log in.</p>
+                    <p style="color:var(--text-dim); font-size:14px; font-weight:500; line-height:1.6; margin-bottom:24px;">${text}</p>
+                    <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 12px; border-radius: 12px; margin-bottom: 24px;">
+                        <p style="color:var(--warning); font-size:12px; font-weight:700; margin:0;">Your Test Code will be unlocked on your Profile page once an Admin verifies your identity and course purchase.</p>
+                    </div>
                     <button class="modal-btn confirm" onclick="window.location.href='dashboard.html'">Return to Dashboard</button>
                 `;
             }
@@ -425,7 +424,7 @@
                 .then(() => {
                     btn.innerHTML = `SUBMIT APPLICATION <i data-lucide="send" size="18"></i>`;
                     btn.style.pointerEvents = 'auto';
-                    showModal('success', 'Application Submitted!', 'Your request has been forwarded to the administration. Your Application ID is:', formattedAppId);
+                    showModal('success', 'Application Submitted!', 'Your request has been securely forwarded to the administration for review.');
                 })
                 .catch((error) => {
                     btn.innerHTML = `SUBMIT APPLICATION <i data-lucide="send" size="18"></i>`;
