@@ -166,8 +166,6 @@
         .btn-download.locked { background: #f1f5f9; color: var(--text-dim); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border);}
         .btn-download:not(.locked):hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 132, 255, 0.3); }
 
-        .dev-bypass { font-size: 10px; color: var(--text-dim); text-align: center; margin-top: -5px; cursor: pointer; text-decoration: underline;}
-
         /* Stats Grid */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 24px; text-align: center; }
@@ -340,8 +338,8 @@
         const storage = firebase.storage();
         lucide.createIcons();
 
-        let hasPurchased = false; // Updates dynamically from Firebase
-        let cachedAdmitData = null; // Store approved data for PDF generation
+        let hasPurchased = false; 
+        let cachedAdmitData = null; 
 
         // TIER SYSTEM
         const tiers = [
@@ -375,7 +373,6 @@
             }
         }
 
-        // --- SAVE TO LOCAL STORAGE CACHE ---
         function updateOfflineCache(uid, partialData) {
             const cacheKey = `agriq_profile_cache_${uid}`;
             const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
@@ -394,15 +391,13 @@
                     document.getElementById('admin-badge').style.display = 'flex';
                 }
                 
-                // Load offline cache instantly before fetching live data
                 loadOfflineCache(user.uid);
-
                 fetchProfileData(user.uid);
                 fetchAdmitCardStatus(user.uid);
             }
         });
 
-        // --- DYNAMIC ADMIT CARD LOGIC ---
+        // --- STRICTLY LOCKED ADMIT CARD UI ---
         function renderAdmitCardUI(status, reqData, purchased) {
             const badge = document.getElementById('ac-badge');
             const content = document.getElementById('ac-content');
@@ -429,41 +424,47 @@
                     </button>
                 `;
             } else if (status === 'accepted') {
-                cachedAdmitData = reqData; // Store for PDF generation
+                cachedAdmitData = reqData; 
                 badge.style.display = 'inline-block';
                 badge.className = 'ac-status accepted'; badge.innerText = 'APPROVED';
                 
-                const lockIcon = purchased ? '<i data-lucide="download" size="16"></i>' : '<i data-lucide="lock" size="16"></i>';
-                const btnClass = purchased ? 'btn-ac btn-download' : 'btn-ac btn-download locked';
-                const btnText = purchased ? 'Download Official PDF' : 'Purchase Course to Unlock';
-
-                content.innerHTML = `
-                    <p class="ac-body" style="margin-bottom: 15px; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
-                        <strong>App ID:</strong> <span style="font-family:'JetBrains Mono'; color:var(--primary); font-weight:800;">${reqData?.appId || ''}</span><br>
-                        Your identity is verified.
-                    </p>
-                    <div class="dev-bypass" onclick="toggleBypass()"></div>
-                    <button class="${btnClass}" id="dl-pdf-btn" onclick="generateStudentPDF()">
-                        ${lockIcon} ${btnText}
-                    </button>
-                `;
+                if (purchased) {
+                    // Fully unlocked - Give them the App ID Code
+                    content.innerHTML = `
+                        <p class="ac-body" style="margin-bottom: 15px; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+                            <strong>App ID (Test Code):</strong> <span style="font-family:'JetBrains Mono'; color:var(--primary); font-weight:900; font-size:15px;">${reqData?.appId || ''}</span><br>
+                            Your identity is verified. Use this code to access your test.
+                        </p>
+                        <button class="btn-ac btn-download" id="dl-pdf-btn" onclick="generateStudentPDF()">
+                            <i data-lucide="download" size="16"></i> Download Official PDF
+                        </button>
+                    `;
+                } else {
+                    // Strictly Locked - Application approved but course NOT purchased
+                    content.innerHTML = `
+                        <p class="ac-body" style="margin-bottom: 15px; background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2); color: var(--warning);">
+                            <strong><i data-lucide="lock" size="14" style="display:inline; vertical-align:middle; margin-right:4px;"></i> Test Code Locked</strong><br>
+                            Your application is approved. Please purchase the course to reveal your Test Code and download the Admit Card.
+                        </p>
+                        <button class="btn-ac btn-download locked" id="dl-pdf-btn" onclick="showToast('You must purchase the course to unlock your code.')">
+                            <i data-lucide="lock" size="16"></i> Purchase Course to Unlock
+                        </button>
+                    `;
+                }
             }
             lucide.createIcons();
         }
 
         function fetchAdmitCardStatus(uid) {
-            // Listen to real Firebase purchases to unlock the button
             db.ref(`students/${uid}/purchases`).on('value', purchaseSnap => {
                 const purchases = purchaseSnap.val() || {};
                 hasPurchased = Object.keys(purchases).length > 0; 
 
-                // Listen to Admit Card application status
                 db.ref(`admit_card_requests/${uid}`).on('value', snap => {
                     const req = snap.val();
                     const status = req ? req.status : 'none';
                     renderAdmitCardUI(status, req, hasPurchased);
                     
-                    // Sync admit card status to offline cache
                     updateOfflineCache(uid, { admitStatus: status, admitData: req, hasPurchased });
                 });
             });
@@ -552,7 +553,7 @@
             }, 500);
         }
 
-        // --- EXISTING PROFILE LOGIC + CACHE WRITING ---
+        // --- PROFILE LOGIC ---
         function fetchProfileData(uid) {
             db.ref(`students/${uid}`).on('value', snap => {
                 const data = snap.val();
@@ -569,7 +570,6 @@
                         document.getElementById('upload-btn').style.display = 'flex'; 
                     }
                     
-                    // Save Name & Photo to offline cache
                     updateOfflineCache(uid, { name, photoURL: data.photoURL || null });
                 }
             });
@@ -590,7 +590,6 @@
                 document.getElementById('acc-val').innerText = `${avgAcc}%`;
                 applyTierSystem(totalPoints);
                 
-                // Save tests, accuracy, and XP to offline cache
                 updateOfflineCache(uid, { tests: userTests, acc: avgAcc, xp: totalPoints });
             });
         }
@@ -664,7 +663,6 @@
             confirmBtn.style.background = '#e11d48'; confirmBtn.innerText = 'Logout';
             document.getElementById('modal-overlay').style.display = 'flex';
             confirmBtn.onclick = () => { 
-                // Clear local offline cache on logout
                 if (auth.currentUser) localStorage.removeItem(`agriq_profile_cache_${auth.currentUser.uid}`);
                 auth.signOut().then(() => { window.location.href = 'login.html'; }); 
             };
