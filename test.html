@@ -237,16 +237,14 @@
         const reviewIndexParam = params.get('reviewIndex');
         const isReviewMode = reviewIndexParam !== null;
         
-        // Grab the version and random parameters from the URL
+        // Grab version, source, and random parameters from the URL
         const dbVersion = params.get('v');
+        const sourceParam = params.get('source');
         const isRandomMode = params.get('random') === 'true';
         
         // Initialize Active Session ID
         let activeSessionId = folderKey ? `${folderKey}_${moduleKey}` : moduleKey; 
-        
-        if (dbVersion === '2') {
-            activeSessionId += '_v2';
-        }
+        if (dbVersion === '2') { activeSessionId += '_v2'; }
         
         const retakeParam = params.get('retake');
         const isRetake = retakeParam === 'true' || retakeParam === 'half';
@@ -300,11 +298,11 @@
                 saveProgress(); 
                 
                 let returnUrl = 'folder_view.html';
+                if (sourceParam === 'course_content') { returnUrl = 'pfolder.html'; }
+                
                 if (folderKey) {
                     returnUrl += `?folder=${folderKey}`;
-                    if (dbVersion === '2') {
-                        returnUrl += `&v=2`;
-                    }
+                    if (dbVersion === '2') { returnUrl += `&v=2`; }
                 }
                 
                 window.location.replace(returnUrl);
@@ -400,10 +398,11 @@
             lucide.createIcons();
         }
 
-        // ---------------- NORMAL TEST LOGIC ---------------- //
+        // ---------------- NORMAL TEST LOGIC (UPGRADED WITH LOCAL STORAGE) ---------------- //
         async function loadQuestions() {
             if (!moduleKey) return window.location.href = 'courses.html';
 
+            // 1. Check Revision Mode
             if (moduleKey === 'revision' || localStorage.getItem('isRevision') === 'true') {
                 try {
                     const storedQs = localStorage.getItem('revisionQuestions');
@@ -412,12 +411,10 @@
                         document.getElementById('assessment-type-label').style.color = "var(--warning)";
                         
                         const parsedQs = JSON.parse(storedQs);
-                        
                         localStorage.removeItem('isRevision');
                         localStorage.removeItem('revisionQuestions');
 
                         totalSecondsRemaining = parsedQs.length * 60;
-                        
                         setupQuestions(parsedQs);
                         return; 
                     } else {
@@ -428,48 +425,81 @@
                 }
             }
 
-            // --- OFFLINE DATA CHECK ---
+            // 2. CACHE-FIRST / OFFLINE LOCAL STORAGE CHECK
+            // Checks the caches built by folder_view.html and pfolder.html
+            if (folderKey) {
+                const cachedFolderData = localStorage.getItem(`agriq_folder_data_${folderKey}`) || 
+                                         localStorage.getItem(`agriq_pfolder_data_${folderKey}`);
+                
+                if (cachedFolderData) {
+                    try {
+                        const modulesArray = JSON.parse(cachedFolderData);
+                        const targetModule = modulesArray.find(m => m.key === moduleKey || m.id === moduleKey);
+
+                        if (targetModule && targetModule.questions) {
+                            if (targetModule.current_session_id) {
+                                activeSessionId = dbVersion === '2' ? targetModule.current_session_id + '_v2' : targetModule.current_session_id;
+                            }
+
+                            const rawQuestions = targetModule.questions?.data || targetModule.questions || [];
+                            if (targetModule.config && targetModule.config.timeLimit) {
+                                totalSecondsRemaining = parseInt(targetModule.config.timeLimit, 10);
+                            }
+
+                            document.getElementById('assessment-type-label').innerText = !navigator.onLine ? "⚡ OFFLINE ASSESSMENT" : "⚡ INSTANT CACHED TEST";
+                            document.getElementById('assessment-type-label').style.color = "#10b981";
+                            setupQuestions(rawQuestions);
+                            return; // Zero Firebase reads used!
+                        }
+                    } catch(e) {
+                        console.warn("Local storage cache parse failed, falling back to Firebase cloud:", e);
+                    }
+                }
+            }
+
+            // 3. Fallback: Check legacy 'agriq_offline_content'
             if (!navigator.onLine && folderKey && localStorage.getItem('agriq_offline_content')) {
                 const offlineData = JSON.parse(localStorage.getItem('agriq_offline_content'));
-                
                 if (offlineData[folderKey] && offlineData[folderKey][moduleKey]) {
                     const data = offlineData[folderKey][moduleKey];
-                    
                     if (data.current_session_id) {
                         activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
                     }
-
                     const rawQuestions = data.questions?.data || data.questions || [];
                     if (data.config && data.config.timeLimit) {
                         totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
                     }
-                    
                     document.getElementById('assessment-type-label').innerText = "OFFLINE ASSESSMENT";
                     document.getElementById('assessment-type-label').style.color = "#10b981";
                     setupQuestions(rawQuestions);
-                    return; // End execution here, offline load successful
+                    return; 
                 }
             }
 
+            // 4. Firebase Cloud Fetch (if not in local storage or if standalone subject)
             try {
                 let dbPath = `subjects/${moduleKey}`;
                 let snap = null;
 
-                // --- NEW FETCH LOGIC WITH FALLBACKS ---
                 if (folderKey) {
                     if (dbVersion === '2') {
                         dbPath = `nested_subjects_v2/${folderKey}/${moduleKey}`;
                         snap = await db.ref(dbPath).once('value');
                         if (snap.exists()) document.getElementById('assessment-type-label').innerText = "LIVE ASSESSMENT V2";
-                    } else {
-                        // First, try the newly added 'course_content' path
+                    } else if (sourceParam === 'course_content') {
                         dbPath = `course_content/${folderKey}/${moduleKey}`;
                         snap = await db.ref(dbPath).once('value');
-                        
+                        if (snap.exists()) document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
+                    } else if (sourceParam === 'nested_subjects') {
+                        dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
+                        snap = await db.ref(dbPath).once('value');
+                    } else {
+                        // Try course_content first, then nested_subjects
+                        dbPath = `course_content/${folderKey}/${moduleKey}`;
+                        snap = await db.ref(dbPath).once('value');
                         if (snap.exists()) {
                             document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
                         } else {
-                            // If not found, fallback to the existing 'nested_subjects' path
                             dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
                             snap = await db.ref(dbPath).once('value');
                         }
@@ -480,17 +510,13 @@
 
                 if (snap && snap.exists()) {
                     const data = snap.val();
-                    
                     if (data.current_session_id) {
                         activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
                     }
-
                     const rawQuestions = data.questions?.data || data.questions || [];
-                    
                     if (data.config && data.config.timeLimit) {
                         totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
                     }
-                    
                     setupQuestions(rawQuestions);
                 } else {
                     showModal("ERROR", "Module not found or not available.", "alert", () => window.location.href='courses.html');
@@ -530,7 +556,7 @@
                         totalSecondsRemaining = parsed.totalSecondsRemaining;
                     }
                     if (parsed.questions && parsed.questions.length > 0) {
-                        restoredQuestions = parsed.questions; // Grab exact previous question configuration
+                        restoredQuestions = parsed.questions; 
                     }
                 } catch(e) {
                     console.error("Could not restore saved progress.");
@@ -538,16 +564,12 @@
             }
 
             if (restoredQuestions) {
-                // Restore exact layout to prevent reshuffling on resume
                 questions = restoredQuestions;
             } else {
-                // Brand new test: Process and shuffle based on switch
                 const processedQuestions = isRandomMode ? shuffleArray([...dataArray]) : [...dataArray];
-
                 questions = processedQuestions.map(q => {
                     const opts = q.options || [];
                     const finalOptions = isRandomMode ? shuffleArray([...opts]) : [...opts];
-                    
                     return {
                         ...q,
                         displayQ: q.question || q.q,
@@ -604,13 +626,11 @@
             
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active', 'done', 'marked');
-                
                 if (markedQuestions[i]) {
                     p.classList.add('marked');
                 } else if (userChoices[i] !== undefined && userChoices[i] !== null) {
                     p.classList.add('done');
                 }
-                
                 if (i === currentIdx) {
                     p.classList.add('active');
                 }
@@ -633,7 +653,6 @@
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
                 div.innerText = opt;
-                
                 div.onclick = () => { 
                     if (userChoices[currentIdx] === opt) {
                         userChoices[currentIdx] = null; 
@@ -658,10 +677,8 @@
 
         function startGlobalTimer() {
             updateTimerUI(); 
-            
             timer = setInterval(() => {
                 if (isPaused) return; 
-
                 if (totalSecondsRemaining <= 0) { 
                     clearInterval(timer); 
                     processFinalResults(); 
@@ -702,7 +719,6 @@
                 const userAns = (userChoices[i] === null || userChoices[i] === undefined) ? "SKIPPED" : userChoices[i];
                 const isCorrect = userAns === q.correct;
                 if(isCorrect) correctCount++;
-                
                 return { 
                     question: q.displayQ, 
                     user: userAns, 
@@ -711,7 +727,6 @@
                 };
             });
 
-            // Award full normal marks regardless of retake status
             let earnedXP = correctCount;
 
             const resultData = { 
@@ -726,26 +741,34 @@
                 isRetake: isRetake
             };
 
-            // Save locally first so analysiss.html can read it immediately regardless of connection
+            // 1. Save locally for analysis.html
             localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
 
-            // If Offline: Skip the await and let Firebase queue it in the background
+            // 2. INSTANT SCORE CACHE SYNC: Update local user score cache so folder views show new scores instantly
+            const cacheKeyScores = `agriq_user_scores_${auth.currentUser.uid}`;
+            try {
+                const cachedScoresStr = localStorage.getItem(cacheKeyScores);
+                const cachedScores = cachedScoresStr ? JSON.parse(cachedScoresStr) : {};
+                cachedScores[activeSessionId] = { score: earnedXP, timestamp: Date.now() };
+                localStorage.setItem(cacheKeyScores, JSON.stringify(cachedScores));
+            } catch(err) {
+                console.warn("Could not update local score cache:", err);
+            }
+
+            // 3. If Offline: Skip await and let Firebase queue it in the background
             if (!navigator.onLine) {
                 db.ref('leaderboard').push(resultData);
                 const userRef = db.ref(`students/${auth.currentUser.uid}`);
                 userRef.child(`results/${activeSessionId}`).set({ score: earnedXP, timestamp: Date.now() });
-                
                 window.location.replace('analysiss.html');
                 return;
             }
 
             try {
                 await db.ref('leaderboard').push(resultData);
-                
                 const userRef = db.ref(`students/${auth.currentUser.uid}`);
                 const snap = await userRef.once('value');
                 const d = snap.val() || {};
-                
                 const newTests = (d.testsTaken || 0) + 1;
                 
                 await userRef.update({
