@@ -314,8 +314,8 @@
                 const badgeText = `hsl(${h}, 85%, 45%)`;
                 const badgeBorder = `1px solid hsla(${h}, 85%, 60%, 0.2)`;
 
-                // Redirects to your new local store folder view (pfolder.html)
-                card.onclick = () => { window.location.href = `pfolder.html?folder=${folder.key}`; };
+                // Redirects to your new local store folder view (folder_view.html)
+                card.onclick = () => { window.location.href = `folder_view.html?folder=${folder.key}`; };
                 
                 card.innerHTML = `
                     <i data-lucide="${folder.icon}" size="100" class="bg-symbol"></i>
