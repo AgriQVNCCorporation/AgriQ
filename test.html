@@ -11,9 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -237,10 +237,16 @@
         const reviewIndexParam = params.get('reviewIndex');
         const isReviewMode = reviewIndexParam !== null;
         
-        // NEW: Grab the random parameter from the URL
+        // Grab the version and random parameters from the URL
+        const dbVersion = params.get('v');
         const isRandomMode = params.get('random') === 'true';
         
+        // Initialize Active Session ID
         let activeSessionId = folderKey ? `${folderKey}_${moduleKey}` : moduleKey; 
+        
+        if (dbVersion === '2') {
+            activeSessionId += '_v2';
+        }
         
         const retakeParam = params.get('retake');
         const isRetake = retakeParam === 'true' || retakeParam === 'half';
@@ -249,15 +255,17 @@
         let isSubmitting = false;
         let isPaused = false;
 
-        // Auto-save function to persist test progress across background reloads
+        // Auto-save function to persist test progress
         function saveProgress() {
             if (isReviewMode || isSubmitting) return;
             const progress = {
+                questions, 
                 userChoices,
                 markedQuestions,
                 currentIdx,
                 totalSecondsRemaining,
-                isPaused
+                isPaused,
+                isRandomMode 
             };
             localStorage.setItem(`test_progress_${activeSessionId}`, JSON.stringify(progress));
         }
@@ -285,25 +293,23 @@
         }
 
         // --- BACK BUTTON INTERCEPTION --- //
-        // Push a dummy state so the browser has a history entry to "pop"
         window.history.pushState({ page: 'test' }, null, window.location.href);
 
         window.addEventListener('popstate', function(event) {
             if (!isSubmitting && !isReviewMode) {
-                // Ensure latest progress is saved
                 saveProgress(); 
                 
-                // Construct the return URL based on current parameters
                 let returnUrl = 'folder_view.html';
                 if (folderKey) {
                     returnUrl += `?folder=${folderKey}`;
+                    if (dbVersion === '2') {
+                        returnUrl += `&v=2`;
+                    }
                 }
                 
-                // Redirect user back to the folder view
                 window.location.replace(returnUrl);
             } else if (isReviewMode) {
-                // If in review mode, go back to analysis
-                window.location.replace('analysis.html');
+                window.location.replace('analysiss.html');
             }
         });
         // -------------------------------- //
@@ -331,13 +337,12 @@
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             
             if (!data || !data.details || !data.details[index]) {
-                return window.location.href = 'analysis.html';
+                return window.location.href = 'analysiss.html';
             }
 
             const qData = data.details[index];
             const opts = qData.options || [];
 
-            // Adjust UI for Review Mode
             document.getElementById('bottom-controls').style.display = 'none';
             document.getElementById('marker-grid').style.display = 'none';
             document.getElementById('pause-btn').style.display = 'none';
@@ -367,14 +372,12 @@
                     div.style.cursor = 'default';
                     div.innerText = opt;
                     
-                    // Highlight Correct Answer
                     if (opt === qData.actual) {
                         div.style.borderColor = 'var(--success)';
                         div.style.background = 'var(--success-glow)';
                         div.style.color = 'var(--success)';
                         div.innerHTML += ' <i data-lucide="check-circle" size="18" style="float:right;"></i>';
                     } 
-                    // Highlight User's Wrong Answer
                     else if (opt === qData.user && qData.user !== qData.actual) {
                         div.style.borderColor = 'var(--danger)';
                         div.style.background = 'rgba(239, 68, 68, 0.05)';
@@ -386,13 +389,12 @@
                 });
             }
 
-            // Add Back Button
             const backBtn = document.createElement('button');
             backBtn.className = 'btn-primary';
             backBtn.style.marginTop = '25px';
             backBtn.style.width = '100%';
             backBtn.innerHTML = '<i data-lucide="arrow-left" size="18"></i> BACK TO ANALYSIS';
-            backBtn.onclick = () => window.location.href = 'analysis.html';
+            backBtn.onclick = () => window.location.href = 'analysiss.html';
             document.getElementById('main-content').appendChild(backBtn);
             
             lucide.createIcons();
@@ -426,19 +428,61 @@
                 }
             }
 
+            // --- OFFLINE DATA CHECK ---
+            if (!navigator.onLine && folderKey && localStorage.getItem('agriq_offline_content')) {
+                const offlineData = JSON.parse(localStorage.getItem('agriq_offline_content'));
+                
+                if (offlineData[folderKey] && offlineData[folderKey][moduleKey]) {
+                    const data = offlineData[folderKey][moduleKey];
+                    
+                    if (data.current_session_id) {
+                        activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
+                    }
+
+                    const rawQuestions = data.questions?.data || data.questions || [];
+                    if (data.config && data.config.timeLimit) {
+                        totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
+                    }
+                    
+                    document.getElementById('assessment-type-label').innerText = "OFFLINE ASSESSMENT";
+                    document.getElementById('assessment-type-label').style.color = "#10b981";
+                    setupQuestions(rawQuestions);
+                    return; // End execution here, offline load successful
+                }
+            }
+
             try {
                 let dbPath = `subjects/${moduleKey}`;
+                let snap = null;
+
+                // --- NEW FETCH LOGIC WITH FALLBACKS ---
                 if (folderKey) {
-                    dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
+                    if (dbVersion === '2') {
+                        dbPath = `nested_subjects_v2/${folderKey}/${moduleKey}`;
+                        snap = await db.ref(dbPath).once('value');
+                        if (snap.exists()) document.getElementById('assessment-type-label').innerText = "LIVE ASSESSMENT V2";
+                    } else {
+                        // First, try the newly added 'course_content' path
+                        dbPath = `course_content/${folderKey}/${moduleKey}`;
+                        snap = await db.ref(dbPath).once('value');
+                        
+                        if (snap.exists()) {
+                            document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
+                        } else {
+                            // If not found, fallback to the existing 'nested_subjects' path
+                            dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
+                            snap = await db.ref(dbPath).once('value');
+                        }
+                    }
+                } else {
+                    snap = await db.ref(dbPath).once('value');
                 }
 
-                const snap = await db.ref(dbPath).once('value');
-                
-                if (snap.exists()) {
+                if (snap && snap.exists()) {
                     const data = snap.val();
                     
                     if (data.current_session_id) {
-                        activeSessionId = data.current_session_id;
+                        activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
                     }
 
                     const rawQuestions = data.questions?.data || data.questions || [];
@@ -472,26 +516,10 @@
                 return showModal("EMPTY TEST", "There are no questions in this module.", "alert", () => window.location.href='courses.html');
             }
 
-            // MODIFIED: Conditionally shuffle the main questions array based on the toggle
-            const processedQuestions = isRandomMode ? shuffleArray([...dataArray]) : [...dataArray];
-
-            questions = processedQuestions.map(q => {
-                // Ensure options exist to prevent errors
-                const opts = q.options || [];
-                
-                // MODIFIED: Conditionally shuffle options based on the toggle
-                const finalOptions = isRandomMode ? shuffleArray([...opts]) : [...opts];
-                
-                return {
-                    ...q,
-                    displayQ: q.question || q.q,
-                    correct: q.answer || q.ans,
-                    shuffledOpts: finalOptions
-                };
-            });
-            
-            // Check for saved progress to restore test perfectly after background termination
+            // Check for saved progress FIRST
             const savedProgress = localStorage.getItem(`test_progress_${activeSessionId}`);
+            let restoredQuestions = null;
+
             if (savedProgress) {
                 try {
                     const parsed = JSON.parse(savedProgress);
@@ -501,9 +529,32 @@
                     if (parsed.totalSecondsRemaining && parsed.totalSecondsRemaining > 0) {
                         totalSecondsRemaining = parsed.totalSecondsRemaining;
                     }
+                    if (parsed.questions && parsed.questions.length > 0) {
+                        restoredQuestions = parsed.questions; // Grab exact previous question configuration
+                    }
                 } catch(e) {
                     console.error("Could not restore saved progress.");
                 }
+            }
+
+            if (restoredQuestions) {
+                // Restore exact layout to prevent reshuffling on resume
+                questions = restoredQuestions;
+            } else {
+                // Brand new test: Process and shuffle based on switch
+                const processedQuestions = isRandomMode ? shuffleArray([...dataArray]) : [...dataArray];
+
+                questions = processedQuestions.map(q => {
+                    const opts = q.options || [];
+                    const finalOptions = isRandomMode ? shuffleArray([...opts]) : [...opts];
+                    
+                    return {
+                        ...q,
+                        displayQ: q.question || q.q,
+                        correct: q.answer || q.ans,
+                        shuffledOpts: finalOptions
+                    };
+                });
             }
 
             initUI();
@@ -617,7 +668,7 @@
                 } else {
                     totalSecondsRemaining--;
                     updateTimerUI();
-                    if (totalSecondsRemaining % 5 === 0) saveProgress(); // Auto-save timer occasionally 
+                    if (totalSecondsRemaining % 5 === 0) saveProgress();
                 }
             }, 1000);
         }
@@ -652,7 +703,6 @@
                 const isCorrect = userAns === q.correct;
                 if(isCorrect) correctCount++;
                 
-                // NEW: Saving options so we can render them in Review Mode
                 return { 
                     question: q.displayQ, 
                     user: userAns, 
@@ -676,6 +726,19 @@
                 isRetake: isRetake
             };
 
+            // Save locally first so analysiss.html can read it immediately regardless of connection
+            localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
+
+            // If Offline: Skip the await and let Firebase queue it in the background
+            if (!navigator.onLine) {
+                db.ref('leaderboard').push(resultData);
+                const userRef = db.ref(`students/${auth.currentUser.uid}`);
+                userRef.child(`results/${activeSessionId}`).set({ score: earnedXP, timestamp: Date.now() });
+                
+                window.location.replace('analysiss.html');
+                return;
+            }
+
             try {
                 await db.ref('leaderboard').push(resultData);
                 
@@ -696,10 +759,9 @@
                     timestamp: Date.now()
                 });
 
-                localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
-                window.location.replace('analysis.html');
+                window.location.replace('analysiss.html');
             } catch (e) {
-                window.location.replace('analysis.html');
+                window.location.replace('analysiss.html');
             }
         }
 
