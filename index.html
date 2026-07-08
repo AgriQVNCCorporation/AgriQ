@@ -3,266 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <title>AgriQ Pro | Dominate Your Agriculture Exams</title>
-    <meta name="title" content="AgriQ Pro | Dominate Your Agriculture Exams">
-    <meta name="description" content="The ultimate Progressive Web App for agriculture students. Prepare for MCAER, ICAR, SRF, BHU, NSC, and banking exams with Daily Rapid Drills and COAK Monks.">
-    <meta name="keywords" content="agriculture exams, MCAER PG CET, ICAR mock test, SRF, BHU agriculture, NSC, banking agriculture, AgriQ Pro, agriculture study app">
-    <meta name="author" content="AgriQ VNC Corporation">
-
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://agriqvnccorporation.github.io/AgriQ/">
-    <meta property="og:title" content="AgriQ Pro | Top Agriculture Exam Prep">
-    <meta property="og:description" content="Join the leaderboard! Practice daily agriculture drills for MCAER, ICAR, and more.">
-    <meta property="og:image" content="https://agriqvnccorporation.github.io/AgriQ/banner.jpg"> 
-
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#0084ff">
-
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <title>Login | AgriQ Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
             --primary: #0084ff;
-            --primary-glow: rgba(0, 132, 255, 0.15);
-            --bg: #f0f9ff;
-            --surface: #ffffff;
-            --text-main: #002d4d;
-            --text-dim: #64748b;
-            --border: #e2e8f0;
             --daily-color: #10b981;
             --coak-color: #8b5cf6;
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --text-main: #002d4d;
+            --text-dim: #475569;
+            
+            /* Liquid Glass Variables */
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --glass-blur: blur(16px);
         }
 
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html { scroll-behavior: smooth; }
-        body { background: var(--bg); color: var(--text-main); overflow-x: hidden; }
-
-        /* Navigation */
-        nav {
-            position: fixed; top: 0; width: 100%; background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px); z-index: 1000; border-bottom: 1px solid var(--border);
-            padding: 12px 5%; display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-        }
-        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 4px; }
-        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        .nav-links { display: flex; gap: 20px; align-items: center; }
-        .nav-links .desktop-link { text-decoration: none; color: var(--text-dim); font-weight: 700; font-size: 14px; transition: var(--transition); display: none; }
-        .nav-links .desktop-link:hover { color: var(--primary); }
-        
-        @media(min-width: 768px) { 
-            .nav-links .desktop-link { display: block; }
-            nav { padding: 15px 5%; }
-            .brand { font-size: 22px; }
-        }
-
-        .btn-nav {
-            background: var(--primary); color: white; padding: 10px 18px; border-radius: 12px;
-            font-weight: 800; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 6px;
-            box-shadow: 0 4px 15px var(--primary-glow); transition: var(--transition);
-        }
-        .btn-nav:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 132, 255, 0.3); }
-        .btn-nav:active { transform: scale(0.95); }
-
-        /* Hero Section */
-        .hero {
-            padding: 120px 5% 60px; text-align: center; min-height: 85vh;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: radial-gradient(circle at top, #ffffff, var(--bg));
+        body { 
+            background: #e8f4fc; 
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+            overflow: hidden; /* Prevent scrolling on login */
             position: relative;
         }
-        .badge {
-            background: white; border: 1px solid var(--border); padding: 8px 16px;
-            border-radius: 50px; font-size: 12px; font-weight: 800; color: var(--primary);
-            margin-bottom: 24px; display: inline-flex; align-items: center; gap: 6px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+
+        /* --- Liquid Background Animation --- */
+        .liquid-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: #f0f9ff;
         }
-        .hero h1 { font-size: 38px; font-weight: 900; line-height: 1.15; margin-bottom: 20px; letter-spacing: -1px; }
-        .hero h1 span { color: var(--primary); }
-        .hero p { font-size: 15px; color: var(--text-dim); max-width: 600px; margin: 0 auto 35px; line-height: 1.6; font-weight: 600; padding: 0 10px; }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: liquid-move 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .blob-1 {
+            background: var(--primary);
+            width: 50vw; height: 50vw;
+            top: -10%; left: -10%;
+            animation-delay: 0s;
+        }
+        .blob-2 {
+            background: var(--coak-color);
+            width: 40vw; height: 40vw;
+            bottom: -10%; right: -5%;
+            animation-delay: -5s;
+        }
+        .blob-3 {
+            background: var(--daily-color);
+            width: 35vw; height: 35vw;
+            top: 40%; left: 20%;
+            animation-delay: -10s;
+        }
+
+        @keyframes liquid-move {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            33% { transform: translate(5vw, 10vh) scale(1.1) rotate(45deg); }
+            66% { transform: translate(-10vw, 5vh) scale(0.9) rotate(-45deg); }
+            100% { transform: translate(10vw, -10vh) scale(1.05) rotate(90deg); }
+        }
+
+        /* --- Global Loader Styles --- */
+        #global-loader {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(232, 244, 252, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.4s ease;
+        }
+        .loader-brand {
+            font-weight: 900; font-size: 28px; letter-spacing: -1px; margin-bottom: 20px;
+            color: var(--text-main); animation: pulse 1.5s infinite;
+        }
+        .loader-brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.6);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
-        .cta-group { display: flex; gap: 12px; justify-content: center; flex-direction: column; width: 100%; max-width: 350px; }
-        .btn-large {
-            padding: 16px 24px; border-radius: 16px; font-weight: 800; font-size: 15px;
-            text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; transition: var(--transition); width: 100%;
+        /* --- Smooth Card Fade In --- */
+        .fade-in { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+
+        /* Glassmorphism Card */
+        .auth-card { 
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            width: 100%; max-width: 400px; padding: 40px 30px; 
+            border-radius: 32px; text-align: center;
+            position: relative; z-index: 10;
         }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 30px var(--primary-glow); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0, 132, 255, 0.3); }
+
+        .brand { font-weight: 900; font-size: 24px; letter-spacing: -1px; margin-bottom: 30px; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        /* Glass Countdown Timer */
+        .timer-box { 
+            background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.5); padding: 15px; 
+            border-radius: 20px; margin-bottom: 30px; 
+        }
+        .timer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+        .t-unit { background: rgba(255, 255, 255, 0.7); padding: 8px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .t-num { display: block; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--primary); font-size: 18px; }
+        .t-lbl { font-size: 8px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+
+        .input-group { position: relative; margin-bottom: 15px; text-align: left; }
+        .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+        
+        /* Glass Inputs */
+        input { 
+            width: 100%; padding: 16px 16px 16px 52px; border-radius: 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.6); 
+            background: rgba(255, 255, 255, 0.5); 
+            backdrop-filter: blur(5px);
+            font-weight: 600; outline: none; transition: 0.3s;
+            color: var(--text-main);
+        }
+        input::placeholder { color: var(--text-dim); }
+        input:focus { 
+            border-color: var(--primary); 
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 4px rgba(0, 132, 255, 0.15); 
+        }
+
+        /* Gradient Glass Buttons */
+        .btn-primary { 
+            width: 100%; padding: 18px; border-radius: 16px; border: none; 
+            background: linear-gradient(135deg, rgba(0, 132, 255, 0.85), rgba(0, 85, 255, 0.85)); 
+            border: 1px solid rgba(255,255,255,0.4);
+            color: #fff; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 10px 20px rgba(0, 132, 255, 0.25); transition: 0.3s; margin-top: 10px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(0, 132, 255, 1), rgba(0, 85, 255, 1)); 
+            box-shadow: 0 12px 25px rgba(0, 132, 255, 0.35);
+        }
         .btn-primary:active { transform: scale(0.98); }
-        .btn-secondary { background: white; color: var(--text-main); border: 1px solid var(--border); }
-        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-secondary:active { transform: scale(0.98); background: #f8fafc; }
 
-        @media(min-width: 768px) {
-            .hero { padding-top: 150px; }
-            .hero h1 { font-size: 56px; line-height: 1.1; }
-            .hero p { font-size: 18px; padding: 0; }
-            .cta-group { flex-direction: row; max-width: none; }
-            .btn-large { width: auto; padding: 18px 32px; font-size: 16px; }
+        .btn-google {
+            width: 100%; padding: 14px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.8);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-weight: 700; cursor: pointer; background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(10px); margin-top: 15px; font-size: 14px; color: var(--text-main);
+            transition: 0.3s;
+        }
+        .btn-google:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
         }
 
-        /* Supported Exams Marquee */
-        .exam-ticker {
-            background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-            padding: 15px 0; overflow: hidden; display: flex; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-        }
-        .ticker-track { display: flex; animation: scroll 25s linear infinite; gap: 30px; padding: 0 15px; }
-        .exam-tag { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
-        .exam-tag i { color: var(--primary); opacity: 0.5; }
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-        @media(min-width: 768px) {
-            .exam-ticker { padding: 20px 0; }
-            .ticker-track { gap: 40px; padding: 0 20px; }
-            .exam-tag { font-size: 18px; }
-        }
-
-        /* Features Section */
-        .features { padding: 60px 5%; max-width: 1200px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 40px; padding: 0 10px; }
-        .section-header h2 { font-size: 28px; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px; }
-        .section-header p { color: var(--text-dim); font-weight: 600; font-size: 14px; }
-        
-        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        .feature-card {
-            background: var(--surface); padding: 25px; border-radius: 24px;
-            border: 1px solid var(--border); box-shadow: 0 8px 25px rgba(0,0,0,0.02);
-            transition: var(--transition); text-align: left;
-        }
-        .feature-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 12px 35px rgba(0, 132, 255, 0.08); }
-        .icon-box { 
-            width: 48px; height: 48px; border-radius: 14px; display: flex; 
-            align-items: center; justify-content: center; margin-bottom: 18px;
-        }
-        .feature-card h3 { font-weight: 800; font-size: 18px; margin-bottom: 8px; }
-        .feature-card p { color: var(--text-dim); font-size: 14px; line-height: 1.6; font-weight: 600; margin: 0; }
-
-        @media(min-width: 768px) {
-            .features { padding: 80px 5%; }
-            .section-header { margin-bottom: 50px; }
-            .section-header h2 { font-size: 32px; }
-            .section-header p { font-size: 16px; }
-            .grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-            .feature-card { padding: 30px; border-radius: 28px; }
-            .icon-box { width: 50px; height: 50px; border-radius: 16px; margin-bottom: 20px; }
-            .feature-card h3 { font-size: 20px; margin-bottom: 10px; }
-        }
-
-        /* Footer */
-        footer { background: white; padding: 40px 5%; text-align: center; border-top: 1px solid var(--border); margin-top: 20px; }
-        .footer-brand { margin-bottom: 10px; font-size: 18px; }
-        .copyright { font-size: 11px; color: var(--text-dim); font-weight: 600; margin-bottom: 5px; }
-        .made-with { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;}
-
-        @media(min-width: 768px) {
-            footer { margin-top: 50px; }
-            .copyright { font-size: 12px; }
+        #toast { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: white; 
+            padding: 12px 24px; border-radius: 50px;
+            font-size: 13px; font-weight: 600; display: none; z-index: 10000;
         }
     </style>
 </head>
 <body>
 
-    <nav>
-        <a href="#" class="brand">AGRI<span>Q</span> PRO</a>
-        <div class="nav-links">
-            <a href="#features" class="desktop-link">Features</a>
-            <a href="#exams" class="desktop-link">Exams</a>
-            <a href="login.html" class="btn-nav">LOGIN <i data-lucide="arrow-right" size="14"></i></a>
-        </div>
-    </nav>
-
-    <header class="hero">
-        <div class="badge"><i data-lucide="sparkles" size="12"></i> V5.0 is Live Now</div>
-        <h1>Dominate Your <br><span>Agriculture Exams</span></h1>
-        <p>The ultimate Agriculture study platform for agriculture students. Boost your speed, accuracy, and rank with daily drills designed for top-tier competitive exams.</p>
-        
-        <div class="cta-group">
-            <a href="login.html" class="btn-large btn-primary">Start Practicing <i data-lucide="zap" size="18"></i></a>
-            <a href="#features" class="btn-large btn-secondary">Explore Features</a>
-        </div>
-    </header>
-
-    <div class="exam-ticker" id="exams">
-        <div class="ticker-track">
-            <span class="exam-tag">MCAER PG CET <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">ICAR AIEEA <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">BHU  (Ag) <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">SRF/JRF <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">NSC <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">BANKING (AFO) <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">MCAER PG CET <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">ICAR AIEEA <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">BHU PET (Ag) <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">SRF/JRF <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">NSC <i data-lucide="check-circle" size="14"></i></span>
-            <span class="exam-tag">BANKING (AFO) <i data-lucide="check-circle" size="14"></i></span>
-        </div>
+    <div class="liquid-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <section class="features" id="features">
-        <div class="section-header">
-            <h2>Why choose AgriQ Pro?</h2>
-            <p>Designed specifically to give you the competitive edge.</p>
-        </div>
+    <div id="global-loader">
+        <div class="loader-brand">AGRI<span>Q</span> PRO</div>
+        <div class="spinner"></div>
+    </div>
 
-        <div class="grid">
-            <div class="feature-card">
-                <div class="icon-box" style="background: rgba(16, 185, 129, 0.15);">
-                    <i data-lucide="zap" color="var(--daily-color)" size="22"></i>
-                </div>
-                <h3>Daily Rapid Drills</h3>
-                <p>Sharpen your reflexes with our 10-question, 5-minute daily challenges. Fresh questions updated every single day to test your accuracy under pressure.</p>
-            </div>
+    <div id="toast">Message here</div>
 
-            <div class="feature-card">
-                <div class="icon-box" style="background: rgba(139, 92, 246, 0.15);">
-                    <i data-lucide="book-open-check" color="var(--coak-color)" size="22"></i>
-                </div>
-                <h3>COAK Monks Module</h3>
-                <p>Dive deep into our highly specialized preparation module. Structured, chapter-wise questions that cover everything from foundational concepts to advanced agriculture.</p>
-            </div>
+    <div class="auth-card fade-in">
+        <div class="brand">AGRI<span>Q</span> PRO</div>
 
-            <div class="feature-card">
-                <div class="icon-box" style="background: rgba(0, 132, 255, 0.15);">
-                    <i data-lucide="globe" color="var(--primary)" size="22"></i>
-                </div>
-                <h3>Live Leaderboards</h3>
-                <p>Earn XP for every test you complete. Climb the Global and Daily ranks to see exactly where you stand against thousands of other agriculture students.</p>
+        <div class="timer-box">
+            <span style="font-size: 10px; font-weight: 800; color: var(--text-dim);">MCAER PG CET 2026 COUNTDOWN</span>
+            <div class="timer-grid">
+                <div class="t-unit"><span id="d" class="t-num">00</span><span class="t-lbl">Days</span></div>
+                <div class="t-unit"><span id="h" class="t-num">00</span><span class="t-lbl">Hrs</span></div>
+                <div class="t-unit"><span id="m" class="t-num">00</span><span class="t-lbl">Min</span></div>
+                <div class="t-unit" style="background:var(--primary)"><span id="s" class="t-num" style="color:white">00</span><span class="t-lbl" style="color:rgba(255,255,255,0.7)">Sec</span></div>
             </div>
         </div>
-    </section>
 
-    <footer>
-        <div class="brand footer-brand">AGRI<span>Q</span> PRO</div>
-        <div class="copyright">© 2026 AgriQ VNC Corporation.</div>
-        <div class="made-with">Designed for Excellence</div>
-    </footer>
+        <h2 id="auth-title" style="margin: 0 0 20px; font-weight: 800;">Welcome Back</h2>
+        
+        <form onsubmit="handleAuth(event)">
+            <div class="input-group"><i data-lucide="mail"></i><input type="email" id="email" placeholder="Email Address" required></div>
+            <div class="input-group"><i data-lucide="lock"></i><input type="password" id="password" placeholder="Password" required></div>
+            <button type="submit" class="btn-primary" id="submit-btn">SIGN IN <i data-lucide="arrow-right"></i></button>
+        </form>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    
+        <button class="btn-google" onclick="googleLogin()">
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Continue with Google
+        </button>
+
+        <p style="margin-top: 25px; font-size: 13px; color: var(--text-dim);">
+            <span id="toggle-text">Don't have an account?</span> 
+            <a href="#" onclick="toggleMode()" id="toggle-link" style="color: var(--primary); font-weight: 800; text-decoration: none;">Register</a>
+        </p>
+    </div>
+
     <script>
-        // Initialize Icons
-        lucide.createIcons();
-
-        // Firebase Configuration
+        // --- Firebase Init ---
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
-            projectId: "agri-mcar"
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar",
+            storageBucket: "agri-mcar.firebasestorage.app",
+            messagingSenderId: "823436752104",
+            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        let isLogin = true;
 
-        // Auto-Redirect Logic: If user is logged in, send them straight to the dashboard
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                window.location.href = 'dashboard.html';
+        lucide.createIcons();
+
+        // --- Auth Logic ---
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            
+            try {
+                // Show loader during auth attempt
+                document.getElementById('global-loader').style.display = 'flex';
+                document.getElementById('global-loader').style.opacity = '1';
+
+                if(isLogin) {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                } else {
+                    await auth.createUserWithEmailAndPassword(email, pass);
+                }
+                window.location.href = 'index.html'; // Redirect to dashboard
+            } catch (err) {
+                // Hide loader if error occurs
+                document.getElementById('global-loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('global-loader').style.display = 'none', 300);
+                showToast(err.message);
+            }
+        }
+
+        async function googleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                document.getElementById('global-loader').style.display = 'flex';
+                document.getElementById('global-loader').style.opacity = '1';
+                await auth.signInWithPopup(provider);
+                window.location.href = 'index.html';
+            } catch (err) {
+                document.getElementById('global-loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('global-loader').style.display = 'none', 300);
+                showToast(err.message);
+            }
+        }
+
+        function toggleMode() {
+            isLogin = !isLogin;
+            document.getElementById('auth-title').innerText = isLogin ? "Welcome Back" : "Create Account";
+            document.getElementById('submit-btn').innerHTML = isLogin ? 'SIGN IN <i data-lucide="arrow-right"></i>' : 'REGISTER <i data-lucide="user-plus"></i>';
+            document.getElementById('toggle-text').innerText = isLogin ? "Don't have an account?" : "Already have an account?";
+            document.getElementById('toggle-link').innerText = isLogin ? "Register" : "Login";
+            lucide.createIcons();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // --- Countdown Timer ---
+        function startTimer() {
+            const target = new Date("June 20, 2026 00:00:00").getTime();
+            setInterval(() => {
+                const now = new Date().getTime();
+                const diff = target - now;
+                document.getElementById('d').innerText = Math.floor(diff / (86400000)).toString().padStart(2, '0');
+                document.getElementById('h').innerText = Math.floor((diff % 86400000) / 3600000).toString().padStart(2, '0');
+                document.getElementById('m').innerText = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+                document.getElementById('s').innerText = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            }, 1000);
+        }
+        startTimer();
+
+        // --- Improved Auth State Observer handling the loading screen ---
+        auth.onAuthStateChanged(user => { 
+            if(user) {
+                // If logged in, keep loader visible and redirect
+                window.location.href = 'index.html'; 
+            } else {
+                // If not logged in, gracefully fade out the loader to reveal the login card
+                const loader = document.getElementById('global-loader');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 400); // Wait for transition to finish
             }
         });
     </script>
