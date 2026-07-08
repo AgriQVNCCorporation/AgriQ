@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dream Agri | Test Generator</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-blue: #0A2254;      
+            --brand-green: #1E5631;     
+            --brand-gold: #D4AF37;      
+            --brand-orange: #E65100;    
+            --green-glow: rgba(30, 86, 49, 0.25);
+            --gold-glow: rgba(212, 175, 55, 0.35);
+            
+            --bg-gradient: linear-gradient(135deg, #F4F8F4 0%, #E8F0EA 100%);
+            --surface: #ffffff;
+            --text-main: #0A2254;
+            --text-dim: #4A5D4E;
+            --border: #C8D6CD;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            margin: 0;
+            padding: 0;
+            color: var(--brand-blue);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: repeating-linear-gradient(45deg, var(--border) 0, var(--border) 1px, transparent 1px, transparent 40px);
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        header {
+            width: 100%;
+            padding: calc(env(safe-area-inset-top) + 16px) 24px 16px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 3px solid var(--brand-gold);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 4px 25px rgba(30, 86, 49, 0.08);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-svg {
+            width: 54px;
+            height: 54px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.05;
+        }
+
+        .brand-title {
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+            color: var(--brand-blue);
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+        }
+        
+        .brand-title span {
+            color: var(--brand-green);
+        }
+
+        .brand-subtitle {
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: var(--brand-orange);
+            font-style: italic;
+        }
+
+        main {
+            width: 100%;
+            max-width: 580px;
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .coaching-badge {
+            background: linear-gradient(135deg, var(--brand-green), #143D22);
+            color: #fff;
+            padding: 16px 22px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 25px var(--green-glow);
+            border-left: 6px solid var(--brand-gold);
+            border-right: 6px solid var(--brand-gold);
+            text-align: center;
+        }
+
+        .coaching-badge span {
+            color: var(--brand-gold);
+            font-weight: 800;
+            z-index: 1;
+        }
+
+        .info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--brand-green);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(30, 86, 49, 0.05);
+        }
+
+        .info-card h3 {
+            margin: 0 0 20px 0;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--brand-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-wrapper label {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--brand-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 4px;
+        }
+
+        .text-input, textarea {
+            width: 100%;
+            padding: 16px;
+            font-size: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background-color: #FAFCFA;
+            color: var(--text-main);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            height: 160px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            resize: none;
+            font-weight: 500;
+        }
+
+        .text-input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--brand-gold);
+            background-color: var(--surface);
+            box-shadow: 0 0 0 4px var(--gold-glow);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 18px;
+            font-size: 15px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 800;
+            width: 100%;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-action:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-shuffle {
+            background-color: var(--surface);
+            color: var(--brand-blue);
+            border: 2px solid var(--brand-blue);
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #2AABEE, #0A2254);
+            color: white;
+            box-shadow: 0 10px 25px rgba(10, 34, 84, 0.2);
+            text-transform: uppercase;
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 34, 84, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+            opacity: 0; visibility: hidden;
+            transition: 0.3s ease;
+            padding: 20px;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-card {
+            background: #fff; width: 100%; max-width: 400px;
+            border-radius: 24px; padding: 32px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            transform: translateY(30px) scale(0.95);
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            border-top: 8px solid var(--brand-gold);
+        }
+        .modal-overlay.show .modal-card { transform: translateY(0) scale(1); }
+        .modal-icon {
+            width: 72px; height: 72px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; font-size: 34px;
+        }
+        .modal-icon.success { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+        .modal-icon.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .modal-card h3 { margin: 0 0 12px 0; font-size: 22px; color: var(--brand-blue); font-weight: 800; }
+        .modal-card p { margin: 0 0 24px 0; font-size: 15px; color: var(--text-dim); line-height: 1.6; font-weight: 500;}
+        .modal-buttons { display: flex; gap: 12px; }
+        .modal-btn {
+            flex: 1; padding: 16px; border-radius: 12px; border: none;
+            font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-confirm { background: var(--brand-green); color: #fff; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-card">
+            <div id="modalIcon" class="modal-icon success">📋</div>
+            <h3 id="modalTitle">Success!</h3>
+            <p id="modalText">Message</p>
+            <div class="modal-buttons">
+                <button id="modalBtnConfirm" class="modal-btn btn-confirm">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="brand-container">
+            <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#D4AF37" stroke-width="6"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#1E5631" stroke-width="2" stroke-dasharray="4 4"/>
+                <path d="M50 25 C 65 25, 75 40, 75 55 C 75 75, 50 85, 50 85 C 50 85, 25 75, 25 55 C 25 40, 35 25, 50 25 Z" fill="#1E5631"/>
+                <path d="M50 85 V 35" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+                <path d="M50 65 Q 40 55 35 45" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+                <path d="M50 55 Q 60 45 65 35" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+                <path d="M50 75 Q 42 68 38 60" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div class="brand-text">
+                <span class="brand-title">DREAM <span>AGRI</span></span>
+                <span class="brand-subtitle">Agriexcellence with Diligence..</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="coaching-badge">
+            🌟 Offline Format Tool <span>MCAER • ICAR • MPSC</span>
+        </div>
+
+        <div class="info-card">
+            <h3>⚙️ Test Configuration</h3>
+            <div class="input-row">
+                <div class="input-wrapper">
+                    <label for="testTitle">Test Title Header</label>
+                    <input type="text" id="testTitle" class="text-input" placeholder="e.g. ENTO TEST NO. 01">
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>📝 Question Bank Data</h3>
+            <div class="input-wrapper">
+                <label for="jsonInput">Paste JSON Array Format Here</label>
+                <textarea id="jsonInput" placeholder='[&#10;  {&#10;    "question": "The term Ecology was first coined by?",&#10;    "options": ["Charles Darwin", "Ernst Haeckel", "William Kirby", "Linnaeus"],&#10;    "answer": "Ernst Haeckel"&#10;  }&#10;]'></textarea>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-action btn-shuffle" onclick="handleShuffleClick()">
+                🔀 Shuffle Questions & Options
+            </button>
+            <button class="btn-action btn-generate" id="downloadBtn" onclick="handleDownloadWord()">
+                📄 Generate & Download Word File
+            </button>
+        </div>
+    </main>
+
+    <script>
+        function showModal(title, text, iconType, iconEmoji) {
+            const modal = document.getElementById('customModal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            
+            const mIcon = document.getElementById('modalIcon');
+            mIcon.innerText = iconEmoji;
+            mIcon.className = `modal-icon ${iconType}`;
+            
+            document.getElementById('modalBtnConfirm').onclick = () => modal.classList.remove('show');
+            modal.classList.add('show');
+        }
+
+        function handleShuffleClick() {
+            const jsonText = document.getElementById('jsonInput').value;
+            if (!jsonText.trim()) return showModal('Empty Input', 'Please paste your JSON data first.', 'error', '⚠️');
+            
+            try {
+                let data = JSON.parse(jsonText);
+                if (!Array.isArray(data)) throw new Error("Input must be a valid array.");
+                
+                for (let i = data.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [data[i], data[j]] = [data[j], data[i]];
+                }
+                data.forEach(item => {
+                    if (item.options && Array.isArray(item.options)) {
+                        for (let i = item.options.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [item.options[i], item.options[j]] = [item.options[j], item.options[i]];
+                        }
+                    }
+                });
+                document.getElementById('jsonInput').value = JSON.stringify(data, null, 2);
+                showModal('Shuffle Successful!', 'Questions and Options randomized.', 'success', '✨');
+            } catch (error) {
+                showModal('Invalid JSON', 'Syntax Error: ' + error.message, 'error', '❌');
+            }
+        }
+
+        async function handleDownloadWord() {
+            const jsonText = document.getElementById('jsonInput').value;
+            const testTitle = document.getElementById('testTitle').value.trim() || 'MOCK TEST';
+            const btn = document.getElementById('downloadBtn');
+
+            if (!jsonText.trim()) return showModal('Empty Input', 'Please paste your JSON data first.', 'error', '⚠️');
+
+            let data;
+            try {
+                data = JSON.parse(jsonText);
+                if (!Array.isArray(data)) throw new Error("Must be an array.");
+            } catch (error) {
+                return showModal('Invalid JSON', 'Check syntax.', 'error', '❌');
+            }
+
+            // Prompt user to name their file
+            let fileName = prompt("Enter a name for your Word document:", testTitle.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") || "Agri_Test_Document");
+            
+            // If the user presses cancel on the prompt, stop the function
+            if (!fileName) return;
+
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = '⏳ Generating Word File...';
+            btn.disabled = true;
+
+            // Small delay to allow UI to update
+            await new Promise(resolve => setTimeout(resolve, 15));
+
+            try {
+                let htmlParts = [
+                    `<div style="font-family: Calibri, Arial, sans-serif; color: #000000; font-size: 11pt;">`,
+                    `<div style="text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 24px;">${testTitle}</div>`
+                ];
+
+                const optLabels = ["A", "B", "C", "D"];
+                
+                const tableParts = data.map(item => {
+                    let ansIdx = "";
+                    if (item.options && item.answer) {
+                        let found = item.options.indexOf(item.answer);
+                        if (found !== -1) ansIdx = (found + 1).toString();
+                    }
+
+                    let optsHtml = "";
+                    for(let i = 0; i < 4; i++) {
+                        let optTxt = item.options && item.options[i] ? `${optLabels[i]}. ${item.options[i]}` : `${optLabels[i]}. `;
+                        optsHtml += `<tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Option</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">${optTxt}</td>
+                        </tr>`;
+                    }
+
+                    return `
+                    <table style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin-bottom: 20px;">
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Question</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">${item.question || ""}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Type</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">multiple_choice</td>
+                        </tr>
+                        ${optsHtml}
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Answer</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">${ansIdx}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Solution</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;"></td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Positive Marks</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">1</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Negative Marks</td>
+                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">0</td>
+                        </tr>
+                    </table><br>`;
+                });
+
+                htmlParts.push(...tableParts);
+                htmlParts.push(`</div>`);
+                
+                const finalHtml = htmlParts.join("");
+
+                // Wrap in MS Word compatible XML headers
+                const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export Document</title></head><body>";
+                const footer = "</body></html>";
+                const sourceHTML = header + finalHtml + footer;
+
+                // Create a Blob file suitable for mobile Chrome download
+                const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                
+                // Trigger download
+                const downloadLink = document.createElement("a");
+                downloadLink.href = url;
+                downloadLink.download = fileName + ".doc";
+                
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                
+                // Cleanup
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(url);
+                
+                showModal('File Downloaded!', `Your file "${fileName}.doc" has been saved. You can open it in Word.`, 'success', '📄');
+
+            } catch (err) {
+                console.error(err);
+                showModal('Generation Failed', 'An error occurred while creating the Word file.', 'error', '❌');
+            } finally {
+                // Restore button state
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
