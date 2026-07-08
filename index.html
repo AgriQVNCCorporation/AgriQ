@@ -34,7 +34,6 @@
         }
 
         body {
-            /* Deep, premium animated gradient */
             background: linear-gradient(-45deg, #051024, #0a2254, #12351f, #071510);
             background-size: 400% 400%;
             animation: ambientBG 18s ease infinite;
@@ -48,7 +47,6 @@
             background-attachment: fixed;
         }
 
-        /* Ambient glowing orbs in the background */
         body::before, body::after {
             content: '';
             position: fixed;
@@ -69,7 +67,6 @@
             bottom: -100px; right: -100px;
         }
 
-        /* Glassmorphism Header */
         header {
             width: 100%;
             padding: calc(env(safe-area-inset-top) + 16px) 24px 16px;
@@ -143,7 +140,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Glass Cards */
         .glass-card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -156,7 +152,6 @@
             overflow: hidden;
         }
 
-        /* Subtle top border accent for cards */
         .glass-card::before {
             content: '';
             position: absolute;
@@ -363,7 +358,6 @@
     <header>
         <div class="brand-container">
             <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Abstract glowing leaf/shield logo -->
                 <circle cx="50" cy="50" r="46" fill="rgba(255,255,255,0.05)" stroke="#D4AF37" stroke-width="4"/>
                 <path d="M50 20 C 75 20, 80 45, 80 60 C 80 85, 50 90, 50 90 C 50 90, 20 85, 20 60 C 20 45, 25 20, 50 20 Z" fill="url(#grad1)"/>
                 <path d="M50 90 V 40" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
@@ -480,14 +474,20 @@
             await new Promise(resolve => setTimeout(resolve, 50));
 
             try {
-                const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
 
                 const childrenItems = [];
 
-                // Add Title Heading
+                // Add Title Heading with Georgia Font formatting
                 childrenItems.push(new Paragraph({
-                    text: testTitle,
-                    heading: HeadingLevel.HEADING_1,
+                    children: [
+                        new TextRun({
+                            text: testTitle,
+                            font: "Georgia",
+                            size: 32, // 16pt (half-points)
+                            bold: true
+                        })
+                    ],
                     alignment: AlignmentType.CENTER,
                     spacing: { after: 400 }
                 }));
@@ -501,18 +501,24 @@
                         if (found !== -1) ansIdx = (found + 1).toString();
                     }
 
-                    // Enforces absolute column widths preventing mobile squishing bugs
+                    // Helper to create cells enforcing 3.1 cm column width and Georgia 11pt font
                     const createRow = (label, value) => {
                         return new TableRow({
                             children: [
                                 new TableCell({
-                                    children: [new Paragraph({ text: String(label) })],
-                                    width: { size: 2500, type: WidthType.DXA }, 
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: String(label), font: "Georgia", size: 22 })]
+                                    })],
+                                    // 3.1 cm converts to exactly 1757 DXA
+                                    width: { size: 1757, type: WidthType.DXA }, 
                                     margins: { top: 100, bottom: 100, left: 100, right: 100 }
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ text: String(value) })],
-                                    width: { size: 7500, type: WidthType.DXA },
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: String(value), font: "Georgia", size: 22 })]
+                                    })],
+                                    // The remaining width of the standard page layout
+                                    width: { size: 7603, type: WidthType.DXA },
                                     margins: { top: 100, bottom: 100, left: 100, right: 100 }
                                 })
                             ]
@@ -533,11 +539,11 @@
                     rows.push(createRow("Positive Marks", "1"));
                     rows.push(createRow("Negative Marks", "0"));
 
-                    // Compiles strict structural table
+                    // Compiles strict structural table matching Word defaults
                     const questionTable = new Table({
                         rows: rows,
-                        width: { size: 10000, type: WidthType.DXA }, 
-                        columnWidths: [2500, 7500],
+                        width: { size: 9360, type: WidthType.DXA }, // Standard US Letter inner width
+                        columnWidths: [1757, 7603],
                     });
 
                     childrenItems.push(questionTable);
@@ -564,7 +570,7 @@
                 document.body.removeChild(downloadLink);
                 URL.revokeObjectURL(url);
                 
-                showModal('File Downloaded!', `Your native file "${fileName}.docx" has been generated correctly and is ready to view.`, 'success', '📄');
+                showModal('File Downloaded!', `Your native file "${fileName}.docx" has been generated correctly and is ready to view.`, 'success', '✨');
 
             } catch (err) {
                 console.error(err);
