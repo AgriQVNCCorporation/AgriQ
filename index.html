@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dream Agri | Test Generator</title>
+    <title>AgriQ Pro | Test Generator</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <!-- html-docx-js library for genuine Word document generation -->
+    <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
 
     <style>
         :root {
@@ -330,7 +332,7 @@
                 <path d="M50 75 Q 42 68 38 60" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
             </svg>
             <div class="brand-text">
-                <span class="brand-title">DREAM <span>AGRI</span></span>
+                <span class="brand-title">AGRIQ <span>PRO</span></span>
                 <span class="brand-subtitle">Agriexcellence with Diligence..</span>
             </div>
         </div>
@@ -426,7 +428,7 @@
             }
 
             // Prompt user to name their file
-            let fileName = prompt("Enter a name for your Word document:", testTitle.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") || "Agri_Test_Document");
+            let fileName = prompt("Enter a name for your Word document:", testTitle.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") || "AgriQ_Pro_Document");
             
             // If the user presses cancel on the prompt, stop the function
             if (!fileName) return;
@@ -440,7 +442,10 @@
 
             try {
                 let htmlParts = [
-                    `<div style="font-family: Calibri, Arial, sans-serif; color: #000000; font-size: 11pt;">`,
+                    `<!DOCTYPE html>
+                    <html>
+                    <head><meta charset="utf-8"><title>${testTitle}</title></head>
+                    <body style="font-family: Calibri, Arial, sans-serif; color: #000000; font-size: 11pt;">`,
                     `<div style="text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 24px;">${testTitle}</div>`
                 ];
 
@@ -493,23 +498,18 @@
                 });
 
                 htmlParts.push(...tableParts);
-                htmlParts.push(`</div>`);
+                htmlParts.push(`</body></html>`);
                 
                 const finalHtml = htmlParts.join("");
 
-                // Wrap in MS Word compatible XML headers
-                const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export Document</title></head><body>";
-                const footer = "</body></html>";
-                const sourceHTML = header + finalHtml + footer;
-
-                // Create a Blob file suitable for mobile Chrome download
-                const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
-                const url = URL.createObjectURL(blob);
+                // Use the library to convert HTML to a true .docx Blob
+                const converted = htmlDocx.asBlob(finalHtml);
+                const url = URL.createObjectURL(converted);
                 
-                // Trigger download
+                // Trigger download as .docx
                 const downloadLink = document.createElement("a");
                 downloadLink.href = url;
-                downloadLink.download = fileName + ".doc";
+                downloadLink.download = fileName + ".docx"; 
                 
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
@@ -518,7 +518,7 @@
                 document.body.removeChild(downloadLink);
                 URL.revokeObjectURL(url);
                 
-                showModal('File Downloaded!', `Your file "${fileName}.doc" has been saved. You can open it in Word.`, 'success', '📄');
+                showModal('File Downloaded!', `Your file "${fileName}.docx" has been generated correctly.`, 'success', '📄');
 
             } catch (err) {
                 console.error(err);
