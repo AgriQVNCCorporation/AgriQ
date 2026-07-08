@@ -6,8 +6,9 @@
     <title>AgriQ Pro | Test Generator</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
-    <!-- html-docx-js library for genuine Word document generation -->
-    <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
+    
+    <!-- Modern Native DOCX Library -->
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
 
     <style>
         :root {
@@ -427,86 +428,96 @@
                 return showModal('Invalid JSON', 'Check syntax.', 'error', '❌');
             }
 
-            // Prompt user to name their file
             let fileName = prompt("Enter a name for your Word document:", testTitle.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") || "AgriQ_Pro_Document");
-            
-            // If the user presses cancel on the prompt, stop the function
             if (!fileName) return;
 
             const originalBtnText = btn.innerHTML;
-            btn.innerHTML = '⏳ Generating Word File...';
+            btn.innerHTML = '⏳ Generating Native DOCX...';
             btn.disabled = true;
 
-            // Small delay to allow UI to update
-            await new Promise(resolve => setTimeout(resolve, 15));
+            await new Promise(resolve => setTimeout(resolve, 50));
 
             try {
-                let htmlParts = [
-                    `<!DOCTYPE html>
-                    <html>
-                    <head><meta charset="utf-8"><title>${testTitle}</title></head>
-                    <body style="font-family: Calibri, Arial, sans-serif; color: #000000; font-size: 11pt;">`,
-                    `<div style="text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 24px;">${testTitle}</div>`
-                ];
+                // Destructure required objects from the docx library
+                const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } = docx;
+
+                const childrenItems = [];
+
+                // Add Title Heading
+                childrenItems.push(new Paragraph({
+                    text: testTitle,
+                    heading: HeadingLevel.HEADING_1,
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 400 } // Add space below title
+                }));
 
                 const optLabels = ["A", "B", "C", "D"];
-                
-                const tableParts = data.map(item => {
+
+                // Build Tables based on JSON data
+                data.forEach(item => {
                     let ansIdx = "";
                     if (item.options && item.answer) {
                         let found = item.options.indexOf(item.answer);
                         if (found !== -1) ansIdx = (found + 1).toString();
                     }
 
-                    let optsHtml = "";
+                    // Helper function to create standardized rows
+                    const createRow = (label, value) => {
+                        return new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({ text: String(label), style: "Normal" })],
+                                    width: { size: 25, type: WidthType.PERCENTAGE },
+                                    margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({ text: String(value), style: "Normal" })],
+                                    width: { size: 75, type: WidthType.PERCENTAGE },
+                                    margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                                })
+                            ]
+                        });
+                    };
+
+                    const rows = [];
+                    rows.push(createRow("Question", item.question || ""));
+                    rows.push(createRow("Type", "multiple_choice"));
+
+                    // Option Rows
                     for(let i = 0; i < 4; i++) {
                         let optTxt = item.options && item.options[i] ? `${optLabels[i]}. ${item.options[i]}` : `${optLabels[i]}. `;
-                        optsHtml += `<tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Option</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">${optTxt}</td>
-                        </tr>`;
+                        rows.push(createRow("Option", optTxt));
                     }
 
-                    return `
-                    <table style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin-bottom: 20px;">
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Question</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">${item.question || ""}</td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Type</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">multiple_choice</td>
-                        </tr>
-                        ${optsHtml}
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Answer</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">${ansIdx}</td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Solution</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;"></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Positive Marks</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">1</td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 6px; width: 25%; vertical-align: top;">Negative Marks</td>
-                            <td style="border: 1px solid #000; padding: 6px; width: 75%; vertical-align: top;">0</td>
-                        </tr>
-                    </table><br>`;
+                    rows.push(createRow("Answer", ansIdx));
+                    rows.push(createRow("Solution", ""));
+                    rows.push(createRow("Positive Marks", "1"));
+                    rows.push(createRow("Negative Marks", "0"));
+
+                    // Compile the table for this question
+                    const questionTable = new Table({
+                        rows: rows,
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                    });
+
+                    childrenItems.push(questionTable);
+                    
+                    // Add a blank spacer paragraph between tables
+                    childrenItems.push(new Paragraph({ text: "", spacing: { after: 400 } }));
                 });
 
-                htmlParts.push(...tableParts);
-                htmlParts.push(`</body></html>`);
-                
-                const finalHtml = htmlParts.join("");
+                // Create the final Document object
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
+                        children: childrenItems
+                    }]
+                });
 
-                // Use the library to convert HTML to a true .docx Blob
-                const converted = htmlDocx.asBlob(finalHtml);
-                const url = URL.createObjectURL(converted);
+                // Generate the Blob directly from the Document object
+                const blob = await Packer.toBlob(doc);
+                const url = URL.createObjectURL(blob);
                 
-                // Trigger download as .docx
                 const downloadLink = document.createElement("a");
                 downloadLink.href = url;
                 downloadLink.download = fileName + ".docx"; 
@@ -514,17 +525,15 @@
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 
-                // Cleanup
                 document.body.removeChild(downloadLink);
                 URL.revokeObjectURL(url);
                 
-                showModal('File Downloaded!', `Your file "${fileName}.docx" has been generated correctly.`, 'success', '📄');
+                showModal('File Downloaded!', `Your native file "${fileName}.docx" has been generated correctly and is ready to view.`, 'success', '📄');
 
             } catch (err) {
                 console.error(err);
                 showModal('Generation Failed', 'An error occurred while creating the Word file.', 'error', '❌');
             } finally {
-                // Restore button state
                 btn.innerHTML = originalBtnText;
                 btn.disabled = false;
             }
