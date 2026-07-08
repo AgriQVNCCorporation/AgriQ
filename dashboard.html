@@ -6,8 +6,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <meta name="theme-color" content="#0084ff">
+    
     <title>AgriQ Pro | Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -15,19 +19,10 @@
 
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-gradient: linear-gradient(135deg, #00c6ff, #0072ff);
-            --primary-glow: rgba(0, 114, 255, 0.25);
-            --bg: #f8fafc;
-            --surface: rgba(255, 255, 255, 0.7);
-            --text-main: #0f172a;
-            --text-dim: #475569;
-            --border: rgba(226, 232, 240, 0.6);
-            --daily-color: #10b981; 
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --gold: #fbbf24;
-            --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --primary: #0084ff; --bg: #f0f9ff; --surface: #ffffff;
+            --text-main: #002d4d; --text-dim: #64748b; --border: #e2e8f0;
+            --daily-color: #10b981; --coak-color: #8b5cf6;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         html { scroll-behavior: smooth; }
@@ -40,162 +35,124 @@
             overflow-x: hidden;
         }
 
-        /* Ambient Background Mesh */
-        .ambient-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
-            background: radial-gradient(circle at 15% 50%, rgba(0, 198, 255, 0.08), transparent 25%),
-                        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
-            animation: breathe 10s ease-in-out infinite alternate;
-        }
-        @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
-
         /* --- SKELETON UI STYLES --- */
-        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.4) 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+        .skeleton.dark { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        .skeleton-text { height: 16px; margin-bottom: 8px; width: 100%; }
+        .skeleton-text.short { width: 60%; }
+        .skeleton-avatar { width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; }
+        
+        .post-skeleton { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .post-skeleton-header { display: flex; align-items: center; gap: 12px; }
 
-        /* --- HEADER --- */
-        header { 
-            padding: 15px 24px; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            position: sticky; top: env(safe-area-inset-top); z-index: 100; display: flex; justify-content: space-between; 
-            align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 4px 30px rgba(0,0,0,0.03);
-        }
+        header { padding: 20px 24px; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); position: sticky; top: env(safe-area-inset-top); z-index: 100; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); transition: var(--transition); }
         .header-left { display: flex; align-items: center; gap: 15px; }
-        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; }
-        .brand span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'JetBrains Mono'; }
+        .brand { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
-        .user-profile-btn {
-            background: rgba(0, 114, 255, 0.1); border: 1px solid rgba(0, 114, 255, 0.2);
-            padding: 6px 14px; border-radius: 50px; display: flex; align-items: center; gap: 8px;
-            cursor: pointer; transition: var(--transition);
-        }
-        .user-profile-btn:hover { background: var(--primary-gradient); transform: translateY(-2px); box-shadow: 0 5px 15px var(--primary-glow); }
-        .user-profile-btn:hover span, .user-profile-btn:hover svg { color: white !important; }
-        .u-name { font-size: 13px; font-weight: 800; color: var(--primary); transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;}
-
-        /* --- SIDEBAR --- */
-        .sidebar-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease; }
-        .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(25px); z-index: 1001; box-shadow: 5px 0 30px rgba(0,0,0,0.1); transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding: 20px; padding-top: calc(20px + env(safe-area-inset-top)); }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.4); backdrop-filter: blur(4px); z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: var(--surface); z-index: 1001; box-shadow: 5px 0 25px rgba(0,0,0,0.1); transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; padding: 20px; padding-top: calc(20px + env(safe-area-inset-top)); }
         .sidebar.open { left: 0; }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
         .sidebar-link { display: flex; align-items: center; gap: 15px; padding: 16px 20px; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 16px; margin-bottom: 10px; transition: var(--transition); }
-        .sidebar-link svg { color: var(--primary); transition: var(--transition); opacity: 0.7;}
-        .sidebar-link:hover { background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transform: translateX(5px); }
-        .sidebar-link:hover svg { opacity: 1; }
+        .sidebar-link i { color: var(--text-dim); transition: var(--transition); }
+        .sidebar-link:hover { background: #f0f9ff; color: var(--primary); transform: translateX(5px); }
+        .sidebar-link:hover i { color: var(--primary); }
 
-        main { padding: 25px 5%; max-width: 600px; margin: 0 auto; position: relative; z-index: 1;}
+        main { padding: 20px; max-width: 500px; margin: 0 auto; }
         
-        /* --- RANK GRID --- */
-        .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        .rank-card { 
-            padding: 24px; border-radius: 28px; color: white; display: flex; flex-direction: column; 
-            justify-content: center; position: relative; overflow: hidden; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: var(--transition); 
-            cursor: pointer; text-decoration: none; min-height: 130px; 
-        }
-        .rank-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .rank-card { padding: 20px; border-radius: 28px; color: white; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: var(--transition); cursor: pointer; text-decoration: none; min-height: 120px; }
+        .rank-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
         .rank-card:active { transform: scale(0.96); }
         
         .rank-global { background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); }
         .rank-daily { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
-        .rank-bg-icon { position: absolute; right: -15px; bottom: -15px; opacity: 0.2; transform: rotate(-15deg); pointer-events: none; transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-        .rank-card:hover .rank-bg-icon { transform: rotate(0deg) scale(1.15); opacity: 0.3; }
+        .rank-bg-icon { position: absolute; right: -10px; bottom: -15px; opacity: 0.2; transform: rotate(-15deg); pointer-events: none; transition: 0.4s ease-out; }
+        .rank-card:hover .rank-bg-icon { transform: rotate(0deg) scale(1.1); opacity: 0.3; }
         
-        .r-title { font-size: 10px; font-weight: 800; opacity: 0.9; text-transform: uppercase; letter-spacing:1px; margin-bottom: 6px; display: block; }
-        .r-val { font-size: 36px; font-weight: 900; font-family: 'JetBrains Mono'; line-height: 1; letter-spacing: -1px;}
-        .r-pts { font-size: 11px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 50px; display: inline-block; margin-top: 10px; backdrop-filter: blur(5px);}
+        .r-title { font-size: 9px; font-weight: 800; opacity: 0.9; text-transform: uppercase; letter-spacing:1px; margin-bottom: 4px; display: block; }
+        .r-val { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono'; line-height: 1; }
+        .r-pts { font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; display: inline-block; margin-top: 8px; }
 
-        /* --- BANNERS --- */
-        .banner-card { 
-            background: var(--surface); border: 1px solid var(--border); padding: 20px; 
-            border-radius: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; 
-            cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.03); text-decoration: none; 
-            transition: var(--transition); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            position: relative;
-        }
-        .banner-card:hover { transform: translateY(-4px); border-color: rgba(16, 185, 129, 0.3); box-shadow: 0 15px 40px rgba(16, 185, 129, 0.1); }
+        .banner-card { background: #0f172a; color: white; padding: 20px; border-radius: 24px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-decoration: none; transition: var(--transition); }
+        .banner-card:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        .banner-card:active { transform: scale(0.98); }
         
-        .daily-icon { background: rgba(16, 185, 129, 0.1); padding: 14px; border-radius: 20px; display: flex; align-items: center; justify-content: center; transition: var(--transition); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .banner-card:hover .daily-icon { background: var(--daily-color); color: white !important;}
-        .banner-card:hover .daily-icon svg { color: white !important; }
-
-        /* Refresh Button inside Banner */
-        .refresh-btn {
-            background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--daily-color); padding: 8px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: var(--transition); z-index: 5;
-        }
-        .refresh-btn:hover { background: var(--daily-color); color: white; transform: rotate(180deg); }
-        .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* --- SUNDAY TEST SECURE LOGIN CARD --- */
-        .secure-card { 
-            background: var(--surface); padding: 30px 25px; border-radius: 32px; 
-            border: 1px solid rgba(0, 114, 255, 0.2); margin-bottom: 24px; 
-            transition: var(--transition); position: relative; overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 114, 255, 0.05);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        }
-        .secure-card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px;
-            background: var(--primary-gradient);
-        }
+        .daily-banner { border-left: 5px solid var(--daily-color); }
+        .daily-icon { background: rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .banner-card:hover .daily-icon { background: rgba(16, 185, 129, 0.4); }
         
-        .secure-card h3 { margin: 0; font-weight: 900; font-size:22px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
-        .secure-card p { font-size: 13px; color: var(--text-dim); margin: 8px 0 20px; font-weight:600; line-height: 1.5;}
+        .coak-banner { border-left: 5px solid var(--coak-color); }
+        .coak-icon { background: rgba(139, 92, 246, 0.2); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .banner-card:hover .coak-icon { background: rgba(139, 92, 246, 0.4); }
+
+        .module-card { background: var(--surface); padding: 24px; border-radius: 28px; border: 1px solid var(--border); margin-bottom: 20px; margin-top: 5px; transition: var(--transition); }
+        .module-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.04); }
         
-        .input-group { position: relative; margin-bottom: 12px; }
-        .input-group svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--primary); opacity: 0.7;}
-        .secure-input { 
-            width: 100%; padding: 16px 16px 16px 48px; border-radius: 16px; 
-            border: 2px solid var(--border); background: #f8fafc; font-weight: 700; 
-            font-size: 14px; color: var(--text-main); transition: var(--transition); outline: none;
-        }
-        .secure-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 5px 15px var(--primary-glow); }
+        .custom-select { position: relative; margin-top: 15px; }
+        .select-btn { width: 100%; padding: 18px 20px; border-radius: 18px; border: 1.5px solid var(--border); background: #f8fafc; font-weight: 700; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-main); transition: var(--transition); }
+        .select-btn:hover { border-color: rgba(0, 132, 255, 0.5); }
+        .select-btn.active { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 132, 255, 0.1); background: #fff; }
+        
+        .select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; margin-top: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 50; display: none; max-height: 220px; overflow-y: auto; }
+        .select-dropdown.show { display: block; animation: slideDownFade 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        
+        @keyframes slideDownFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Black Auth Button */
-        .btn-black { 
-            width: 100%; padding: 18px; border-radius: 16px; border: none; 
-            background: #0f172a; color: white; font-weight: 900; font-size: 15px; 
-            margin-top: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            gap: 10px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2); transition: var(--transition); 
-        }
-        .btn-black:hover { background: #1e293b; transform: translateY(-3px); box-shadow: 0 15px 35px rgba(15, 23, 42, 0.3); }
-        .btn-black:active { transform: scale(0.97); }
+        .select-option { padding: 16px 20px; font-weight: 600; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: var(--transition); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .select-option:last-child { border-bottom: none; }
+        .select-option:hover:not(.locked) { background: #f0f9ff; color: var(--primary); padding-left: 25px; }
+        .select-option.locked { cursor: not-allowed; opacity: 0.5; background: #f8fafc; color: var(--text-dim); }
 
-        /* --- BOTTOM NAV --- */
-        .nav-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); 
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            display: flex; justify-content: space-around; padding: 15px 5px calc(15px + env(safe-area-inset-bottom)); 
-            border-top: 1px solid var(--border); box-shadow: 0 -10px 30px rgba(0,0,0,0.03); z-index: 100; 
-        }
-        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; transition: var(--transition); flex: 1; }
+        .btn-start { width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 800; font-size: 16px; margin-top: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(0, 132, 255, 0.2); transition: var(--transition); }
+        .btn-start:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0, 132, 255, 0.3); }
+        .btn-start:active { transform: scale(0.97); }
+
+        .post-section { margin-top: 30px; }
+        .section-title { font-weight: 900; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .carousel-container { overflow: hidden; width: 100%; border-radius: 24px; position: relative; }
+        .carousel-track { display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); align-items: flex-start; }
+        .carousel-slide { min-width: 100%; flex-shrink: 0; padding-bottom: 10px; }
+        .post-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); width: 100%; display: flex; flex-direction: column; max-height: 280px; margin: 0 2px; }
+        .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-shrink: 0; }
+        .post-avatar { width: 36px; height: 36px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; }
+        .post-meta h4 { margin: 0; font-size: 14px; font-weight: 800; }
+        .post-meta span { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+        .post-content { font-size: 13px; color: var(--text-dim); line-height: 1.6; font-weight: 600; overflow-y: auto; overflow-x: hidden; padding-right: 5px; word-wrap: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap; flex-grow: 1; }
+
+        .dots-container { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: 0.3s; cursor: pointer; }
+        .dot.active { background: var(--primary); width: 18px; border-radius: 4px; }
+
+        footer { text-align: center; padding: 30px 20px 10px; color: var(--text-dim); }
+        .copyright { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 15px 5px calc(15px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 100; }
+        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; transition: var(--transition); flex: 1; }
         .nav-item:hover { color: var(--primary); }
-        .nav-item.active { color: var(--primary); transform: translateY(-4px); }
+        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
 
-        /* --- MODALS --- */
-        #modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; }
-        .modal { background: white; padding: 35px; border-radius: 32px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        
-        .modal-btn { padding: 16px 24px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; flex: 1; transition: var(--transition); font-size: 14px;}
-        .modal-btn:active { transform: scale(0.95); }
-        
-        #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        #modal-overlay { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.4); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; }
+        .modal { background: white; padding: 30px; border-radius: 32px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .modal-btn { padding: 16px 24px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; flex: 1; transition: var(--transition); }
+        .modal-btn:hover { filter: brightness(0.95); transform: translateY(-2px); }
+        .modal-input { width: 100%; padding: 16px; border-radius: 16px; border: 1.5px solid var(--border); margin-top: 15px; font-weight: 700; outline: none; text-align: center; text-transform: uppercase; transition: var(--transition); }
+        .modal-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.1); }
+        #toast { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px; font-size: 13px; font-weight: 700; display: none; z-index: 10001; animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 
-        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="ambient-bg"></div>
-
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
     <div id="sidebar" class="sidebar">
         <div class="sidebar-header">
-            <div class="brand">AGRI<span>Q</span> PRO</div>
+            <div class="brand">AGRI<span>Q</span></div>
             <i data-lucide="x" size="24" style="cursor:pointer; color:var(--text-dim);" onclick="closeSidebar()"></i>
         </div>
         <div style="flex: 1;">
@@ -203,30 +160,32 @@
             <a href="group.html" class="sidebar-link"><i data-lucide="users" size="20"></i> Groups</a>
             <a href="help.html" class="sidebar-link"><i data-lucide="help-circle" size="20"></i> Help</a>
             <a href="contact.html" class="sidebar-link"><i data-lucide="mail" size="20"></i> Contact Us</a>
-            <a href="#" class="sidebar-link" onclick="auth.signOut().then(()=>window.location.href='login.html')"><i data-lucide="log-out" size="20" style="color:var(--danger)"></i> <span style="color:var(--danger)">Logout</span></a>
+        </div>
+        <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto;">
+            <div class="copyright" style="text-align: center; color: var(--text-dim);">V5.0</div>
         </div>
     </div>
 
     <div id="toast"></div>
-
     <div id="modal-overlay">
         <div class="modal">
-            <h3 id="m-title" style="margin-top:0; font-weight:900; font-size: 20px;">Title</h3>
-            <div id="m-body"><p id="m-text" style="color:var(--text-dim); font-size:14px; line-height:1.6; font-weight:500;">Message</p></div>
+            <h3 id="m-title" style="margin-top:0; font-weight:900;">Title</h3>
+            <div id="m-body"><p id="m-text" style="color:var(--text-dim); font-size:14px; line-height:1.5; font-weight:600;">Message</p></div>
             <div style="display:flex; gap:12px; margin-top:25px;">
-                <button class="modal-btn" style="background:var(--primary-gradient); color:white" onclick="closeModal()">Okay</button>
+                <button class="modal-btn" style="background:#f1f5f9; color:var(--text-dim);" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn" style="background:var(--primary); color:white" id="m-confirm">Confirm</button>
             </div>
         </div>
     </div>
-  
+    
     <header>
         <div class="header-left">
-            <i data-lucide="menu" size="24" style="cursor:pointer; color:var(--text-main);" onclick="toggleSidebar()"></i>
+            <i data-lucide="menu" size="24" style="cursor:pointer; color:var(--text-main); transition:0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-main)'" onclick="toggleSidebar()"></i>
             <div class="brand">AGRI<span>Q</span> PRO</div>
         </div>
-        <div class="user-profile-btn" onclick="window.location.href='profile.html'">
-            <span class="u-name" id="user-display-name">USER</span>
-            <i data-lucide="user" size="16" style="color:var(--primary)"></i>
+        <div style="display:flex; gap:18px; align-items:center;">
+            <i data-lucide="edit-3" size="20" style="color:var(--text-main); cursor:pointer; transition:0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-main)'" onclick="requestNameChange()"></i>
+            <i data-lucide="bell" size="20" style="color:var(--text-dim); cursor:pointer; transition:0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'"></i>
         </div>
     </header>
 
@@ -235,57 +194,90 @@
             <a href="leaderboard.html" class="rank-card rank-global">
                 <i data-lucide="globe" size="100" class="rank-bg-icon"></i>
                 <span class="r-title">Global Rank</span>
-                <div class="r-val" id="rank-val"><div class="skeleton" style="width: 60px; height: 36px; border-radius: 8px;"></div></div>
-                <div><span class="r-pts" id="points-val"><div class="skeleton" style="width: 40px; height: 12px; display:inline-block;"></div></span></div>
+                <div class="r-val" id="rank-val"><div class="skeleton" style="width: 60px; height: 32px; border-radius: 6px;"></div></div>
+                <div><span class="r-pts" id="points-val"><div class="skeleton" style="width: 40px; height: 10px; display:inline-block;"></div></span></div>
             </a>
             <a href="leaderboarddaily.html" class="rank-card rank-daily">
                 <i data-lucide="zap" size="100" class="rank-bg-icon"></i>
                 <span class="r-title">Daily Drill Rank</span>
-                <div class="r-val" id="daily-rank-val"><div class="skeleton" style="width: 60px; height: 36px; border-radius: 8px;"></div></div>
-                <div><span class="r-pts" id="daily-points-val"><div class="skeleton" style="width: 40px; height: 12px; display:inline-block;"></div></span></div>
+                <div class="r-val" id="daily-rank-val"><div class="skeleton" style="width: 60px; height: 32px; border-radius: 6px;"></div></div>
+                <div><span class="r-pts" id="daily-points-val"><div class="skeleton" style="width: 40px; height: 10px; display:inline-block;"></div></span></div>
             </a>
         </div>
 
-        <div class="banner-card" onclick="window.location.href='daily.html'">
-            <div class="daily-icon"><i data-lucide="zap" color="var(--daily-color)" size="26"></i></div>
+        <a href="daily.html" class="banner-card daily-banner">
+            <div class="daily-icon"><i data-lucide="zap" fill="var(--daily-color)" color="var(--daily-color)" size="24"></i></div>
             <div style="flex:1;">
-                <h3 style="margin:0 0 4px 0; font-size:16px; font-weight:900; color: var(--text-main);">Daily Rapid Drill</h3>
-                <p style="margin:0; font-size:12px; color:var(--text-dim); font-weight:600;">10 Questions • 5 Mins • Fresh</p>
+                <h3 style="margin:0 0 4px 0; font-size:15px; font-weight:800;">Daily Rapid Drill</h3>
+                <p style="margin:0; font-size:11px; color:rgba(255,255,255,0.7); font-weight:600;">10 Questions • 5 Mins • Fresh</p>
             </div>
-            <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh(event)" title="Refresh Ranks">
-                <i data-lucide="refresh-cw" size="18"></i>
-            </button>
-            <i data-lucide="chevron-right" color="var(--text-dim)" style="margin-left: 8px;"></i>
-        </div>
-        
-        <div class="secure-card">
-            <h3 style="color: var(--primary);"><i data-lucide="shield-check" size="24"></i> Sunday Grand Test</h3>
-            <p>Authentication required. Enter your specific credentials to unlock this week's live examination array.</p>
+            <i data-lucide="chevron-right" color="rgba(255,255,255,0.5)"></i>
+        </a>
+
+        <a href="coakmonks.html" class="banner-card coak-banner">
+            <div class="coak-icon"><i data-lucide="book-open-check" fill="var(--coak-color)" color="var(--coak-color)" size="24"></i></div>
+            <div style="flex:1;">
+                <h3 style="margin:0 0 4px 0; font-size:15px; font-weight:800;">COAK Monks</h3>
+                <p style="margin:0; font-size:11px; color:rgba(255,255,255,0.7); font-weight:600;">Specialized Preparation Module</p>
+            </div>
+            <i data-lucide="chevron-right" color="rgba(255,255,255,0.5)"></i>
+        </a>
+
+        <div class="module-card">
+            <h3 style="margin: 0; font-weight: 900; font-size:18px;">Study Module</h3>
+            <p style="font-size: 12px; color: var(--text-dim); margin: 6px 0 18px; font-weight:600;">Select your subject to begin practice</p>
             
-            <div class="input-group">
-                <i data-lucide="id-card" size="18"></i>
-                <input type="text" class="secure-input" id="sunday-app-id" placeholder="Application ID">
-            </div>
-            <div class="input-group">
-                <i data-lucide="calendar" size="18"></i>
-                <input type="password" class="secure-input" id="sunday-dob" placeholder="Password (DOB: YYYYMMDD)">
+            <div class="custom-select">
+                <div class="select-btn" id="select-btn" onclick="toggleDropdown()">
+                    <span id="selected-text" style="display:flex; align-items:center; gap:10px;"><i data-lucide="book-open" size="18" color="var(--primary)"></i> Choose Subject</span>
+                    <i data-lucide="chevron-down" size="18" id="dropdown-icon" style="color:var(--text-dim); transition:0.3s;"></i>
+                </div>
+                <div class="select-dropdown" id="select-dropdown">
+                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton dark skeleton-text" style="width: 80%;"></div></div></div>
+                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton dark skeleton-text" style="width: 60%;"></div></div></div>
+                    <div class="select-option" style="cursor: default;"><div style="flex:1;"><div class="skeleton dark skeleton-text" style="width: 75%;"></div></div></div>
+                </div>
             </div>
 
-            <button class="btn-black" onclick="startSundayTest()">
-                AUTHENTICATE & START <i data-lucide="lock" size="18"></i>
-            </button>
+            <button class="btn-start" onclick="initiateTest()">START SESSION <i data-lucide="arrow-right" size="18"></i></button>
+            <div style="text-align: center; margin-top: 15px;">
+                <span style="font-size: 11px; color: var(--text-dim); font-weight: 800; cursor: pointer; text-decoration: underline; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'" onclick="promptCoupon()">Redeem Promo Code</span>
+            </div>
         </div>
+
+        <div class="post-section">
+            <div class="section-title"><i data-lucide="radio" size="18" color="var(--primary)"></i> Exam Updates</div>
+            <div class="carousel-container">
+                <div class="carousel-track" id="post-track">
+                     <div class="carousel-slide">
+                         <div class="post-skeleton">
+                             <div class="post-skeleton-header">
+                                 <div class="skeleton dark skeleton-avatar"></div>
+                                 <div style="flex:1;"><div class="skeleton dark skeleton-text" style="margin-bottom:4px;"></div><div class="skeleton dark skeleton-text short" style="margin:0;"></div></div>
+                             </div>
+                             <div><div class="skeleton dark skeleton-text"></div><div class="skeleton dark skeleton-text"></div><div class="skeleton dark skeleton-text short"></div></div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dots-container" id="post-dots"></div>
+        </div>
+
+        <footer>
+            <div class="copyright">© 2026 AGRIQ PRO V5.0</div>
+            <div style="font-size: 10px; margin-top: 6px; font-weight:600;">Designed for Excellence</div>
+        </footer>
     </main>
 
     <nav class="nav-bar">
-        <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-grid" size="22"></i>Dash</a>
-        <a href="courses.html" class="nav-item"><i data-lucide="library" size="22"></i>Courses</a>
-        <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3" size="22"></i>Rank</a>
-        <a href="profile.html" class="nav-item"><i data-lucide="user" size="22"></i>Profile</a>
+        <a href="dashboard.html" class="nav-item active"><i data-lucide="layout-grid"></i>Dash</a>
+        <a href="courses.html" class="nav-item"><i data-lucide="library"></i>Courses</a>
+        <a href="leaderboard.html" class="nav-item"><i data-lucide="bar-chart-3"></i>Rank</a>
+       
+        <a href="profile.html" class="nav-item"><i data-lucide="user"></i>Profile</a>
     </nav>
 
-    <script>
-        // --- Firebase Init ---
+      <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
@@ -297,161 +289,253 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        lucide.createIcons();
+        let questions = [], currentIdx = 0, userChoices = {}, markedQuestions = {}, timer;
+        let totalSecondsRemaining = 300; // STRICT 5 MINUTE TIMER
+        const moduleKey = "DAILY_DRILL"; // Fixed identifier for leaderboard
+        let isSubmitting = false;
 
-        // --- Sidebar ---
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.add('open');
-            const overlay = document.getElementById('sidebar-overlay');
-            overlay.style.display = 'block';
-            setTimeout(() => overlay.style.opacity = '1', 10);
-        }
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            const overlay = document.getElementById('sidebar-overlay');
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-        }
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && !isSubmitting) processFinalResults();
+        });
 
-        // --- Sunday Test Logic ---
-        function startSundayTest() {
-            const appId = document.getElementById('sunday-app-id').value.trim();
-            const dob = document.getElementById('sunday-dob').value.trim();
-
-            if(!appId || !dob) {
-                return showModal("ACCESS DENIED", "Please provide both your Application ID and Password to authenticate.");
-            }
-
-            showToast("Authenticating secure connection...");
-            
-            setTimeout(() => {
-                window.location.href = `tst.html?type=sunday&auth=${btoa(appId)}`;
-            }, 1000);
-        }
-
-        // --- Modals & Toasts ---
-        function showModal(title, text) {
-            const m = document.getElementById('modal-overlay');
-            document.getElementById('m-title').innerText = title;
-            document.getElementById('m-text').innerText = text;
-            m.style.display = 'flex';
-        }
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-        
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
-
-        // --- Manual Refresh Button Logic ---
-        function manualRefresh(e) {
-            e.stopPropagation(); // Prevents clicking the banner from redirecting to daily.html
-            const btn = document.getElementById('refresh-btn');
-            btn.classList.add('spinning');
-            showToast("Syncing latest ranks...");
-            
-            if (auth.currentUser) {
-                fetchAndSyncRanks(auth.currentUser.uid, () => {
-                    setTimeout(() => btn.classList.remove('spinning'), 600);
-                    showToast("Ranks updated!");
-                });
-            } else {
-                btn.classList.remove('spinning');
-            }
-        }
-
-        // --- Core Leaderboard & Local Storage Sync ---
-        function fetchAndSyncRanks(uid, callback = null) {
-            const cacheKey = `agriq_tracker_${uid}`;
-
-            db.ref('leaderboard').once('value', snap => {
-                const rawData = snap.val();
-                if (!rawData) {
-                    if (callback) callback();
-                    return;
-                }
-
-                const globalAgg = {};
-                const dailyAgg = {};
-                
-                Object.values(rawData).forEach(entry => {
-                    if (!entry.uid) return;
-                    const score = parseInt(entry.score) || 0;
-
-                    // 1. Global Aggregation (All entries)
-                    if (!globalAgg[entry.uid]) globalAgg[entry.uid] = { uid: entry.uid, score: 0 };
-                    globalAgg[entry.uid].score += score;
-
-                    // 2. Daily Drill Aggregation (Only DAILY_DRILL module)
-                    if (entry.module === "DAILY_DRILL") {
-                        if (!dailyAgg[entry.uid]) dailyAgg[entry.uid] = { uid: entry.uid, score: 0 };
-                        dailyAgg[entry.uid].score += score;
-                    }
-                });
-
-                // Calculate Global Ranks
-                const sortedGlobal = Object.values(globalAgg).sort((a, b) => b.score - a.score);
-                const globalIndex = sortedGlobal.findIndex(u => u.uid === uid);
-                const myGlobalRank = globalIndex !== -1 ? globalIndex + 1 : '-';
-                const myGlobalScore = globalAgg[uid] ? globalAgg[uid].score : 0;
-
-                // Calculate Daily Ranks
-                const sortedDaily = Object.values(dailyAgg).sort((a, b) => b.score - a.score);
-                const dailyIndex = sortedDaily.findIndex(u => u.uid === uid);
-                const myDailyRank = dailyIndex !== -1 ? dailyIndex + 1 : '-';
-                const myDailyScore = dailyAgg[uid] ? dailyAgg[uid].score : 0;
-
-                // Update DOM instantly
-                document.getElementById('rank-val').innerHTML = myGlobalRank;
-                document.getElementById('points-val').innerHTML = myGlobalScore.toLocaleString() + ' XP';
-                
-                document.getElementById('daily-rank-val').innerHTML = myDailyRank;
-                document.getElementById('daily-points-val').innerHTML = myDailyScore.toLocaleString() + ' XP';
-
-                // Save fresh computed stats back to local storage
-                localStorage.setItem(cacheKey, JSON.stringify({ 
-                    score: myGlobalScore, 
-                    rank: myGlobalRank,
-                    dailyScore: myDailyScore,
-                    dailyRank: myDailyRank
-                }));
-
-                if (callback) callback();
-            });
-        }
-
-        // --- Auth & Initial Load ---
         auth.onAuthStateChanged(user => {
-            if (!user) return window.location.href = 'login.html';
-            
-            // 1. INSTANT LOAD: Read Local Storage first so skeletons disappear instantly
-            const cacheKey = `agriq_tracker_${user.uid}`;
-            const cached = JSON.parse(localStorage.getItem(cacheKey));
-            if (cached && cached.score !== undefined) {
-                document.getElementById('points-val').innerHTML = cached.score.toLocaleString() + ' XP';
-                if (cached.rank) document.getElementById('rank-val').innerHTML = cached.rank;
-                if (cached.dailyScore) document.getElementById('daily-points-val').innerHTML = cached.dailyScore.toLocaleString() + ' XP';
-                if (cached.dailyRank) document.getElementById('daily-rank-val').innerHTML = cached.dailyRank;
-            }
-
-            // Fetch user profile name
+            if (!user) return window.location.href = 'dashboard.html';
             db.ref(`students/${user.uid}`).once('value', snap => {
                 const userData = snap.val();
                 if (userData && userData.name) {
                     document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
+                    document.getElementById('user-initial').innerText = userData.name[0];
+                }
+            });
+            loadDailyQuestions();
+        });
+
+        async function loadDailyQuestions() {
+            try {
+                const snap = await db.ref('subjects').once('value');
+                if (snap.exists()) {
+                    let allQuestionsPool = [];
+                    
+                    // Iterate through ALL subjects and pool questions unconditionally
+                    snap.forEach(moduleSnap => {
+                        const data = moduleSnap.val();
+                        if (data) {
+                            let rawQs = [];
+                            if (Array.isArray(data)) {
+                                rawQs = data;
+                            } else if (data.questions) {
+                                rawQs = data.questions.data || data.questions || [];
+                            }
+                            
+                            if (Array.isArray(rawQs)) {
+                                allQuestionsPool = allQuestionsPool.concat(rawQs);
+                            }
+                        }
+                    });
+
+                    allQuestionsPool = allQuestionsPool.filter(q => q != null && typeof q === 'object');
+
+                    if(allQuestionsPool.length === 0) {
+                        document.getElementById('app-loader').classList.add('fade-out');
+                        return showModal("NO DATA", "No active questions found in the database.", "alert", () => window.location.href='dashboard.html');
+                    }
+
+                    // Shuffle the giant pool of questions
+                    allQuestionsPool.sort(() => Math.random() - 0.5);
+
+                    // Pick exactly 10 random questions (or less if pool is smaller)
+                    const selected10 = allQuestionsPool.slice(0, 10);
+                    
+                    setupQuestions(selected10);
                 } else {
-                    document.getElementById('user-display-name').innerText = "STUDENT";
+                    document.getElementById('app-loader').classList.add('fade-out');
+                    showModal("ERROR", "Database empty.", "alert", () => window.location.href='dashboard.html');
+                }
+            } catch (e) { 
+                console.error(e); 
+                document.getElementById('app-loader').classList.add('fade-out');
+                showModal("DATABASE ERROR", "Failed to load: " + e.message, "alert", () => window.location.href='dashboard.html');
+            }
+        }
+
+        function setupQuestions(dataArray) {
+            questions = dataArray.map(q => ({
+                ...q,
+                displayQ: q.question || q.q || "Missing Question Text",
+                correct: q.answer || q.ans,
+                shuffledOpts: [...(q.options || [])].sort(() => Math.random() - 0.5)
+            }));
+            initUI();
+            document.getElementById('app-loader').classList.add('fade-out');
+            startGlobalTimer();
+        }
+
+        function initUI() {
+            const grid = document.getElementById('marker-grid');
+            grid.innerHTML = '';
+            questions.forEach((_, i) => {
+                const p = document.createElement('div');
+                p.className = 'q-pill';
+                p.id = `mark-${i}`;
+                p.innerText = i + 1;
+                p.onclick = () => { currentIdx = i; showQ(); };
+                grid.appendChild(p);
+            });
+            showQ();
+        }
+
+        function toggleMark() {
+            markedQuestions[currentIdx] = !markedQuestions[currentIdx];
+            showQ();
+        }
+
+        function showQ() {
+            const q = questions[currentIdx];
+            document.getElementById('q-display').innerHTML = `<span style="color: var(--primary); font-weight: 800;">Q.${currentIdx + 1}</span> ${q.displayQ}`;
+            
+            document.querySelectorAll('.q-pill').forEach((p, i) => {
+                p.classList.remove('active', 'done', 'marked');
+                
+                if (markedQuestions[i]) {
+                    p.classList.add('marked');
+                } else if (userChoices[i] !== undefined && userChoices[i] !== null) {
+                    p.classList.add('done');
+                }
+                
+                if (i === currentIdx) {
+                    p.classList.add('active');
                 }
             });
 
-            // 2. REAL-TIME LISTENER: Keep ranks updated automatically in the background
-            db.ref('leaderboard').on('value', () => {
-                fetchAndSyncRanks(user.uid);
-            });
-        });
+            const markBtn = document.getElementById('mark-btn');
+            if (markedQuestions[currentIdx]) {
+                markBtn.style.background = 'var(--warning)';
+                markBtn.style.color = '#fff';
+                markBtn.innerHTML = 'MARKED <i data-lucide="bookmark-check" size="18"></i>';
+            } else {
+                markBtn.style.background = '#fff';
+                markBtn.style.color = 'var(--warning)';
+                markBtn.innerHTML = 'MARK <i data-lucide="bookmark" size="18"></i>';
+            }
 
+            const optBox = document.getElementById('opts-display');
+            optBox.innerHTML = '';
+            q.shuffledOpts.forEach(opt => {
+                const div = document.createElement('div');
+                div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
+                div.innerText = opt;
+                
+                div.onclick = () => { 
+                    if (userChoices[currentIdx] === opt) {
+                        userChoices[currentIdx] = null;
+                    } else {
+                        userChoices[currentIdx] = opt;
+                    }
+                    showQ(); 
+                };
+                optBox.appendChild(div);
+            });
+            
+            document.getElementById(`mark-${currentIdx}`).scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            lucide.createIcons();
+        }
+
+        function startGlobalTimer() {
+            timer = setInterval(() => {
+                if (totalSecondsRemaining <= 0) { clearInterval(timer); processFinalResults(); }
+                else {
+                    totalSecondsRemaining--;
+                    let m = Math.floor(totalSecondsRemaining/60).toString().padStart(2,'0');
+                    let s = (totalSecondsRemaining%60).toString().padStart(2,'0');
+                    document.getElementById('q-timer').innerText = `${m}:${s}`;
+                    
+                    if(totalSecondsRemaining <= 30) {
+                        document.getElementById('q-timer').style.background = totalSecondsRemaining % 2 === 0 ? 'var(--danger)' : '#fff';
+                        document.getElementById('q-timer').style.color = totalSecondsRemaining % 2 === 0 ? '#fff' : 'var(--danger)';
+                    }
+                }
+            }, 1000);
+        }
+
+        function changeQ(dir) {
+            let next = currentIdx + dir;
+            if (next >= 0 && next < questions.length) { 
+                currentIdx = next; 
+                showQ(); 
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function submitTest() { 
+            showModal("SUBMIT DRILL", "Are you sure you want to finalize your daily drill?", "confirm", processFinalResults); 
+        }
+
+        async function processFinalResults() {
+            if(isSubmitting) return;
+            isSubmitting = true;
+            clearInterval(timer);
+
+            let score = 0;
+            const details = questions.map((q, i) => {
+                const userAns = (userChoices[i] === null || userChoices[i] === undefined) ? "SKIPPED" : userChoices[i];
+                const isCorrect = userAns === q.correct;
+                if(isCorrect) score++;
+                
+                // CRITICAL UPDATE: Saving `options` so the Active Sky Test (first HTML) can read it in Review Mode!
+                return { 
+                    question: q.displayQ, 
+                    user: userAns, 
+                    actual: q.correct,
+                    options: q.shuffledOpts 
+                };
+            });
+
+            const resultData = { 
+                uid: auth.currentUser.uid,
+                score: score, 
+                rawScore: score, // Added for consistency with main test
+                total: questions.length, 
+                accuracy: Math.round((score / (questions.length || 1)) * 100),
+                module: moduleKey, 
+                timestamp: Date.now() 
+            };
+
+            try {
+                await db.ref('leaderboard').push(resultData);
+                const userRef = db.ref(`students/${auth.currentUser.uid}`);
+                const snap = await userRef.once('value');
+                const d = snap.val() || {};
+                
+                const newTests = (d.testsTaken || 0) + 1;
+                await userRef.update({
+                    totalScore: (d.totalScore || 0) + score,
+                    testsTaken: newTests,
+                    avgAccuracy: Math.round(((d.avgAccuracy || 0) * (newTests - 1) + resultData.accuracy) / newTests)
+                });
+
+                // Save to local storage for the Review Mode to pick up
+                localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
+                
+                // UPDATED PATH: Now points to the unified analysis page instead of `analysisdaily.html`
+                window.location.replace('analysis.html'); 
+            } catch (e) {
+                // UPDATED PATH: Fallback route
+                window.location.replace('analysis.html');
+            }
+        }
+
+        function showModal(title, text, type, onConfirm) {
+            const m = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
+            m.style.display = 'flex';
+            document.getElementById('modal-confirm-btn').onclick = () => { m.style.display='none'; if(onConfirm) onConfirm(); };
+            document.getElementById('modal-cancel-btn').onclick = () => m.style.display='none';
+            if(type === 'alert') document.getElementById('modal-cancel-btn').classList.add('hidden');
+            else document.getElementById('modal-cancel-btn').classList.remove('hidden');
+        }
+
+        lucide.createIcons();
     </script>
 </body>
 </html>
