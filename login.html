@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Login | AgriQ Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -12,182 +12,156 @@
 
     <style>
         :root {
-            --primary: #0084ff;
-            --daily-color: #10b981;
-            --coak-color: #8b5cf6;
-            --text-main: #002d4d;
+            --primary: #2563eb;
+            --primary-gradient: linear-gradient(135deg, #00c6ff, #0072ff);
+            --primary-glow: rgba(0, 114, 255, 0.25);
+            --bg: #f8fafc;
+            --surface: rgba(255, 255, 255, 0.7);
+            --text-main: #0f172a;
             --text-dim: #475569;
-            
-            /* Liquid Glass Variables */
-            --glass-bg: rgba(255, 255, 255, 0.45);
-            --glass-border: rgba(255, 255, 255, 0.6);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-            --glass-blur: blur(16px);
+            --border: rgba(226, 232, 240, 0.6);
+            --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
-            background: #e8f4fc; 
-            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
-            overflow: hidden; /* Prevent scrolling on login */
-            position: relative;
+            background: var(--bg); margin: 0; min-height: 100vh; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 40px 20px; position: relative; color: var(--text-main);
+            overflow-x: hidden; /* Allows vertical scrolling but prevents horizontal breaking */
         }
 
-        /* --- Liquid Background Animation --- */
-        .liquid-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1;
-            overflow: hidden;
-            background: #f0f9ff;
+        /* Ambient Background Mesh (V7.0) */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(0, 198, 255, 0.1), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.1), transparent 25%);
+            animation: breathe 10s ease-in-out infinite alternate;
         }
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.6;
-            animation: liquid-move 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .blob-1 {
-            background: var(--primary);
-            width: 50vw; height: 50vw;
-            top: -10%; left: -10%;
-            animation-delay: 0s;
-        }
-        .blob-2 {
-            background: var(--coak-color);
-            width: 40vw; height: 40vw;
-            bottom: -10%; right: -5%;
-            animation-delay: -5s;
-        }
-        .blob-3 {
-            background: var(--daily-color);
-            width: 35vw; height: 35vw;
-            top: 40%; left: 20%;
-            animation-delay: -10s;
-        }
+        @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
 
-        @keyframes liquid-move {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            33% { transform: translate(5vw, 10vh) scale(1.1) rotate(45deg); }
-            66% { transform: translate(-10vw, 5vh) scale(0.9) rotate(-45deg); }
-            100% { transform: translate(10vw, -10vh) scale(1.05) rotate(90deg); }
-        }
-
-        /* --- Global Loader Styles --- */
+        /* --- Fast Global Loader --- */
         #global-loader {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(232, 244, 252, 0.8);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            position: fixed; inset: 0; background: #ffffff;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 9999; transition: opacity 0.4s ease;
+            z-index: 9999; transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
         }
         .loader-brand {
             font-weight: 900; font-size: 28px; letter-spacing: -1px; margin-bottom: 20px;
-            color: var(--text-main); animation: pulse 1.5s infinite;
-        }
-        .loader-brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.6);
-            border-top-color: var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        /* --- Smooth Card Fade In --- */
-        .fade-in { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
-        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
-
-        /* Glassmorphism Card */
-        .auth-card { 
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-            width: 100%; max-width: 400px; padding: 40px 30px; 
-            border-radius: 32px; text-align: center;
-            position: relative; z-index: 10;
-        }
-
-        .brand { font-weight: 900; font-size: 24px; letter-spacing: -1px; margin-bottom: 30px; }
-        .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
-
-        /* Glass Countdown Timer */
-        .timer-box { 
-            background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.5); padding: 15px; 
-            border-radius: 20px; margin-bottom: 30px; 
-        }
-        .timer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-        .t-unit { background: rgba(255, 255, 255, 0.7); padding: 8px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .t-num { display: block; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--primary); font-size: 18px; }
-        .t-lbl { font-size: 8px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
-
-        .input-group { position: relative; margin-bottom: 15px; text-align: left; }
-        .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); }
-        
-        /* Glass Inputs */
-        input { 
-            width: 100%; padding: 16px 16px 16px 52px; border-radius: 16px; 
-            border: 1px solid rgba(255, 255, 255, 0.6); 
-            background: rgba(255, 255, 255, 0.5); 
-            backdrop-filter: blur(5px);
-            font-weight: 600; outline: none; transition: 0.3s;
             color: var(--text-main);
         }
-        input::placeholder { color: var(--text-dim); }
-        input:focus { 
-            border-color: var(--primary); 
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 0 4px rgba(0, 132, 255, 0.15); 
+        .loader-brand span { 
+            background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            font-family: 'JetBrains Mono'; 
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid var(--primary-glow);
+            border-top-color: #0072ff; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Snappy Card Fade In --- */
+        .fade-in { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+
+        /* Glassmorphism Card V7.0 */
+        .auth-card { 
+            background: var(--surface); border: 1px solid var(--border);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            width: 100%; max-width: 420px; padding: 40px 35px; 
+            border-radius: 32px; text-align: center; position: relative; z-index: 10;
+        }
+        .auth-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+            z-index: 0; pointer-events: none; border-radius: 32px;
+        }
+        .auth-card > * { position: relative; z-index: 1; }
+
+        .brand { font-weight: 900; font-size: 26px; letter-spacing: -1px; margin-bottom: 8px; }
+        .brand span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'JetBrains Mono'; }
+        
+        /* Quote / Description */
+        .app-desc {
+            font-size: 14px; color: var(--text-dim); font-weight: 500; 
+            line-height: 1.6; margin: 0 auto 30px auto; padding: 0 10px;
+        }
+        .quote {
+            font-style: italic; font-weight: 700; color: #0072ff; margin-bottom: 8px; display: block;
         }
 
-        /* Gradient Glass Buttons */
+        .form-title { margin: 0 0 20px; font-weight: 900; font-size: 22px; letter-spacing: -0.5px; }
+
+        /* Inputs */
+        .input-group { position: relative; margin-bottom: 16px; text-align: left; }
+        .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #0072ff; }
+        input { 
+            width: 100%; padding: 16px 16px 16px 52px; border-radius: 16px; 
+            border: 2px solid var(--border); background: #f8fafc; 
+            font-weight: 600; outline: none; transition: var(--transition);
+            color: var(--text-main); font-size: 15px;
+        }
+        input::placeholder { color: var(--text-dim); font-weight: 500; }
+        input:focus { border-color: #0072ff; background: #fff; box-shadow: 0 5px 15px var(--primary-glow); }
+
+        /* Buttons */
         .btn-primary { 
             width: 100%; padding: 18px; border-radius: 16px; border: none; 
-            background: linear-gradient(135deg, rgba(0, 132, 255, 0.85), rgba(0, 85, 255, 0.85)); 
-            border: 1px solid rgba(255,255,255,0.4);
-            color: #fff; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 10px 20px rgba(0, 132, 255, 0.25); transition: 0.3s; margin-top: 10px;
+            background: var(--primary-gradient); color: #fff; font-weight: 900; font-size: 15px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 10px 25px var(--primary-glow); transition: var(--transition); margin-top: 10px;
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            background: linear-gradient(135deg, rgba(0, 132, 255, 1), rgba(0, 85, 255, 1)); 
-            box-shadow: 0 12px 25px rgba(0, 132, 255, 0.35);
-        }
-        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0, 114, 255, 0.4); }
+        .btn-primary:active { transform: scale(0.97); }
 
         .btn-google {
-            width: 100%; padding: 14px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.8);
+            width: 100%; padding: 15px; border-radius: 16px; border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            font-weight: 700; cursor: pointer; background: rgba(255, 255, 255, 0.6); 
-            backdrop-filter: blur(10px); margin-top: 15px; font-size: 14px; color: var(--text-main);
-            transition: 0.3s;
+            font-weight: 800; cursor: pointer; background: rgba(255, 255, 255, 0.8); 
+            margin-top: 15px; font-size: 14px; color: var(--text-main); transition: var(--transition);
         }
-        .btn-google:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-2px);
+        .btn-google:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.04); border-color: #0072ff;}
+
+        .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+        .divider:not(:empty)::before { margin-right: .5em; }
+        .divider:not(:empty)::after { margin-left: .5em; }
+        .divider span { color: var(--text-dim); font-size: 12px; font-weight: 700; }
+
+        /* Black Toggle Button */
+        .btn-black {
+            width: 100%; padding: 16px; border-radius: 16px; border: none;
+            background: #0f172a; color: #ffffff; font-weight: 800; font-size: 14px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: var(--transition); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
         }
+        .btn-black:hover { background: #1e293b; transform: translateY(-2px); box-shadow: 0 12px 25px rgba(15, 23, 42, 0.25); }
+        .btn-black:active { transform: scale(0.97); }
 
         #toast { 
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: white; 
-            padding: 12px 24px; border-radius: 50px;
-            font-size: 13px; font-weight: 600; display: none; z-index: 10000;
+            background: #0f172a; color: white; padding: 14px 24px; border-radius: 50px;
+            font-size: 13px; font-weight: 700; display: none; z-index: 10000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUpFade 0.3s ease;
+        }
+
+        /* Copyright Footer */
+        .copyright {
+            margin-top: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-align: center;
+            position: relative;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
 
-    <div class="liquid-bg">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-    </div>
+    <div class="ambient-bg"></div>
 
     <div id="global-loader">
         <div class="loader-brand">AGRI<span>Q</span> PRO</div>
@@ -198,33 +172,39 @@
 
     <div class="auth-card fade-in">
         <div class="brand">AGRI<span>Q</span> PRO</div>
-
-        <div class="timer-box">
-            <span style="font-size: 10px; font-weight: 800; color: var(--text-dim);">MCAER PG CET 2026 COUNTDOWN</span>
-            <div class="timer-grid">
-                <div class="t-unit"><span id="d" class="t-num">00</span><span class="t-lbl">Days</span></div>
-                <div class="t-unit"><span id="h" class="t-num">00</span><span class="t-lbl">Hrs</span></div>
-                <div class="t-unit"><span id="m" class="t-num">00</span><span class="t-lbl">Min</span></div>
-                <div class="t-unit" style="background:var(--primary)"><span id="s" class="t-num" style="color:white">00</span><span class="t-lbl" style="color:rgba(255,255,255,0.7)">Sec</span></div>
-            </div>
+        
+        <div class="app-desc">
+            <span class="quote">"Discipline is the seed. Success is the crop."</span>
+            Sign in to access your daily drills, encrypted exam arrays, and live leaderboards.
         </div>
 
-        <h2 id="auth-title" style="margin: 0 0 20px; font-weight: 800;">Welcome Back</h2>
+        <h2 id="auth-title" class="form-title">Welcome Back</h2>
         
         <form onsubmit="handleAuth(event)">
-            <div class="input-group"><i data-lucide="mail"></i><input type="email" id="email" placeholder="Email Address" required></div>
-            <div class="input-group"><i data-lucide="lock"></i><input type="password" id="password" placeholder="Password" required></div>
-            <button type="submit" class="btn-primary" id="submit-btn">SIGN IN <i data-lucide="arrow-right"></i></button>
+            <div class="input-group">
+                <i data-lucide="mail" size="18"></i>
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <i data-lucide="lock" size="18"></i>
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn-primary" id="submit-btn">SIGN IN <i data-lucide="arrow-right" size="18"></i></button>
         </form>
 
         <button class="btn-google" onclick="googleLogin()">
             <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Continue with Google
         </button>
 
-        <p style="margin-top: 25px; font-size: 13px; color: var(--text-dim);">
-            <span id="toggle-text">Don't have an account?</span> 
-            <a href="#" onclick="toggleMode()" id="toggle-link" style="color: var(--primary); font-weight: 800; text-decoration: none;">Register</a>
-        </p>
+        <div class="divider"><span>OR</span></div>
+
+        <button type="button" class="btn-black" onclick="toggleMode()" id="toggle-btn">
+            CREATE AN ACCOUNT <i data-lucide="user-plus" size="16"></i>
+        </button>
+    </div>
+
+    <div class="copyright fade-in" style="animation-delay: 0.1s;">
+        © 2026 AgriQ VNC Corporation. All rights reserved.
     </div>
 
     <script>
@@ -233,12 +213,9 @@
             apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
             authDomain: "agri-mcar.firebaseapp.com",
             databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-            projectId: "agri-mcar",
-            storageBucket: "agri-mcar.firebasestorage.app",
-            messagingSenderId: "823436752104",
-            appId: "1:823436752104:web:ea093e4cb836b52d36c55d"
+            projectId: "agri-mcar"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         let isLogin = true;
 
@@ -251,20 +228,26 @@
             const pass = document.getElementById('password').value;
             
             try {
-                // Show loader during auth attempt
-                document.getElementById('global-loader').style.display = 'flex';
-                document.getElementById('global-loader').style.opacity = '1';
+                const loader = document.getElementById('global-loader');
+                loader.style.display = 'flex';
+                // Force reflow
+                loader.offsetHeight; 
+                loader.style.opacity = '1';
+                loader.style.visibility = 'visible';
 
                 if(isLogin) {
                     await auth.signInWithEmailAndPassword(email, pass);
                 } else {
                     await auth.createUserWithEmailAndPassword(email, pass);
                 }
-                window.location.href = 'index.html'; // Redirect to dashboard
+                window.location.href = 'dashboard.html'; 
             } catch (err) {
-                // Hide loader if error occurs
-                document.getElementById('global-loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('global-loader').style.display = 'none', 300);
+                const loader = document.getElementById('global-loader');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.visibility = 'hidden';
+                    loader.style.display = 'none';
+                }, 300);
                 showToast(err.message);
             }
         }
@@ -272,23 +255,35 @@
         async function googleLogin() {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
-                document.getElementById('global-loader').style.display = 'flex';
-                document.getElementById('global-loader').style.opacity = '1';
+                const loader = document.getElementById('global-loader');
+                loader.style.display = 'flex';
+                loader.offsetHeight; 
+                loader.style.opacity = '1';
+                loader.style.visibility = 'visible';
+
                 await auth.signInWithPopup(provider);
-                window.location.href = 'index.html';
+                window.location.href = 'dashboard.html';
             } catch (err) {
-                document.getElementById('global-loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('global-loader').style.display = 'none', 300);
+                const loader = document.getElementById('global-loader');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.visibility = 'hidden';
+                    loader.style.display = 'none';
+                }, 300);
                 showToast(err.message);
             }
         }
 
         function toggleMode() {
             isLogin = !isLogin;
+            
+            // Update Form Elements
             document.getElementById('auth-title').innerText = isLogin ? "Welcome Back" : "Create Account";
-            document.getElementById('submit-btn').innerHTML = isLogin ? 'SIGN IN <i data-lucide="arrow-right"></i>' : 'REGISTER <i data-lucide="user-plus"></i>';
-            document.getElementById('toggle-text').innerText = isLogin ? "Don't have an account?" : "Already have an account?";
-            document.getElementById('toggle-link').innerText = isLogin ? "Register" : "Login";
+            document.getElementById('submit-btn').innerHTML = isLogin ? 'SIGN IN <i data-lucide="arrow-right" size="18"></i>' : 'REGISTER <i data-lucide="arrow-right" size="18"></i>';
+            
+            // Update Toggle Button
+            document.getElementById('toggle-btn').innerHTML = isLogin ? 'CREATE AN ACCOUNT <i data-lucide="user-plus" size="16"></i>' : 'BACK TO LOGIN <i data-lucide="log-in" size="16"></i>';
+            
             lucide.createIcons();
         }
 
@@ -299,32 +294,17 @@
             setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        // --- Countdown Timer ---
-        function startTimer() {
-            const target = new Date("June 20, 2026 00:00:00").getTime();
-            setInterval(() => {
-                const now = new Date().getTime();
-                const diff = target - now;
-                document.getElementById('d').innerText = Math.floor(diff / (86400000)).toString().padStart(2, '0');
-                document.getElementById('h').innerText = Math.floor((diff % 86400000) / 3600000).toString().padStart(2, '0');
-                document.getElementById('m').innerText = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-                document.getElementById('s').innerText = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-            }, 1000);
-        }
-        startTimer();
-
-        // --- Improved Auth State Observer handling the loading screen ---
+        // --- Snappy Preloader Reveal ---
         auth.onAuthStateChanged(user => { 
             if(user) {
-                // If logged in, keep loader visible and redirect
-                window.location.href = 'index.html'; 
+                window.location.href = 'dashboard.html'; 
             } else {
-                // If not logged in, gracefully fade out the loader to reveal the login card
                 const loader = document.getElementById('global-loader');
                 loader.style.opacity = '0';
                 setTimeout(() => {
+                    loader.style.visibility = 'hidden';
                     loader.style.display = 'none';
-                }, 400); // Wait for transition to finish
+                }, 300); 
             }
         });
     </script>
