@@ -47,7 +47,7 @@
         main { padding: 24px 20px; max-width: 800px; margin: 0 auto; }
 
         /* TABS */
-        .tabs { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 5px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
         .tab {
             padding: 12px 20px; background: white; border: 1px solid var(--border);
             border-radius: 14px; font-weight: 800; font-size: 13px; color: var(--text-dim);
@@ -56,6 +56,17 @@
         .tab.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25); }
         .tab.bot-tab { border-color: var(--bot-color); color: var(--bot-color); }
         .tab.bot-tab.active { background: var(--bot-color); color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); }
+
+        /* ACTION BAR */
+        .action-bar { display: none; justify-content: flex-end; margin-bottom: 15px; }
+        .btn-clear-all {
+            background: var(--danger-light); color: var(--danger);
+            border: 1px solid var(--danger); border-radius: 10px;
+            padding: 10px 16px; font-weight: 800; font-size: 12px;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: var(--transition);
+        }
+        .btn-clear-all:hover { background: var(--danger); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
 
         /* DATA TABLE */
         .table-container { background: white; border-radius: 20px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(139, 92, 246, 0.05); }
@@ -147,6 +158,13 @@
             <div class="tab" id="tab-global" onclick="switchTab('global')"><i data-lucide="globe" size="14"></i> Global Logs</div>
             <div class="tab" id="tab-daily" onclick="switchTab('daily')"><i data-lucide="zap" size="14"></i> Daily Logs</div>
             <div class="tab bot-tab" id="tab-bots" onclick="switchTab('bots')"><i data-lucide="bot" size="14"></i> Deploy Bots</div>
+        </div>
+
+        <!-- Action bar for Clear All button -->
+        <div class="action-bar" id="action-bar">
+            <button class="btn-clear-all" onclick="openClearAllModal()">
+                <i data-lucide="trash-2" size="14"></i> Clear All Leaderboard Data
+            </button>
         </div>
 
         <div class="table-container" id="table-view">
@@ -242,6 +260,13 @@
             // UI Updates
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Show/Hide Clear All button
+            if (tabId === 'global' || tabId === 'daily') {
+                document.getElementById('action-bar').style.display = 'flex';
+            } else {
+                document.getElementById('action-bar').style.display = 'none';
+            }
 
             if (tabId === 'bots') {
                 document.getElementById('table-view').style.display = 'none';
@@ -342,7 +367,7 @@
             db.ref('leaderboard').push({
                 uid: botUid,
                 score: score,
-                accuracy: Math.floor(Math.random() * (100 - 85 + 1) + 85), // Random acc between 85-100%
+                accuracy: Math.floor(Math.random() * (100 - 85 + 1) + 85), 
                 module: "GLOBAL_RANKING",
                 timestamp: Date.now(),
                 isBot: true,
@@ -351,7 +376,7 @@
                 showToast(`Bot '${name}' deployed with ${score} XP!`);
                 document.getElementById('bot-name').value = '';
                 document.getElementById('bot-score').value = '';
-                switchTab('global'); // Auto-switch to see the bot
+                switchTab('global'); 
             }).catch(err => {
                 showToast("Error deploying bot: " + err.message);
             });
@@ -399,6 +424,22 @@
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
+        function openClearAllModal() {
+            actionType = 'clear_all';
+            
+            document.getElementById('m-title').innerText = "Clear All Leaderboard Data";
+            document.getElementById('m-desc').innerHTML = `Are you absolutely sure you want to delete <b>ALL</b> leaderboard records? This action cannot be undone and will affect all users and bots.`;
+            
+            document.getElementById('m-input').style.display = 'none';
+            
+            const btn = document.getElementById('m-confirm');
+            btn.innerText = "Yes, Clear All";
+            btn.className = "btn-modal btn-confirm danger";
+            btn.onclick = executeClearAll;
+            
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
         function executeEdit() {
             const newVal = parseInt(document.getElementById('m-input').value) || 0;
             
@@ -420,6 +461,13 @@
                 db.ref(`leaderboard/${targetId}`).remove()
                   .then(() => showToast("Record Deleted"));
             }
+            closeModal();
+        }
+
+        function executeClearAll() {
+            db.ref('leaderboard').remove()
+              .then(() => showToast("All Leaderboard Data Cleared successfully!"))
+              .catch((err) => showToast("Error: " + err.message));
             closeModal();
         }
 
