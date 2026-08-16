@@ -47,6 +47,12 @@
         .brand { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
         .brand span { color: var(--primary); font-family: 'JetBrains Mono'; }
 
+        /* Clean Mode Filter Toggle */
+        .filter-toggle-container {
+            display: flex; align-items: center; gap: 8px; background: rgba(0, 132, 255, 0.05);
+            padding: 6px 12px; border-radius: 20px; border: 1px solid var(--primary-glow);
+        }
+
         main { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
 
         .card { 
@@ -134,6 +140,10 @@
         .lb-item:last-child { border-bottom: none; }
 
         @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        
+        /* Spinner Animation for buttons */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
     </style>
 </head>
 <body>
@@ -143,7 +153,7 @@
     <div id="modal-overlay">
         <div class="modal">
             <h3 id="m-title" style="margin-top:0; font-weight:900;">Title</h3>
-            <div id="m-body"><p id="m-text" style="color:var(--text-dim); font-size:14px; line-height:1.5; font-weight:600;">Message</p></div>
+            <div id="m-body"><p id="m-text" style="color:var(--text-dim); font-size:14px; line-height:1.5; font-weight:600; text-align: left; white-space: pre-wrap;">Message</p></div>
             <div style="display:flex; gap:12px; margin-top:25px;">
                 <button class="modal-btn" id="m-cancel" style="background:#f1f5f9; color:var(--text-dim);" onclick="closeModal()">CANCEL</button>
                 <button class="modal-btn" style="background:var(--primary); color:white" id="m-confirm">CONFIRM</button>
@@ -159,29 +169,21 @@
     <header>
         <div class="brand"><i data-lucide="terminal" size="20"></i> AgriQ <span>Admin</span></div>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <button class="btn-outline" style="color: var(--purple); border-color: rgba(139, 92, 246, 0.3);" onclick="window.location.href='gen.html'">
-                <i data-lucide="swords" size="14"></i> COAK
-            </button>
-            <button class="btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" onclick="auth.signOut()">EXIT</button>
+            <div class="filter-toggle-container">
+                <span style="font-size: 9px; font-weight:800; color: var(--primary);">CLEAN MODE</span>
+                <label class="switch" style="transform: scale(0.7); transform-origin: right;">
+                    <input type="checkbox" id="today-filter" onchange="toggleFilter()" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button class="btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2); padding: 8px 12px;" onclick="auth.signOut()">EXIT</button>
         </div>
     </header>
 
     <main>
-        <div class="card" style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
-            <div class="card-header">
-                <div class="title-wrap"><i data-lucide="radio" size="18" style="color: var(--purple);"></i> Communication Hub</div>
-            </div>
-            <p style="font-size: 12px; color: var(--text-dim); margin-top: 0; margin-bottom: 20px; font-weight: 600;">
-                Broadcast global updates, exam tips, and announcements to all student dashboards.
-            </p>
-            <button onclick="window.location.href='post.html'" class="btn-primary" style="background: var(--purple); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);">
-                <i data-lucide="megaphone" size="18"></i> OPEN POST MANAGER
-            </button>
-        </div>
-
         <div class="card" id="updates-creator-card" style="border-color: var(--purple);">
             <div class="card-header">
-                <div class="title-wrap" style="color: var(--purple);"><i data-lucide="bell-ring" size="18" style="color: var(--purple);"></i> Publish Update (update.html)</div>
+                <div class="title-wrap" style="color: var(--purple);"><i data-lucide="bell-ring" size="18" style="color: var(--purple);"></i> Publish Update</div>
             </div>
             
             <div class="input-group">
@@ -195,13 +197,8 @@
             </div>
 
             <div class="input-group">
-                <span class="input-label">Image URL (Optional)</span>
-                <input type="text" id="up-image" placeholder="https://link-to-your-image.jpg">
-            </div>
-
-            <div class="input-group">
                 <span class="input-label">Message Content</span>
-                <textarea id="up-content" placeholder="Type the detailed update message here..." style="min-height: 100px;"></textarea>
+                <textarea id="up-content" placeholder="Type the detailed update message here..." style="min-height: 80px;"></textarea>
             </div>
 
             <button class="btn-primary" style="background: var(--purple); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);" onclick="publishUpdate()">
@@ -216,50 +213,6 @@
             <div id="updates-list" style="max-height: 250px; overflow-y: auto;">
                 <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading Updates...</div>
             </div>
-        </div>
-
-        <div class="card" id="editor-card">
-            <div class="card-header">
-                <div class="title-wrap"><i data-lucide="file-code-2" size="18"></i> Module Studio</div>
-            </div>
-            
-            <div class="input-group">
-                <span class="input-label">Module Database Key (No Spaces)</span>
-                <input type="text" id="sub-key" placeholder="e.g. agronomy_01">
-            </div>
-
-            <div class="input-group">
-                <span class="input-label">Display Name</span>
-                <input type="text" id="sub-name" placeholder="Name students see">
-            </div>
-            
-            <div class="input-group">
-                <span class="input-label"><i data-lucide="timer" size="12" style="margin-right: 4px;"></i> Time Limit (Seconds)</span>
-                <input type="number" id="time-limit" placeholder="e.g. 600 for 10 mins" value="600">
-            </div>
-
-            <div class="input-group">
-                <span class="input-label">Questions JSON Array</span>
-                <textarea id="json-input" placeholder='[{"q": "...", "options": [...], "ans": "..."}]'></textarea>
-            </div>
-            <button class="btn-primary" onclick="deployModule()">DEPLOY TO REGISTRY</button>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="title-wrap"><i data-lucide="database" size="18"></i> Active Registry</div>
-            </div>
-            <div id="module-list">
-                <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading...</div>
-            </div>
-        </div>
-
-        <div class="card" style="border-color: rgba(239, 68, 68, 0.2);">
-            <div class="card-header" style="margin-bottom: 10px;">
-                <div class="title-wrap" style="color: var(--danger);"><i data-lucide="trophy" size="18" style="color: var(--danger);"></i> Leaderboard</div>
-                <button class="btn-outline" style="color:var(--danger); border-color:var(--danger);" onclick="wipeLeaderboard()">WIPE ALL</button>
-            </div>
-            <div id="lb-admin-list" style="max-height: 200px; overflow-y: auto;"></div>
         </div>
 
         <div class="card" id="vishal-card" style="border-color: var(--success); border-width: 2px;">
@@ -304,29 +257,60 @@
                 <textarea id="v-json" placeholder='[{"q": "...", "options": [...], "ans": "..."}]' style="min-height: 120px;"></textarea>
             </div>
             
-            <button class="btn-primary" onclick="pushVishalData()" style="background: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);">
+            <button id="btn-push-nested" class="btn-primary" onclick="pushVishalData()" style="background: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);">
                 <i data-lucide="upload-cloud" size="18"></i> PUSH TO FOLDER
             </button>
         </div>
 
         <div class="card" style="border-color: rgba(16, 185, 129, 0.2);">
             <div class="card-header">
-                <div class="title-wrap" style="color: var(--success);"><i data-lucide="database" size="18"></i> Vishal's Active Folders</div>
+                <div class="title-wrap" style="color: var(--success);"><i data-lucide="database" size="18"></i> Active Folders Registry</div>
             </div>
             <div id="vishal-module-list">
                 <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading Nested Modules...</div>
             </div>
         </div>
 
+        <div class="card" id="editor-card">
+            <div class="card-header">
+                <div class="title-wrap"><i data-lucide="file-code-2" size="18"></i> Standard Module Studio</div>
+            </div>
+            <div class="input-group">
+                <span class="input-label">Module Database Key (No Spaces)</span>
+                <input type="text" id="sub-key" placeholder="e.g. agronomy_01">
+            </div>
+            <div class="input-group">
+                <span class="input-label">Display Name</span>
+                <input type="text" id="sub-name" placeholder="Name students see">
+            </div>
+            <div class="input-group">
+                <span class="input-label"><i data-lucide="timer" size="12" style="margin-right: 4px;"></i> Time Limit (Seconds)</span>
+                <input type="number" id="time-limit" placeholder="e.g. 600 for 10 mins" value="600">
+            </div>
+            <div class="input-group">
+                <span class="input-label">Questions JSON Array</span>
+                <textarea id="json-input" placeholder='[{"q": "...", "options": [...], "ans": "..."}]'></textarea>
+            </div>
+            <button id="btn-push-standard" class="btn-primary" onclick="deployModule()">
+                <i data-lucide="upload-cloud" size="18"></i> DEPLOY TO REGISTRY
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="title-wrap"><i data-lucide="database" size="18"></i> Standard Active Registry</div>
+            </div>
+            <div id="module-list">
+                <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Loading...</div>
+            </div>
+        </div>
     </main>
 
     <nav class="nav-bar">
         <button class="nav-item active" onclick="window.scrollTo(0,0)"><i data-lucide="file-code-2" size="22"></i>STUDIO</button>
-        <button class="nav-item" onclick="document.getElementById('module-list').scrollIntoView()"><i data-lucide="database" size="22"></i>REGISTRY</button>
+        <button class="nav-item" onclick="document.getElementById('vishal-module-list').scrollIntoView()"><i data-lucide="database" size="22"></i>REGISTRY</button>
         <button class="nav-item" onclick="window.location.href='profile.html'"><i data-lucide="user" size="22"></i>PROFILE</button>
-        <button class="nav-item" onclick="window.location.href='adminlead.html'"><i data-lucide="user" size="22"></i>Leader</button>
     </nav>
-    <button class="nav-item" onclick="window.location.href='admintest.html'"><i data-lucide="user" size="22"></i>Test</button>
     
     <script>
         const firebaseConfig = {
@@ -338,6 +322,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
+
+        let cleanModeActive = true;
 
         function getTodayStr() {
             const d = new Date();
@@ -359,14 +345,19 @@
             lucide.createIcons();
             loadRegistry();
             loadVishalRegistry();
-            loadLB();
             loadUpdates(); 
+        }
+
+        function toggleFilter() {
+            cleanModeActive = document.getElementById('today-filter').checked;
+            loadRegistry();
+            loadVishalRegistry();
+            loadUpdates();
         }
 
         function publishUpdate() {
             const title = document.getElementById('up-title').value.trim();
             const tag = document.getElementById('up-tag').value.trim();
-            const image = document.getElementById('up-image').value.trim();
             const content = document.getElementById('up-content').value.trim();
 
             if (!title || !content) return showToast("Title and Content are required!");
@@ -374,17 +365,16 @@
             const updateData = {
                 title: title,
                 tag: tag || "Announcement",
-                image: image,
                 content: content,
+                date: getTodayStr(),
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 author: "AgriQ Admin"
             };
 
             db.ref('updates').push(updateData).then(() => {
-                showToast("Update Published Successfully!");
+                showToast("Update Published!");
                 document.getElementById('up-title').value = "";
                 document.getElementById('up-tag').value = "";
-                document.getElementById('up-image').value = "";
                 document.getElementById('up-content').value = "";
             }).catch(err => showToast("Error: " + err.message));
         }
@@ -400,10 +390,17 @@
                 }
 
                 const updatesArray = [];
+                const today = getTodayStr();
+
                 snap.forEach(child => updatesArray.push({ key: child.key, ...child.val() }));
                 updatesArray.sort((a, b) => b.timestamp - a.timestamp); 
 
+                let itemsRendered = 0;
+
                 updatesArray.forEach(data => {
+                    if (cleanModeActive && data.date !== today) return;
+
+                    itemsRendered++;
                     const div = document.createElement('div');
                     div.className = "lb-item";
                     div.style.alignItems = "flex-start";
@@ -422,6 +419,10 @@
                     `;
                     container.appendChild(div);
                 });
+
+                if (itemsRendered === 0 && cleanModeActive) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Clean Mode: No updates posted today. Turn off switch above to see history.</div>';
+                }
                 lucide.createIcons();
             });
         }
@@ -440,24 +441,29 @@
                 const container = document.getElementById('module-list');
                 container.innerHTML = "";
                 const today = getTodayStr();
+                let itemsRendered = 0;
 
                 snap.forEach(module => {
                     const key = module.key;
                     const data = module.val();
                     const config = data.config || {};
                     const activeDate = config.activeDate || "";
+                    
+                    if (cleanModeActive && activeDate !== today) return;
+
+                    itemsRendered++;
                     const qCount = (data.questions?.data || data.questions || []).length;
                     const timeLimit = config.timeLimit || 600; 
                     
                     let statusBadge = '';
                     if (!activeDate) {
-                        statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual Toggle Only</span>';
+                        statusBadge = '<span class="badge manual"><i data-lucide="settings"></i> Manual</span>';
                     } else if (activeDate < today) {
-                        statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED: Update Date</span>';
+                        statusBadge = '<span class="badge expired"><i data-lucide="alert-triangle"></i> EXPIRED</span>';
                     } else if (activeDate === today) {
                         statusBadge = '<span class="badge live"><i data-lucide="check-circle"></i> LIVE TODAY</span>';
                     } else {
-                        statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> Scheduled: ${activeDate}</span>`;
+                        statusBadge = `<span class="badge scheduled"><i data-lucide="calendar"></i> ${activeDate}</span>`;
                     }
 
                     const pill = document.createElement('div');
@@ -472,7 +478,6 @@
                                     <span style="background: var(--primary-glow); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
                                     <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
                                 </div>
-                                
                                 ${statusBadge}
                             </div>
                             <label class="switch">
@@ -494,11 +499,16 @@
                     `;
                     container.appendChild(pill);
                 });
+
+                if (itemsRendered === 0) {
+                    container.innerHTML = cleanModeActive 
+                        ? '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Clean Mode: No active standard modules for today. Turn off switch to view history.</div>' 
+                        : '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">No modules found.</div>';
+                }
                 lucide.createIcons();
             });
         }
 
-        // --- UPDATED: VISHAL'S REGISTRY LOADER ---
         function loadVishalRegistry() {
             db.ref('nested_subjects').on('value', snap => {
                 const container = document.getElementById('vishal-module-list');
@@ -510,14 +520,20 @@
                     return;
                 }
 
+                let itemsRendered = 0;
+
                 snap.forEach(folderSnap => {
                     const folderKey = folderSnap.key;
-                    
                     folderSnap.forEach(subSnap => {
                         const subKey = subSnap.key;
                         const data = subSnap.val();
                         const config = data.config || {};
                         const activeDate = config.activeDate || "";
+                        
+                        if (cleanModeActive && activeDate !== today) return;
+
+                        itemsRendered++;
+
                         const folderIcon = config.icon || "folder-tree";
                         const qCount = (data.questions?.data || data.questions || []).length;
                         const timeLimit = config.timeLimit || 600; 
@@ -549,7 +565,6 @@
                                         <span style="background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="timer" size="10"></i> ${Math.floor(timeLimit / 60)} Mins</span>
                                         <span style="background: rgba(100, 116, 139, 0.1); color: var(--text-dim); padding: 2px 6px; border-radius: 4px; display:flex; align-items:center; gap: 4px;"><i data-lucide="help-circle" size="10"></i> ${qCount} Qs</span>
                                     </div>
-                                    
                                     ${statusBadge}
                                 </div>
                                 <label class="switch">
@@ -572,6 +587,12 @@
                         container.appendChild(pill);
                     });
                 });
+
+                if (itemsRendered === 0) {
+                    container.innerHTML = cleanModeActive 
+                        ? '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">Clean Mode: No active nested modules for today. Turn off switch to view history.</div>' 
+                        : '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">No modules found.</div>';
+                }
                 lucide.createIcons();
             });
         }
@@ -579,31 +600,20 @@
         function updateVishalModuleDate(folder, subtopic, newDate) {
             const formattedDate = newDate.replace(/-/g, '');
             const sessionID = `${folder}_${subtopic}_${formattedDate}`;
-
-            db.ref(`nested_subjects/${folder}/${subtopic}`).update({ 
-                current_session_id: sessionID,
-                enabled: true
-            });
-            
-            db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ 
-                activeDate: newDate
-            }).then(() => showToast("Nested Schedule updated!"));
+            db.ref(`nested_subjects/${folder}/${subtopic}`).update({ current_session_id: sessionID, enabled: true });
+            db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ activeDate: newDate }).then(() => showToast("Nested Schedule updated!"));
         }
 
         function toggleVishalModule(folder, subtopic, state) {
             if (state === true) {
                 const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
-                db.ref(`nested_subjects/${folder}/${subtopic}`).update({ 
-                    enabled: state,
-                    current_session_id: sessionID
-                });
+                db.ref(`nested_subjects/${folder}/${subtopic}`).update({ enabled: state, current_session_id: sessionID });
                 db.ref(`nested_subjects/${folder}/${subtopic}/config`).update({ activeDate: getTodayStr() });
             } else {
                 db.ref(`nested_subjects/${folder}/${subtopic}`).update({ enabled: state });
             }
         }
 
-        // --- UPDATED: EDIT VISHAL DATA ---
         function editVishalModuleData(folder, subtopic) {
             db.ref(`nested_subjects/${folder}/${subtopic}`).once('value', snap => {
                 const d = snap.val();
@@ -626,164 +636,62 @@
         function updateModuleDate(key, newDate) {
             const formattedDate = newDate.replace(/-/g, '');
             const sessionID = `${key}_${formattedDate}`;
-
-            db.ref(`subjects/${key}`).update({ 
-                current_session_id: sessionID,
-                enabled: true
-            });
-            
-            db.ref(`subjects/${key}/config`).update({ 
-                activeDate: newDate
-            }).then(() => {
-                showToast("Schedule & Session ID updated!");
-            });
+            db.ref(`subjects/${key}`).update({ current_session_id: sessionID, enabled: true });
+            db.ref(`subjects/${key}/config`).update({ activeDate: newDate }).then(() => showToast("Schedule & Session ID updated!"));
         }
 
         function toggleModule(key, state) {
             if (state === true) {
-                const d = new Date();
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                const sessionID = `${key}_${year}${month}${day}`;
-
-                db.ref(`subjects/${key}`).update({ 
-                    enabled: state,
-                    current_session_id: sessionID
-                });
-                
-                db.ref(`subjects/${key}/config`).update({ 
-                    activeDate: getTodayStr() 
-                });
+                const sessionID = `${key}_${getTodayStr().replace(/-/g, '')}`;
+                db.ref(`subjects/${key}`).update({ enabled: state, current_session_id: sessionID });
+                db.ref(`subjects/${key}/config`).update({ activeDate: getTodayStr() });
             } else {
                 db.ref(`subjects/${key}`).update({ enabled: state });
             }
         }
 
-        function deployModule() {
-            const key = document.getElementById('sub-key').value.trim().toLowerCase().replace(/\s+/g, '_');
-            const name = document.getElementById('sub-name').value.trim();
-            const json = document.getElementById('json-input').value;
-            const timeLimit = parseInt(document.getElementById('time-limit').value) || 600;
-
-            if(!key || !json) return showToast("Enter ID and JSON", "error");
-
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const sessionID = `${key}_${year}${month}${day}`;
-
-            try {
-                const qs = JSON.parse(json);
-                db.ref(`subjects/${key}`).set({
-                    questions: qs,
-                    enabled: true,
-                    current_session_id: sessionID, 
-                    config: { 
-                        displayName: name || key, 
-                        timeLimit: timeLimit, 
-                        activeDate: getTodayStr()
-                    } 
-                }).then(() => {
-                    showToast("Module Deployed!");
-                    document.getElementById('sub-key').value = "";
-                    document.getElementById('json-input').value = "";
-                });
-            } catch(e) { showToast("JSON Syntax Error", "error"); }
-        }
-
-        function editModuleData(key) {
-            db.ref(`subjects/${key}`).once('value', snap => {
-                const d = snap.val();
-                document.getElementById('sub-key').value = key;
-                document.getElementById('sub-name').value = d.config?.displayName || key;
-                document.getElementById('time-limit').value = d.config?.timeLimit || 600; 
-                document.getElementById('json-input').value = JSON.stringify(d.questions, null, 2);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-
-        function deleteModule(key) {
-            showAppModal("DELETE", `Remove ${key} forever?`, () => {
-                db.ref(`subjects/${key}`).remove();
-                closeModal();
-            });
-        }
-
-        function loadLB() {
-            db.ref('leaderboard').on('value', snap => {
-                const list = document.getElementById('lb-admin-list');
-                list.innerHTML = "";
-                snap.forEach(c => {
-                    const d = c.val();
-                    const div = document.createElement('div');
-                    div.className = "lb-item";
-                    div.innerHTML = `
-                        <div style="font-size:12px;"><b>${d.module}</b> <br> <small>${d.uid.slice(0,8)}...</small></div>
-                        <button class="btn-outline" onclick="db.ref('leaderboard/${c.key}').remove()"><i data-lucide="x" size="12"></i></button>
-                    `;
-                    list.appendChild(div);
-                });
-                lucide.createIcons();
-            });
-        }
-
-        function wipeLeaderboard() {
-            showAppModal("WIPE", "Clear ALL rankings?", () => {
-                db.ref('leaderboard').remove();
-                closeModal();
-            });
-        }
-
-        function showAppModal(title, text, onConfirm) {
-            document.getElementById('m-title').innerText = title;
-            document.getElementById('m-text').innerText = text;
-            
-            document.getElementById('m-cancel').style.display = 'block';
-            document.getElementById('m-confirm').innerText = "CONFIRM";
-            
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('m-confirm').onclick = onConfirm;
-        }
-        
-        function customAlert(title, text) {
-            document.getElementById('m-title').innerText = title;
-            document.getElementById('m-text').innerText = text;
-            
-            document.getElementById('m-cancel').style.display = 'none';
-            document.getElementById('m-confirm').innerText = "OKAY";
-            
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('m-confirm').onclick = () => {
-                closeModal();
-            };
-        }
-
-        // --- UPDATED: PUSH VISHAL DATA ---
+        /* --- BULLETPROOF PUSH LOGIC FOR VISHAL'S STUDIO --- */
         function pushVishalData() {
+            const btn = document.getElementById('btn-push-nested');
             const folderInput = document.getElementById('v-folder').value.trim();
-            const iconInput = document.getElementById('v-icon').value;
             const subtopicInput = document.getElementById('v-subtopic').value.trim();
-            const jsonStr = document.getElementById('v-json').value;
-            const timeLimit = parseInt(document.getElementById('v-time').value) || 600;
+            const jsonStr = document.getElementById('v-json').value.trim();
 
-            const folder = folderInput.toLowerCase().replace(/\s+/g, '_');
-            const subtopic = subtopicInput.toLowerCase().replace(/\s+/g, '_');
-
-            if(!folder || !subtopic || !jsonStr) {
-                return customAlert("Validation Error", "Please provide a Folder Name, Subtopic, and JSON array!");
+            if(!folderInput || !subtopicInput || !jsonStr) {
+                alert("⚠️ Please provide a Folder Name, Subtopic, and paste your JSON array!");
+                return;
             }
 
-            try {
-                const qs = JSON.parse(jsonStr);
-                
-                customAlert("Creating Folders...", `Initializing Database Path:\n\n📁 ${folderInput}\n ↳ 📄 ${subtopicInput}`);
-                
-                const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
-                const dbPath = `nested_subjects/${folder}/${subtopic}`; 
-                
-                setTimeout(() => {
+            // Update UI Instantly
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader" class="spin" size="18"></i> PUSHING...`;
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            setTimeout(() => { // Small timeout allows UI to render the loading state
+                try {
+                    let qs = JSON.parse(jsonStr);
+                    
+                    // Auto-fix if user pasted an Object instead of an Array
+                    if (!Array.isArray(qs)) {
+                        if (qs.data && Array.isArray(qs.data)) qs = qs.data;
+                        else if (qs.questions && Array.isArray(qs.questions)) qs = qs.questions;
+                        else {
+                            btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                            alert("❌ FORMAT ERROR:\nThe system expected a JSON Array [...] but got a JSON Object {...}.\n\nPlease wrap your entire block of questions inside square brackets [ ].");
+                            return;
+                        }
+                    }
+
+                    const folder = folderInput.toLowerCase().replace(/\s+/g, '_');
+                    const subtopic = subtopicInput.toLowerCase().replace(/\s+/g, '_');
+                    const iconInput = document.getElementById('v-icon').value;
+                    const timeLimit = parseInt(document.getElementById('v-time').value) || 600;
+                    
+                    const sessionID = `${folder}_${subtopic}_${getTodayStr().replace(/-/g, '')}`;
+                    const dbPath = `nested_subjects/${folder}/${subtopic}`; 
+                    
                     db.ref(dbPath).set({
                         questions: qs,
                         enabled: true,
@@ -796,17 +704,113 @@
                             activeDate: getTodayStr()
                         } 
                     }).then(() => {
-                        customAlert("Success!", `Array successfully deployed into:\n${folderInput} -> ${subtopicInput}`);
+                        btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                        alert(`✅ SUCCESS! ${qs.length} questions successfully deployed into:\n\n📁 ${folderInput}\n↳ 📄 ${subtopicInput}`);
                         document.getElementById('v-subtopic').value = "";
                         document.getElementById('v-json').value = "";
+                        lucide.createIcons();
                     }).catch(err => {
-                        customAlert("Database Error", err.message);
+                        btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                        alert("🔥 DATABASE ERROR: " + err.message);
+                        lucide.createIcons();
                     });
-                }, 1500);
 
-            } catch(e) { 
-                customAlert("JSON Error", "Syntax error found in your JSON Array. Please check formatting.");
+                } catch(e) { 
+                    btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                    alert(`❌ JSON SYNTAX ERROR!\n\nProblem:\n${e.message}\n\nCommon Fixes:\n1. Missing double quotes around keys?\n2. Trailing comma at the end of the array?\n3. Missing brackets [ ]?`);
+                    lucide.createIcons();
+                }
+            }, 100);
+        }
+
+        /* --- BULLETPROOF PUSH LOGIC FOR STANDARD STUDIO --- */
+        function deployModule() {
+            const btn = document.getElementById('btn-push-standard');
+            const keyInput = document.getElementById('sub-key').value.trim();
+            const nameInput = document.getElementById('sub-name').value.trim();
+            const jsonStr = document.getElementById('json-input').value.trim();
+
+            if(!keyInput || !jsonStr) {
+                alert("⚠️ Please enter a Database Key and paste your JSON Array.");
+                return;
             }
+
+            // Update UI Instantly
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader" class="spin" size="18"></i> PUSHING...`;
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            setTimeout(() => {
+                try {
+                    let qs = JSON.parse(jsonStr);
+                    
+                    // Auto-fix if user pasted an Object instead of an Array
+                    if (!Array.isArray(qs)) {
+                        if (qs.data && Array.isArray(qs.data)) qs = qs.data;
+                        else if (qs.questions && Array.isArray(qs.questions)) qs = qs.questions;
+                        else {
+                            btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                            alert("❌ FORMAT ERROR:\nThe system expected a JSON Array [...] but got a JSON Object {...}.\n\nPlease wrap your entire block of questions inside square brackets [ ].");
+                            return;
+                        }
+                    }
+
+                    const key = keyInput.toLowerCase().replace(/\s+/g, '_');
+                    const timeLimit = parseInt(document.getElementById('time-limit').value) || 600;
+                    const sessionID = `${key}_${getTodayStr().replace(/-/g, '')}`;
+                    
+                    db.ref(`subjects/${key}`).set({
+                        questions: qs,
+                        enabled: true,
+                        current_session_id: sessionID, 
+                        config: { displayName: nameInput || key, timeLimit: timeLimit, activeDate: getTodayStr() } 
+                    }).then(() => {
+                        btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                        alert(`✅ SUCCESS! Standard module "${key}" deployed with ${qs.length} questions!`);
+                        document.getElementById('sub-key').value = "";
+                        document.getElementById('json-input').value = "";
+                        lucide.createIcons();
+                    }).catch(err => {
+                        btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                        alert("🔥 DATABASE ERROR: " + err.message);
+                        lucide.createIcons();
+                    });
+
+                } catch(e) { 
+                    btn.innerHTML = originalBtnText; btn.style.opacity = '1'; btn.disabled = false;
+                    alert(`❌ JSON SYNTAX ERROR!\n\nProblem:\n${e.message}\n\nCommon Fixes:\n1. Missing double quotes around keys?\n2. Trailing comma at the end of the array?\n3. Missing brackets [ ]?`);
+                    lucide.createIcons();
+                }
+            }, 100);
+        }
+
+        function editModuleData(key) {
+            db.ref(`subjects/${key}`).once('value', snap => {
+                const d = snap.val();
+                document.getElementById('sub-key').value = key;
+                document.getElementById('sub-name').value = d.config?.displayName || key;
+                document.getElementById('time-limit').value = d.config?.timeLimit || 600;
+                document.getElementById('json-input').value = JSON.stringify(d.questions, null, 2);
+                document.getElementById('editor-card').scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        function deleteModule(key) {
+            showAppModal("DELETE", `Remove ${key} forever?`, () => {
+                db.ref(`subjects/${key}`).remove();
+                closeModal();
+            });
+        }
+
+        function showAppModal(title, text, onConfirm) {
+            document.getElementById('m-title').innerText = title;
+            document.getElementById('m-text').innerText = text;
+            document.getElementById('m-cancel').style.display = 'block';
+            document.getElementById('m-confirm').innerText = "CONFIRM";
+            document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('m-confirm').onclick = onConfirm;
         }
 
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
