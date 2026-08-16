@@ -552,24 +552,32 @@
                         let yOffset = row === 0 ? 0 : rowMaxY[0];
                         let currentY = optStartY + yOffset;
 
-                        // Conditional formatting based on correct vs user answer
-                        if (opt === item.actual) {
-                            doc.setFont("helvetica", "bold"); doc.setTextColor(22, 163, 74); 
-                            doc.text(`[${optionLabels[optIndex]}] (Correct)`, xPos, currentY); 
-                            doc.setTextColor(22, 163, 74);
-                        } else if (opt === item.user) {
-                            doc.setFont("helvetica", "bold"); doc.setTextColor(220, 38, 38); 
-                            doc.text(`[${optionLabels[optIndex]}] (Yours)`, xPos, currentY); 
-                            doc.setTextColor(220, 38, 38);
-                        } else {
-                            doc.setFont("helvetica", "bold"); doc.setTextColor(0, 132, 255); 
-                            doc.text(`[${optionLabels[optIndex]}]`, xPos, currentY);
-                            doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 70); 
-                        }
-                        
-                        const optText = doc.splitTextToSize(`      ${opt}`, colWidth - 10);
-                        doc.text(optText, xPos + 10, currentY);
+                        let isCorrect = (opt === item.actual);
+                        let isUser = (opt === item.user);
 
+                        // 1. Draw the Label (e.g., [A], [B])
+                        doc.setFont("helvetica", "bold");
+                        if (isCorrect) doc.setTextColor(22, 163, 74); // Green
+                        else if (isUser) doc.setTextColor(220, 38, 38); // Red
+                        else doc.setTextColor(0, 132, 255); // Blue
+                        
+                        doc.text(`[${optionLabels[optIndex]}]`, xPos, currentY);
+
+                        // 2. Prepare the Option Text with the status appended at the end
+                        doc.setFont("helvetica", "normal");
+                        if (isCorrect) doc.setTextColor(22, 163, 74);
+                        else if (isUser) doc.setTextColor(220, 38, 38);
+                        else doc.setTextColor(70, 70, 70); // Dark Gray
+                        
+                        let textToPrint = opt;
+                        if (isCorrect) textToPrint += " (Correct)";
+                        if (isUser) textToPrint += " (Yours)";
+                        
+                        // 3. Draw the text starting safely to the right of the label
+                        const optText = doc.splitTextToSize(textToPrint, colWidth - 12);
+                        doc.text(optText, xPos + 9, currentY);
+
+                        // 4. Calculate row height for wrapping
                         let optHeight = (optText.length * 4.5) + 2;
                         if (optHeight > rowMaxY[row]) rowMaxY[row] = optHeight;
                     });
