@@ -3,452 +3,417 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AlphaCatch | Sky Cloud Controller</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- Firebase SDKs (Including Auth) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-
+  <title>AlphaCatchBot | Advanced Batch Controller</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --sky-bg: #f0f9ff; --sky-surface: #ffffff;
-      --sky-primary: #0ea5e9; --sky-primary-hover: #0284c7; --sky-accent: #38bdf8;
-      --text-main: #334155; --text-muted: #94a3b8;
-      --danger: #fb7185; --success: #34d399; --warning: #fbbf24;
-      --shadow-soft: 0 12px 40px rgba(14, 165, 233, 0.08);
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      /* AgriQ Pro Inspired Color Palette */
+      --primary: #001f3f;       /* Deep Navy */
+      --primary-hover: #003366; 
+      --accent: #0066cc;        /* Bright Blue */
+      --success: #228b22;       /* Leaf Green */
+      --success-hover: #1e7a1e;
+      --danger: #ef4444; 
+      --warning: #f59e0b; 
+      --bg-color: #f4f7f9; 
+      --card-bg: #ffffff; 
+      --text-main: #111827; 
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
     }
     
-    body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 0; margin: 0; background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); color: var(--text-main); min-height: 100vh; }
-    
-    /* Login Screen */
-    #login-screen { position: fixed; inset: 0; background: var(--sky-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5000; }
-    .login-box { background: white; padding: 40px; border-radius: 32px; box-shadow: var(--shadow-soft); text-align: center; max-width: 350px; width: 90%; }
-    
-    #app-content { display: none; padding: 20px; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      padding: 20px; 
+      margin: 0; 
+      background-color: var(--bg-color); 
+      color: var(--text-main); 
+    }
 
-    .header { text-align: center; margin-bottom: 30px; position: relative; }
-    .header h1 { margin: 0; font-size: 28px; color: var(--sky-primary); font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;}
-    .header p { margin: 5px 0 0 0; font-size: 14px; color: var(--text-muted); font-weight: 500; }
-    
-    .logout-btn { position: absolute; right: 20px; top: 10px; background: #f1f5f9; color: var(--text-main); border: none; padding: 10px 15px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px;}
-    
-    .global-settings { background: var(--sky-surface); padding: 15px 25px; border-radius: 100px; margin: 0 auto 30px auto; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; justify-content: center; box-shadow: var(--shadow-soft); max-width: 800px; }
-    .global-settings label { margin: 0; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; color: var(--text-main);}
-    .global-settings input[type="number"] { width: 60px; padding: 8px 12px; border-radius: 20px; text-align: center; border: 2px solid #f1f5f9; outline: none; font-weight: 700; color: var(--sky-primary);}
-    
-    .dashboards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto;}
-    .card { background: var(--sky-surface); padding: 25px; border-radius: 32px; box-shadow: var(--shadow-soft); display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.5); }
-    
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    h2 { font-size: 18px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;}
-    .tag { background: #e0f2fe; color: var(--sky-primary); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    /* Top Navigation */
+    .top-nav {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: -10px;
+    }
 
-    label { font-weight: 700; margin-top: 15px; display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-    input[type="text"], textarea { width: 100%; padding: 14px 18px; margin: 8px 0; border: 2px solid #f1f5f9; border-radius: 20px; font-size: 13px; font-family: monospace; box-sizing: border-box; background: #f8fafc; transition: var(--transition); outline: none; }
-    input:focus, textarea:focus { border-color: var(--sky-accent); background: #fff; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
-    textarea { height: 140px; resize: vertical; line-height: 1.5; }
+    .admin-btn {
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+
+    .admin-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h1 { margin: 0; font-size: 28px; color: var(--primary); font-weight: 700; letter-spacing: -0.5px; }
+    .header p { margin: 8px 0 0 0; font-size: 14px; color: var(--text-muted); font-weight: 500;}
     
-    .input-group { display: flex; gap: 8px; align-items: center; margin-bottom: 5px; }
+    .global-settings { 
+      background: var(--card-bg); 
+      padding: 20px; 
+      border-radius: 12px; 
+      margin-bottom: 25px; 
+      display: flex; 
+      gap: 20px; 
+      flex-wrap: wrap; 
+      align-items: center; 
+      justify-content: center; 
+      border: 1px solid var(--border-color); 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+    }
+    
+    .global-settings label { margin-top: 0; font-weight: 600; font-size: 14px; display: flex; align-items: center;}
+    .global-settings input[type="number"] { width: 70px; margin: 0 10px; padding: 8px; }
+    
+    .dashboards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 25px; }
+    .card { 
+      background: var(--card-bg); 
+      padding: 24px; 
+      border-radius: 16px; 
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04); 
+      border: 1px solid var(--border-color); 
+      display: flex; 
+      flex-direction: column; 
+    }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+    h2 { font-size: 20px; margin: 0; color: var(--primary); }
+    .tag { background: #e0f2fe; color: var(--accent); padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+
+    label { font-weight: 600; margin-top: 15px; display: block; font-size: 13px; color: var(--primary); }
+    input[type="text"], input[type="number"], textarea { 
+      width: 100%; 
+      padding: 12px; 
+      margin: 8px 0 12px 0; 
+      border: 1px solid #d1d5db; 
+      border-radius: 8px; 
+      font-size: 14px; 
+      box-sizing: border-box; 
+      font-family: 'Inter', sans-serif; 
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1); }
+    textarea { height: 120px; resize: none; font-family: monospace; font-size: 13px; line-height: 1.5; }
+    
+    .input-group { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
     .input-group input { margin: 0; }
+    .detect-btn { background: var(--accent); width: auto; padding: 12px 16px; margin: 0; white-space: nowrap; font-size: 13px; }
+    .detect-btn:hover { background: #0052a3; }
     
-    button { padding: 16px; font-size: 14px; color: white; border: none; border-radius: 20px; cursor: pointer; width: 100%; font-weight: 800; transition: var(--transition); display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; }
-    button:active { transform: scale(0.97); }
+    button { 
+      padding: 14px; 
+      font-size: 14px; 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      width: 100%; 
+      font-weight: 600; 
+      transition: all 0.15s ease; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 8px; 
+      margin-top: 10px; 
+    }
+    button:active { transform: scale(0.98); }
     
-    .btn-action-row { display: flex; gap: 10px; margin-top: 10px; }
-    .btn-action-row button { margin: 0; }
+    .btn-start { background: var(--success); }
+    .btn-start:hover { background: var(--success-hover); }
+    .btn-stop { background: var(--danger); display: none; }
+    .btn-result { background: var(--primary); margin-top: auto; }
+    .btn-save { background: var(--accent); color: #fff; }
+    .btn-manage { background: #f3f4f6; color: var(--primary); border: 1px solid #d1d5db; margin-top: 10px; }
+    .btn-manage:hover { background: #e5e7eb; }
+    .btn-reset { background: transparent; color: var(--danger); border: 1px solid var(--danger); margin-top: 10px; padding: 10px; font-size: 13px; }
     
-    .btn-detect { background: #f1f5f9; color: var(--text-main); width: auto; padding: 14px 20px; }
-    .btn-start { background: linear-gradient(135deg, var(--sky-accent) 0%, var(--sky-primary) 100%); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3); }
-    .btn-save { background: var(--text-main); color: #fff; }
-    .btn-edit { background: #f1f5f9; color: var(--text-main); }
-    .btn-reset { background: transparent; color: var(--danger); border: 2px dashed var(--danger); }
-    
-    .toast { margin-top: 15px; padding: 12px; border-radius: 16px; font-size: 13px; font-weight: 700; text-align: center; display: none; }
-    .toast.info { background: #e0f2fe; color: var(--sky-primary); display: block; }
-    .toast.success { background: #d1fae5; color: #059669; display: block; }
-    
-    /* Visual Progress Bar */
-    .progress-box { background: #f0fdf4; border: 2px solid #d1fae5; padding: 15px; border-radius: 20px; margin-bottom: 15px; }
-    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .progress-text { font-size: 14px; font-weight: 800; color: #059669; }
-    .progress-sub { font-size: 12px; color: #10b981; font-weight: 600;}
-    
-    .progress-track { width: 100%; height: 8px; background: #d1fae5; border-radius: 10px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #059669; width: 0%; transition: width 0.5s ease-out; border-radius: 10px; }
+    .toast { margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: center; display: none; }
+    .toast.info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; display: block; }
+    .toast.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; display: block; }
+    .toast.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; display: block; }
 
-    /* Custom Modal */
-    #modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; opacity: 0; transition: opacity 0.3s ease;}
-    .modal-box { background: var(--sky-surface); padding: 30px; border-radius: 32px; width: 100%; max-width: 360px; text-align: center; transform: translateY(20px); transition: transform 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
-    .modal-box h3 { margin: 0 0 10px 0; color: var(--text-main); font-weight: 800; font-size: 20px; }
-    .modal-box p { color: var(--text-muted); font-size: 14px; line-height: 1.5; font-weight: 500; margin-bottom: 25px; word-break: break-word;}
-    .modal-actions { display: flex; gap: 10px; }
-    .modal-btn { flex: 1; padding: 14px; margin: 0; border-radius: 16px; border: none; font-weight: 800; cursor: pointer;}
-    .m-cancel { background: #f1f5f9; color: var(--text-main); }
-    .m-confirm { background: var(--sky-primary); color: white; }
+    .scoreBoard { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 160px; overflow-y: auto; margin-top: 15px; margin-bottom: 15px; }
+    .score-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    .score-row:last-child { border-bottom: none; }
+    .score-name { font-weight: 600; color: #334155; }
+    .score-pts { background: var(--success); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+    .empty-state { text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; font-weight: 500; }
+    
+    .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; background-color: var(--success); box-shadow: 0 0 8px var(--success); margin-left: 8px; }
+    .status-dot.offline { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+    .progress-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
+    .progress-text { font-size: 16px; font-weight: 700; color: #166534; }
+    .progress-sub { font-size: 13px; color: #15803d; margin-top: 6px; font-weight: 500; }
+
+    /* Modal Styles */
+    .modal {
+      display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;
+    }
+    .modal-content {
+      background-color: var(--card-bg); margin: auto; padding: 25px; border-radius: 16px;
+      width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px; }
+    .modal-header h3 { margin: 0; color: var(--primary); }
+    .close-btn { color: var(--text-muted); font-size: 24px; font-weight: bold; cursor: pointer; }
+    .close-btn:hover { color: var(--danger); }
+    
+    .q-list-item { 
+      background: #f8fafc; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; 
+      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;
+    }
+    .q-text { font-size: 13px; color: var(--text-main); flex-grow: 1; }
+    .q-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .q-actions button { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+    .btn-edit { background: var(--warning); color: white; }
+    .btn-del { background: var(--danger); color: white; }
+
+    #editArea { display: none; background: #fff; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-top: 15px; }
   </style>
 </head>
 <body>
 
-  <!-- Login Overlay -->
-  <div id="login-screen">
-    <div class="login-box">
-      <i data-lucide="cloud" size="48" color="var(--sky-primary)" style="margin-bottom: 15px;"></i>
-      <h2 style="justify-content: center; margin-bottom: 5px;">SkyBase Admin</h2>
-      <p style="color: var(--text-muted); font-size: 13px; font-weight: 600; margin-bottom: 25px;">Verified Email Access Only</p>
-      <button class="btn-start" onclick="signInWithGoogle()"><i data-lucide="mail"></i> Sign in with Google</button>
-    </div>
+  <audio id="bgAudio" loop>
+    <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" type="audio/wav">
+  </audio>
+
+  <!-- Admin Navigation -->
+  <div class="top-nav">
+    <a href="admin.html" class="admin-btn">⚙️ Admin Home</a>
   </div>
 
-  <!-- Custom Alert Modal -->
-  <div id="modal-overlay">
-    <div class="modal-box" id="modal-box">
-      <h3 id="m-title">Title</h3>
-      <p id="m-text">Message</p>
-      <div class="modal-actions">
-        <button class="modal-btn m-cancel" id="m-cancel" onclick="closeModal()">Cancel</button>
-        <button class="modal-btn m-confirm" id="m-confirm">Confirm</button>
+  <div class="header">
+    <h1>AlphaCatchBot</h1>
+    <p>Multi-Group Batch Controller <span id="connStatus" class="status-dot" title="Listening to Telegram"></span></p>
+  </div>
+
+  <div class="global-settings">
+    <label>Timer (sec): <input type="number" id="globalTimer" value="15" min="5"></label>
+    <label>Delay (sec): <input type="number" id="globalDelay" value="5" min="0"></label>
+    <label>Qs per Batch: <input type="number" id="globalBatch" value="30" min="1"></label>
+    <label><input type="checkbox" id="globalProtect" checked style="margin-right: 8px; width: 16px; height: 16px;"> Protect Content</label>
+  </div>
+
+  <div class="dashboards">
+    
+    <!-- 1. IBPS MODULE -->
+    <div class="card" id="module_ibps">
+      <div class="card-header"><h2>IBPS Exam</h2><span class="tag">#IBPS</span></div>
+      <label>Group Chat ID:</label>
+      <div class="input-group">
+        <input type="text" id="chatId_ibps" placeholder="Chat ID...">
+        <button class="detect-btn" onclick="autoDetectGroup('ibps')">🔍 Detect</button>
       </div>
-    </div>
-  </div>
 
-  <div id="app-content">
-    <div class="header">
-      <button class="logout-btn" onclick="signOut()"><i data-lucide="log-out"></i> Exit</button>
-      <h1><i data-lucide="cloud"></i> SkyBase Controller</h1>
-      <p>Cloud-synced Batch Orchestration <span id="connStatus" class="tag" style="background:#d1fae5; color:#059669; padding: 2px 8px; margin-left: 5px;">Offline</span></p>
-    </div>
+      <div id="setup_ibps">
+        <label>Paste Massive JSON:</label>
+        <textarea id="data_ibps" placeholder='[{"question":"...","options":["..."],"answer":"..."}]'></textarea>
+        <button class="btn-save" onclick="saveToMemory('ibps')">💾 Save to Memory</button>
+      </div>
 
-    <div class="global-settings">
-      <label>Timer <input type="number" id="globalTimer" value="15" min="5"></label>
-      <label>Delay <input type="number" id="globalDelay" value="5" min="0"></label>
-      <label>Batch Size <input type="number" id="globalBatch" value="30" min="1"></label>
-      <label><input type="checkbox" id="globalProtect" checked style="width: auto; margin:0; accent-color: var(--sky-primary);"> Protect Content</label>
-    </div>
-
-    <div class="dashboards">
+      <div id="run_ibps" style="display:none;">
+        <div class="progress-box">
+          <div class="progress-text">Progress: <span id="prog_ibps">0</span> / <span id="total_ibps">0</span> Qs</div>
+          <div class="progress-sub" id="next_ibps">Next Batch: 1 to 30</div>
+        </div>
+        <button id="startBtn_ibps" class="btn-start" onclick="startBatch('ibps')">🚀 Start Next Batch</button>
+        <button id="stopBtn_ibps" class="btn-stop" onclick="stopExam('ibps')">🛑 Stop Exam</button>
+        <button class="btn-manage" onclick="openManager('ibps')">📝 Manage Questions</button>
+        <button class="btn-reset" onclick="resetMemory('ibps')">🔄 Clear Memory</button>
+      </div>
       
-      <!-- MODULE: IBPS -->
-      <div class="card" id="module_ibps">
-        <div class="card-header">
-          <h2><i data-lucide="book-open"></i> IBPS</h2>
-          <span class="tag">CLOUD SYNCED</span>
-        </div>
-        
-        <label>Group Chat ID</label>
-        <div class="input-group">
-          <input type="text" id="chatId_ibps" placeholder="-100xxxxxxxxx">
-          <button class="btn-detect" onclick="autoDetectGroup('ibps')"><i data-lucide="search"></i></button>
-        </div>
+      <div id="status_ibps" class="toast">Ready</div>
+      <label>Live Scoreboard:</label>
+      <div id="scoreBoard_ibps" class="scoreBoard"><div class="empty-state">Waiting for answers...</div></div>
+      <button class="btn-result" onclick="postLeaderboard('ibps')">🏆 Post Results</button>
+    </div>
 
-        <div id="setup_ibps">
-          <label>Cloud Database Upload (Raw Text or JSON)</label>
-          <textarea id="data_ibps" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
-          <div class="btn-action-row">
-            <button class="btn-save" onclick="syncToCloud('ibps')" style="flex: 2;"><i data-lucide="cloud-upload"></i> Upload</button>
-            <button class="btn-edit" onclick="readCloudData('ibps')" style="flex: 1;"><i data-lucide="download-cloud"></i> Edit</button>
-          </div>
-        </div>
-
-        <div id="run_ibps" style="display:none;">
-          <div class="progress-box">
-            <div class="progress-header">
-              <span class="progress-text" id="status_text_ibps">Progress: 0 / 0</span>
-              <span class="progress-sub" id="next_ibps">Ready</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" id="pb_ibps"></div></div>
-          </div>
-          <button id="startBtn_ibps" class="btn-start" onclick="triggerWorker('ibps')"><i data-lucide="play"></i> Dispatch Next Batch</button>
-          <button class="btn-reset" onclick="resetCloud('ibps')"><i data-lucide="trash-2"></i> Wipe Database</button>
-        </div>
-        
-        <div id="toast_ibps" class="toast">Awaiting Data</div>
+    <!-- 2. MCAER MODULE -->
+    <div class="card" id="module_mcaer">
+      <div class="card-header"><h2>MCAER Exam</h2><span class="tag">#MCAER</span></div>
+      <label>Group Chat ID:</label>
+      <div class="input-group">
+        <input type="text" id="chatId_mcaer" placeholder="Chat ID...">
+        <button class="detect-btn" onclick="autoDetectGroup('mcaer')">🔍 Detect</button>
       </div>
 
-      <!-- MODULE: MCAER -->
-      <div class="card" id="module_mcaer">
-        <div class="card-header">
-          <h2><i data-lucide="leaf"></i> MCAER</h2>
-          <span class="tag">CLOUD SYNCED</span>
-        </div>
-        
-        <label>Group Chat ID</label>
-        <div class="input-group">
-          <input type="text" id="chatId_mcaer" placeholder="-100xxxxxxxxx">
-          <button class="btn-detect" onclick="autoDetectGroup('mcaer')"><i data-lucide="search"></i></button>
-        </div>
-
-        <div id="setup_mcaer">
-          <label>Cloud Database Upload (Raw Text or JSON)</label>
-          <textarea id="data_mcaer" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
-          <div class="btn-action-row">
-            <button class="btn-save" onclick="syncToCloud('mcaer')" style="flex: 2;"><i data-lucide="cloud-upload"></i> Upload</button>
-            <button class="btn-edit" onclick="readCloudData('mcaer')" style="flex: 1;"><i data-lucide="download-cloud"></i> Edit</button>
-          </div>
-        </div>
-
-        <div id="run_mcaer" style="display:none;">
-          <div class="progress-box">
-            <div class="progress-header">
-              <span class="progress-text" id="status_text_mcaer">Progress: 0 / 0</span>
-              <span class="progress-sub" id="next_mcaer">Ready</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" id="pb_mcaer"></div></div>
-          </div>
-          <button id="startBtn_mcaer" class="btn-start" onclick="triggerWorker('mcaer')"><i data-lucide="play"></i> Dispatch Next Batch</button>
-          <button class="btn-reset" onclick="resetCloud('mcaer')"><i data-lucide="trash-2"></i> Wipe Database</button>
-        </div>
-        
-        <div id="toast_mcaer" class="toast">Awaiting Data</div>
+      <div id="setup_mcaer">
+        <label>Paste Massive JSON:</label>
+        <textarea id="data_mcaer" placeholder='[{"question":"...","options":["..."],"answer":"..."}]'></textarea>
+        <button class="btn-save" onclick="saveToMemory('mcaer')">💾 Save to Memory</button>
       </div>
 
-      <!-- MODULE: NET -->
-      <div class="card" id="module_net">
-        <div class="card-header">
-          <h2><i data-lucide="graduation-cap"></i> NET</h2>
-          <span class="tag">CLOUD SYNCED</span>
+      <div id="run_mcaer" style="display:none;">
+        <div class="progress-box">
+          <div class="progress-text">Progress: <span id="prog_mcaer">0</span> / <span id="total_mcaer">0</span> Qs</div>
+          <div class="progress-sub" id="next_mcaer">Next Batch: 1 to 30</div>
         </div>
-        
-        <label>Group Chat ID</label>
-        <div class="input-group">
-          <input type="text" id="chatId_net" placeholder="-100xxxxxxxxx">
-          <button class="btn-detect" onclick="autoDetectGroup('net')"><i data-lucide="search"></i></button>
-        </div>
+        <button id="startBtn_mcaer" class="btn-start" onclick="startBatch('mcaer')">🚀 Start Next Batch</button>
+        <button id="stopBtn_mcaer" class="btn-stop" onclick="stopExam('mcaer')">🛑 Stop Exam</button>
+        <button class="btn-manage" onclick="openManager('mcaer')">📝 Manage Questions</button>
+        <button class="btn-reset" onclick="resetMemory('mcaer')">🔄 Clear Memory</button>
+      </div>
+      
+      <div id="status_mcaer" class="toast">Ready</div>
+      <label>Live Scoreboard:</label>
+      <div id="scoreBoard_mcaer" class="scoreBoard"><div class="empty-state">Waiting for answers...</div></div>
+      <button class="btn-result" onclick="postLeaderboard('mcaer')">🏆 Post Results</button>
+    </div>
 
-        <div id="setup_net">
-          <label>Cloud Database Upload (Raw Text or JSON)</label>
-          <textarea id="data_net" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
-          <div class="btn-action-row">
-            <button class="btn-save" onclick="syncToCloud('net')" style="flex: 2;"><i data-lucide="cloud-upload"></i> Upload</button>
-            <button class="btn-edit" onclick="readCloudData('net')" style="flex: 1;"><i data-lucide="download-cloud"></i> Edit</button>
-          </div>
-        </div>
+    <!-- 3. NET MODULE -->
+    <div class="card" id="module_net">
+      <div class="card-header"><h2>NET Exam</h2><span class="tag">#NET</span></div>
+      <label>Group Chat ID:</label>
+      <div class="input-group">
+        <input type="text" id="chatId_net" placeholder="Chat ID...">
+        <button class="detect-btn" onclick="autoDetectGroup('net')">🔍 Detect</button>
+      </div>
 
-        <div id="run_net" style="display:none;">
-          <div class="progress-box">
-            <div class="progress-header">
-              <span class="progress-text" id="status_text_net">Progress: 0 / 0</span>
-              <span class="progress-sub" id="next_net">Ready</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" id="pb_net"></div></div>
-          </div>
-          <button id="startBtn_net" class="btn-start" onclick="triggerWorker('net')"><i data-lucide="play"></i> Dispatch Next Batch</button>
-          <button class="btn-reset" onclick="resetCloud('net')"><i data-lucide="trash-2"></i> Wipe Database</button>
+      <div id="setup_net">
+        <label>Paste Massive JSON:</label>
+        <textarea id="data_net" placeholder='[{"question":"...","options":["..."],"answer":"..."}]'></textarea>
+        <button class="btn-save" onclick="saveToMemory('net')">💾 Save to Memory</button>
+      </div>
+
+      <div id="run_net" style="display:none;">
+        <div class="progress-box">
+          <div class="progress-text">Progress: <span id="prog_net">0</span> / <span id="total_net">0</span> Qs</div>
+          <div class="progress-sub" id="next_net">Next Batch: 1 to 30</div>
         </div>
-        
-        <div id="toast_net" class="toast">Awaiting Data</div>
+        <button id="startBtn_net" class="btn-start" onclick="startBatch('net')">🚀 Start Next Batch</button>
+        <button id="stopBtn_net" class="btn-stop" onclick="stopExam('net')">🛑 Stop Exam</button>
+        <button class="btn-manage" onclick="openManager('net')">📝 Manage Questions</button>
+        <button class="btn-reset" onclick="resetMemory('net')">🔄 Clear Memory</button>
+      </div>
+      
+      <div id="status_net" class="toast">Ready</div>
+      <label>Live Scoreboard:</label>
+      <div id="scoreBoard_net" class="scoreBoard"><div class="empty-state">Waiting for answers...</div></div>
+      <button class="btn-result" onclick="postLeaderboard('net')">🏆 Post Results</button>
+    </div>
+
+  </div>
+
+  <!-- Question Management Modal -->
+  <div id="qModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Manage Questions</h3>
+        <span class="close-btn" onclick="closeManager()">&times;</span>
+      </div>
+      
+      <div id="qListArea">
+        <div id="qListContainer"></div>
+      </div>
+
+      <div id="editArea">
+        <label>Edit Question JSON:</label>
+        <textarea id="editJsonText" style="height: 180px;"></textarea>
+        <input type="hidden" id="editIndex">
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-save" onclick="saveEdit()">💾 Save Changes</button>
+          <button class="btn-reset" onclick="cancelEdit()" style="margin-top: 10px;">Cancel</button>
+        </div>
       </div>
 
     </div>
   </div>
 
   <script>
-    lucide.createIcons();
     const token = "8783125069:AAEQtewJ-ikqVhOakiJEazutduY-BPwyp7U"; 
     
-    // FIREBASE INITIALIZATION
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
-      authDomain: "agri-mcar.firebaseapp.com",
-      databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-      projectId: "agri-mcar"
+    let globalPollMap = {}; 
+    let updateOffset = 0; 
+    let wakeLock = null;
+    let anyActiveExams = 0;
+    let currentManageGroup = "";
+
+    const state = {
+      ibps: { isCancelled: false, scores: {}, batchTotal: 0 },
+      mcaer: { isCancelled: false, scores: {}, batchTotal: 0 },
+      net: { isCancelled: false, scores: {}, batchTotal: 0 }
     };
-    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider();
 
-    // AUTHENTICATION GUARD
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        if (user.email === 'vishalchalse007@gmail.com') {
-          document.getElementById('login-screen').style.display = 'none';
-          document.getElementById('app-content').style.display = 'block';
-          initSystem();
-        } else {
-          auth.signOut();
-          customAlert("Access Denied", "Unauthorized Email Address. This tool is locked.");
-        }
-      } else {
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('app-content').style.display = 'none';
-      }
-    });
+    async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} }
+    function enableBackgroundMode() { document.getElementById("bgAudio").play().catch(()=>{}); }
+    function disableBackgroundMode() { if(anyActiveExams <= 0) document.getElementById("bgAudio").pause(); }
 
-    function signInWithGoogle() { auth.signInWithPopup(provider).catch(err => customAlert("Auth Error", err.message)); }
-    function signOut() { auth.signOut(); }
-
-    // MODAL UTILITIES
-    function customAlert(title, text) {
-      document.getElementById('m-title').innerText = title;
-      document.getElementById('m-text').innerText = text;
-      document.getElementById('m-cancel').style.display = 'none';
-      document.getElementById('m-confirm').innerText = "OK";
-      document.getElementById('m-confirm').onclick = closeModal;
-      openModal();
-    }
-    
-    function customConfirm(title, text, onConfirm) {
-      document.getElementById('m-title').innerText = title;
-      document.getElementById('m-text').innerText = text;
-      document.getElementById('m-cancel').style.display = 'block';
-      document.getElementById('m-confirm').innerText = "Confirm";
-      document.getElementById('m-confirm').onclick = () => { closeModal(); onConfirm(); };
-      openModal();
-    }
-
-    function openModal() {
-      document.getElementById('modal-overlay').style.display = 'flex';
-      setTimeout(() => { 
-        document.getElementById('modal-overlay').style.opacity = '1'; 
-        document.getElementById('modal-box').style.transform = 'translateY(0)'; 
-      }, 10);
-    }
-
-    function closeModal() {
-      document.getElementById('modal-overlay').style.opacity = '0';
-      document.getElementById('modal-box').style.transform = 'translateY(20px)';
-      setTimeout(() => { document.getElementById('modal-overlay').style.display = 'none'; }, 300);
+    window.onload = () => {
+      refreshUI('ibps');
+      refreshUI('mcaer');
+      refreshUI('net');
+      listenForAnswers(); 
     }
 
     function showToast(groupId, message, type) {
-      const toastDiv = document.getElementById(`toast_${groupId}`);
-      toastDiv.innerText = message;
-      toastDiv.className = `toast ${type}`;
-      setTimeout(() => { toastDiv.style.display = 'none'; }, 5000);
+      const statusDiv = document.getElementById(`status_${groupId}`);
+      statusDiv.innerText = message;
+      statusDiv.className = `toast ${type}`;
     }
 
-    // PARSER & DATA MANAGEMENT
-    function parseInputData(rawText) {
-      rawText = rawText.trim();
-      if(!rawText) return [];
-      if (rawText.startsWith("[") || rawText.startsWith("{")) {
-          try { let parsed = JSON.parse(rawText); return Array.isArray(parsed) ? parsed : [parsed]; } 
-          catch(e) { return null; }
-      }
-      const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== '');
-      const results = [];
-      let currentItem = null;
-
-      for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const qMatch = line.match(/^(\d+)\.\s*(.*)/);
-          if (qMatch) {
-              if (currentItem) results.push(currentItem);
-              currentItem = { question: qMatch[2], options: [] };
-          } else if (currentItem) {
-              const optMatch = line.match(/^[A-Z]\.\s*(.*)/i);
-              const ansMatch = line.match(/^Answer:\s*([A-Z])/i);
-              if (optMatch) currentItem.options.push(optMatch[1]);
-              else if (ansMatch) {
-                  const letter = ansMatch[1].toUpperCase();
-                  const index = letter.charCodeAt(0) - 65;
-                  currentItem.answer = currentItem.options[index] || letter;
-              } else {
-                  if (currentItem.options.length === 0) currentItem.question += " " + line;
-                  else currentItem.options[currentItem.options.length - 1] += " " + line;
-              }
-          }
-      }
-      if (currentItem) results.push(currentItem);
-      return results;
-    }
-
-    // CLOUD SYNC & UI LOGIC
-    let cloudDataState = {};
-
-    function initSystem() {
-      db.ref('.info/connected').on('value', snap => {
-        const statusSpan = document.getElementById('connStatus');
-        if (snap.val() === true) {
-            statusSpan.innerText = "Online";
-            statusSpan.style.background = "#d1fae5"; statusSpan.style.color = "#059669";
-        } else {
-            statusSpan.innerText = "Disconnected";
-            statusSpan.style.background = "#ffe4e6"; statusSpan.style.color = "#e11d48";
-        }
-      });
-
-      ['ibps', 'mcaer', 'net'].forEach(groupId => {
-        db.ref(`sky_exams/${groupId}`).on('value', snap => {
-          const data = snap.val();
-          cloudDataState[groupId] = data;
-          updateDashboardUI(groupId, data);
-        });
-      });
-    }
-
-    function syncToCloud(groupId) {
-      const rawText = document.getElementById(`data_${groupId}`).value;
-      const parsedArray = parseInputData(rawText);
+    // --- MEMORY & BATCHING LOGIC --- //
+    function saveToMemory(groupId) {
+      const rawText = document.getElementById(`data_${groupId}`).value.trim();
+      if(!rawText) return showToast(groupId, "Please paste JSON data first.", "error");
       
-      if(!parsedArray || parsedArray.length === 0) return customAlert("Format Error", "Invalid data format.");
+      try {
+        let jsonArray = JSON.parse(rawText);
+        if (!Array.isArray(jsonArray)) jsonArray = [jsonArray];
+        
+        localStorage.setItem(`db_${groupId}_qs`, JSON.stringify(jsonArray));
+        localStorage.setItem(`db_${groupId}_idx`, 0); 
+        
+        showToast(groupId, `Successfully saved ${jsonArray.length} questions!`, "success");
+        refreshUI(groupId);
+      } catch (e) {
+        showToast(groupId, "Invalid JSON format.", "error");
+      }
+    }
 
-      db.ref(`sky_exams/${groupId}`).update({
-        questions: parsedArray,
-        currentIndex: 0
-      }).then(() => {
-        showToast(groupId, `✅ Saved ${parsedArray.length} questions.`, "success");
+    function resetMemory(groupId) {
+      if(confirm(`Are you sure you want to clear the saved questions for ${groupId.toUpperCase()}?`)) {
+        localStorage.removeItem(`db_${groupId}_qs`);
+        localStorage.removeItem(`db_${groupId}_idx`);
         document.getElementById(`data_${groupId}`).value = "";
-      }).catch(err => customAlert("Upload Blocked", err.message));
+        refreshUI(groupId);
+        showToast(groupId, "Memory cleared.", "info");
+      }
     }
 
-    function readCloudData(groupId) {
-      const data = cloudDataState[groupId];
-      if (!data || !data.questions) return customAlert("Empty", "No questions exist in the database for this module.");
-      
-      document.getElementById(`data_${groupId}`).value = JSON.stringify(data.questions, null, 2);
-      
-      document.getElementById(`setup_${groupId}`).style.display = "block";
-      document.getElementById(`run_${groupId}`).style.display = "none";
-      showToast(groupId, "Data loaded into editor. Edit and click Upload to update.", "info");
-    }
-
-    function resetCloud(groupId) {
-      customConfirm("Wipe Database?", `Delete all questions for ${groupId.toUpperCase()}?`, () => {
-        db.ref(`sky_exams/${groupId}`).remove().then(() => showToast(groupId, "Database wiped.", "info")).catch(err => customAlert("Error", err.message));
-      });
-    }
-
-    function updateDashboardUI(groupId, dbData) {
+    function refreshUI(groupId) {
+      const qsData = localStorage.getItem(`db_${groupId}_qs`);
       const setupDiv = document.getElementById(`setup_${groupId}`);
       const runDiv = document.getElementById(`run_${groupId}`);
       
-      if(dbData && dbData.questions) {
-        const arr = dbData.questions;
-        const currentIndex = dbData.currentIndex || 0;
+      if(qsData) {
+        const arr = JSON.parse(qsData);
+        const currentIndex = parseInt(localStorage.getItem(`db_${groupId}_idx`)) || 0;
         const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
         const endRange = Math.min(currentIndex + batchSize, arr.length);
-        const triggerStatus = dbData.trigger ? dbData.trigger.status : "idle";
 
-        // Update Text
-        document.getElementById(`status_text_${groupId}`).innerText = `Progress: ${currentIndex} / ${arr.length}`;
+        document.getElementById(`prog_${groupId}`).innerText = currentIndex;
+        document.getElementById(`total_${groupId}`).innerText = arr.length;
         
-        // Visual Progress Bar Math
-        const percentage = arr.length === 0 ? 0 : (currentIndex / arr.length) * 100;
-        document.getElementById(`pb_${groupId}`).style.width = `${percentage}%`;
-
         if (currentIndex >= arr.length) {
-            document.getElementById(`next_${groupId}`).innerText = "🎉 Database Completed";
-            document.getElementById(`pb_${groupId}`).style.background = "#0ea5e9"; // Sky blue when fully done
+            document.getElementById(`next_${groupId}`).innerText = "🎉 All questions completed!";
             document.getElementById(`startBtn_${groupId}`).style.display = "none";
         } else {
-            document.getElementById(`pb_${groupId}`).style.background = "#059669"; // Green while running
+            document.getElementById(`next_${groupId}`).innerText = `Next Batch: Q${currentIndex + 1} to Q${endRange}`;
             document.getElementById(`startBtn_${groupId}`).style.display = "flex";
-            
-            if (triggerStatus === "running") {
-                document.getElementById(`next_${groupId}`).innerText = "⚡ Test Running...";
-                document.getElementById(`startBtn_${groupId}`).style.display = "none";
-            } else if (triggerStatus === "pending") {
-                document.getElementById(`next_${groupId}`).innerText = "⏳ Worker Starting...";
-                document.getElementById(`startBtn_${groupId}`).style.display = "none";
-            } else {
-                document.getElementById(`next_${groupId}`).innerText = `Next: Q${currentIndex + 1} to Q${endRange}`;
-            }
         }
 
         setupDiv.style.display = "none";
@@ -460,11 +425,92 @@
     }
 
     document.getElementById("globalBatch").addEventListener('change', () => {
-      ['ibps', 'mcaer', 'net'].forEach(g => updateDashboardUI(g, cloudDataState[g]));
+       refreshUI('ibps'); refreshUI('mcaer'); refreshUI('net');
     });
 
-    // Auto Detect Chat ID
+    // --- QUESTION MANAGER MODAL LOGIC --- //
+    function openManager(groupId) {
+      currentManageGroup = groupId;
+      document.getElementById('modalTitle').innerText = `Manage Questions - ${groupId.toUpperCase()}`;
+      renderQuestionList();
+      document.getElementById('qModal').style.display = 'flex';
+    }
+
+    function closeManager() {
+      document.getElementById('qModal').style.display = 'none';
+      cancelEdit();
+    }
+
+    function renderQuestionList() {
+      const qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
+      const container = document.getElementById('qListContainer');
+      container.innerHTML = '';
+      
+      if(qs.length === 0) {
+        container.innerHTML = '<p class="empty-state">No questions found in memory.</p>';
+        return;
+      }
+
+      qs.forEach((q, idx) => {
+        container.innerHTML += `
+          <div class="q-list-item">
+            <div class="q-text"><strong>Q${idx + 1}:</strong> ${q.question}</div>
+            <div class="q-actions">
+              <button class="btn-edit" onclick="startEdit(${idx})">Edit</button>
+              <button class="btn-del" onclick="deleteQuestion(${idx})">Del</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function deleteQuestion(idx) {
+      if(confirm(`Are you sure you want to delete Question ${idx + 1}?`)) {
+        let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
+        qs.splice(idx, 1);
+        localStorage.setItem(`db_${currentManageGroup}_qs`, JSON.stringify(qs));
+        renderQuestionList();
+        refreshUI(currentManageGroup);
+      }
+    }
+
+    function startEdit(idx) {
+      let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
+      document.getElementById('editIndex').value = idx;
+      document.getElementById('editJsonText').value = JSON.stringify(qs[idx], null, 2);
+      
+      document.getElementById('qListArea').style.display = 'none';
+      document.getElementById('editArea').style.display = 'block';
+    }
+
+    function saveEdit() {
+      const idx = document.getElementById('editIndex').value;
+      const jsonText = document.getElementById('editJsonText').value;
+      
+      try {
+        const updatedQ = JSON.parse(jsonText);
+        let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
+        qs[idx] = updatedQ;
+        localStorage.setItem(`db_${currentManageGroup}_qs`, JSON.stringify(qs));
+        
+        cancelEdit();
+        renderQuestionList();
+        refreshUI(currentManageGroup);
+        alert("Question updated successfully!");
+      } catch (e) {
+        alert("Invalid JSON format. Please check your syntax.");
+      }
+    }
+
+    function cancelEdit() {
+      document.getElementById('editArea').style.display = 'none';
+      document.getElementById('qListArea').style.display = 'block';
+    }
+
+
+    // --- EXECUTION LOGIC --- //
     async function autoDetectGroup(groupId) {
+      showToast(groupId, "Searching for recent group message...", "info");
       try {
         const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?limit=100`);
         const data = await res.json();
@@ -476,32 +522,203 @@
               return showToast(groupId, `✅ Linked to: ${msg.chat.title}`, "success");
             }
           }
+          showToast(groupId, "No group found. Send a message in your group first.", "error");
+        } else {
+          showToast(groupId, "No recent activity found.", "error");
         }
-        customAlert("Not Found", "Send a message in your Telegram group first, then try again.");
-      } catch (e) { customAlert("Network Error", "Could not connect to Telegram."); }
+      } catch (e) {
+        showToast(groupId, "Network error.", "error");
+      }
     }
 
-    // Trigger Worker
-    function triggerWorker(groupId) {
-      const chatId = document.getElementById(`chatId_${groupId}`).value.trim();
-      if(!chatId) return customAlert("Missing Info", "Please detect or enter your Group Chat ID first.");
+    function stopExam(groupId) {
+      state[groupId].isCancelled = true;
+      anyActiveExams--;
+      disableBackgroundMode();
+      showToast(groupId, "Batch aborted manually.", "error");
+    }
 
+    async function startBatch(groupId) {
+      const chatId = document.getElementById(`chatId_${groupId}`).value.trim();
+      if(!chatId) return showToast(groupId, "Missing Chat ID.", "error");
+
+      const qsData = localStorage.getItem(`db_${groupId}_qs`);
+      if(!qsData) return showToast(groupId, "No questions in memory.", "error");
+
+      const allQuestions = JSON.parse(qsData);
+      const currentIndex = parseInt(localStorage.getItem(`db_${groupId}_idx`)) || 0;
+      const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
+      
+      const endIndex = Math.min(currentIndex + batchSize, allQuestions.length);
+      const batchQuestions = allQuestions.slice(currentIndex, endIndex);
+
+      await requestWakeLock(); 
+      anyActiveExams++;
+      enableBackgroundMode();
+      
+      state[groupId].isCancelled = false;
+      state[groupId].batchTotal = batchQuestions.length;
+      state[groupId].scores = {}; 
+      renderScoreboard(groupId); 
+      
+      document.getElementById(`startBtn_${groupId}`).style.display = "none";
+      document.getElementById(`stopBtn_${groupId}`).style.display = "flex";
+      
       const timerSec = parseInt(document.getElementById("globalTimer").value) || 15;
       const delayGap = parseInt(document.getElementById("globalDelay").value) || 5;
-      const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
       const isProtected = document.getElementById("globalProtect").checked;
 
-      db.ref(`sky_exams/${groupId}/trigger`).set({
-        status: "pending",
-        chatId: chatId,
-        batchSize: batchSize,
-        timerSec: timerSec,
-        delayGap: delayGap,
-        protectContent: isProtected,
-        timestamp: Date.now()
-      }).then(() => {
-        showToast(groupId, "🚀 Worker dispatched! You can now close this page.", "success");
-      }).catch(err => customAlert("Trigger Blocked", err.message));
+      for (let i = 0; i < batchQuestions.length; i++) {
+        if (state[groupId].isCancelled) break;
+        
+        let visualQNumber = currentIndex + i + 1;
+        showToast(groupId, `Sending Q${visualQNumber} (Batch ${i+1}/${batchQuestions.length})...`, "info");
+        
+        const success = await sendSingleQuiz(chatId, batchQuestions[i], groupId, timerSec, isProtected, visualQNumber);
+        if (!success) break; 
+
+        if (i < batchQuestions.length - 1) {
+          const totalWait = timerSec + delayGap;
+          for(let sec = totalWait; sec > 0; sec--) {
+            if (state[groupId].isCancelled) break;
+            if(sec > delayGap) showToast(groupId, `Q${visualQNumber} open... ${sec - delayGap}s left`, "info");
+            else showToast(groupId, `Delay: Next Q in ${sec}s...`, "info");
+            await new Promise(res => setTimeout(res, 1000));
+          }
+        } else {
+            for(let sec = timerSec; sec > 0; sec--) {
+               if (state[groupId].isCancelled) break;
+               showToast(groupId, `Final Q open... ${sec}s left`, "info");
+               await new Promise(res => setTimeout(res, 1000));
+            }
+        }
+      }
+
+      document.getElementById(`startBtn_${groupId}`).style.display = "flex";
+      document.getElementById(`stopBtn_${groupId}`).style.display = "none";
+
+      if (!state[groupId].isCancelled) {
+        showToast(groupId, "Batch Complete! Auto-posting results...", "success");
+        localStorage.setItem(`db_${groupId}_idx`, endIndex);
+        refreshUI(groupId);
+        
+        anyActiveExams--;
+        disableBackgroundMode();
+        
+        setTimeout(() => { postLeaderboard(groupId); }, 2000);
+      }
+    }
+
+    async function sendSingleQuiz(chatId, item, groupId, timerSec, isProtected, qNumber) {
+      if (!item.question || !item.options) return false;
+      let correctIndex = item.options.indexOf(item.answer);
+      if (correctIndex === -1) correctIndex = 0; 
+      
+      const data = {
+        chat_id: chatId,
+        question: `[Q${qNumber} - ${groupId.toUpperCase()}] ${item.question.substring(0, 270)}`, 
+        options: JSON.stringify(item.options.slice(0, 10)), 
+        type: "quiz",
+        correct_option_id: correctIndex, 
+        is_anonymous: false,
+        open_period: timerSec,
+        protect_content: isProtected
+      };
+      if (item.explanation) data.explanation = item.explanation.substring(0, 200); 
+
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendPoll`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+        const result = await res.json();
+        
+        if(result.ok) {
+          globalPollMap[result.result.poll.id] = { correctIndex: correctIndex, groupId: groupId };
+          return true;
+        }
+        return false;
+      } catch(e) { return false; }
+    }
+
+    // --- LISTENER & SCOREBOARD --- //
+    async function listenForAnswers() {
+      const connDot = document.getElementById("connStatus");
+      while (true) {
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${updateOffset}&timeout=30&allowed_updates=["poll_answer"]`);
+          if (!res.ok) throw new Error();
+          
+          const data = await res.json();
+          connDot.className = "status-dot"; 
+
+          if(data.ok && data.result.length > 0) {
+            for(let update of data.result) {
+              updateOffset = update.update_id + 1; 
+              if(update.poll_answer) {
+                const ans = update.poll_answer;
+                const pollData = globalPollMap[ans.poll_id];
+                if (pollData) {
+                    const uId = ans.user.id;
+                    const uName = (ans.user.first_name + (ans.user.last_name ? " " + ans.user.last_name : "")).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const gId = pollData.groupId;
+
+                    if(!state[gId].scores[uId]) state[gId].scores[uId] = { name: uName, score: 0 };
+                    if(pollData.correctIndex === ans.option_ids[0]) state[gId].scores[uId].score += 1;
+                    
+                    renderScoreboard(gId);
+                }
+              }
+            }
+          }
+        } catch(e) {
+          connDot.className = "status-dot offline"; 
+          await new Promise(res => setTimeout(res, 3000)); 
+        }
+      }
+    }
+
+    function renderScoreboard(groupId) {
+      const board = document.getElementById(`scoreBoard_${groupId}`);
+      const sorted = Object.values(state[groupId].scores).sort((a, b) => b.score - a.score);
+      
+      if(sorted.length === 0) {
+          board.innerHTML = `<div class="empty-state">Waiting for answers...</div>`;
+          return;
+      }
+      board.innerHTML = "";
+      sorted.forEach((user, idx) => {
+         const row = document.createElement("div");
+         row.className = "score-row";
+         let rankIcon = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
+         row.innerHTML = `<div class="score-name">${rankIcon} ${user.name}</div><div class="score-pts">${user.score} pts</div>`;
+         board.appendChild(row);
+      });
+    }
+
+    async function postLeaderboard(groupId) {
+      const chatId = document.getElementById(`chatId_${groupId}`).value.trim();
+      if(!chatId) return alert(`Provide Chat ID for ${groupId.toUpperCase()} first.`);
+
+      const sorted = Object.values(state[groupId].scores).sort((a, b) => b.score - a.score);
+      
+      let text = `🏆 <b>TODAY'S ${groupId.toUpperCase()} LEADERBOARD</b> 🏆\n`;
+      text += `📝 <b>Questions in this session:</b> ${state[groupId].batchTotal}\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+      
+      if(sorted.length === 0) text += "<i>No answers were recorded during this session.</i>";
+      else {
+        sorted.forEach((user, idx) => {
+          let medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "🔹";
+          text += `${medal} <b>${user.name}</b>: ${user.score} pts\n`;
+        });
+      }
+
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: "HTML" }) 
+        });
+        if((await res.json()).ok) showToast(groupId, "Leaderboard posted successfully!", "success");
+      } catch(e) {}
     }
   </script>
 </body>
