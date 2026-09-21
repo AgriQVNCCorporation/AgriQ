@@ -8,109 +8,82 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   
+  <!-- Firebase SDKs (Including Auth) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
   <style>
     :root {
-      --sky-bg: #f0f9ff;
-      --sky-surface: #ffffff;
-      --sky-primary: #0ea5e9;
-      --sky-primary-hover: #0284c7;
-      --sky-accent: #38bdf8;
-      --text-main: #334155;
-      --text-muted: #94a3b8;
-      --danger: #fb7185;
-      --success: #34d399;
-      --warning: #fbbf24;
+      --sky-bg: #f0f9ff; --sky-surface: #ffffff;
+      --sky-primary: #0ea5e9; --sky-primary-hover: #0284c7; --sky-accent: #38bdf8;
+      --text-main: #334155; --text-muted: #94a3b8;
+      --danger: #fb7185; --success: #34d399; --warning: #fbbf24;
       --shadow-soft: 0 12px 40px rgba(14, 165, 233, 0.08);
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    body { 
-      font-family: 'Plus Jakarta Sans', sans-serif; 
-      padding: 20px; margin: 0; 
-      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); 
-      color: var(--text-main); 
-      min-height: 100vh;
-    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 0; margin: 0; background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); color: var(--text-main); min-height: 100vh; }
+    
+    /* Login Screen */
+    #login-screen { position: fixed; inset: 0; background: var(--sky-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5000; }
+    .login-box { background: white; padding: 40px; border-radius: 32px; box-shadow: var(--shadow-soft); text-align: center; max-width: 350px; width: 90%; }
+    
+    #app-content { display: none; padding: 20px; }
 
-    .header { text-align: center; margin-bottom: 30px; }
-    .header h1 { margin: 0; font-size: 28px; color: var(--sky-primary); font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+    .header { text-align: center; margin-bottom: 30px; position: relative; }
+    .header h1 { margin: 0; font-size: 28px; color: var(--sky-primary); font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;}
     .header p { margin: 5px 0 0 0; font-size: 14px; color: var(--text-muted); font-weight: 500; }
     
-    .global-settings { 
-      background: var(--sky-surface); padding: 15px 25px; border-radius: 100px; 
-      margin: 0 auto 30px auto; display: flex; gap: 20px; flex-wrap: wrap; 
-      align-items: center; justify-content: center; box-shadow: var(--shadow-soft); 
-      max-width: 800px;
-    }
+    .logout-btn { position: absolute; right: 20px; top: 10px; background: #f1f5f9; color: var(--text-main); border: none; padding: 10px 15px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px;}
+    
+    .global-settings { background: var(--sky-surface); padding: 15px 25px; border-radius: 100px; margin: 0 auto 30px auto; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; justify-content: center; box-shadow: var(--shadow-soft); max-width: 800px; }
     .global-settings label { margin: 0; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; color: var(--text-main);}
     .global-settings input[type="number"] { width: 60px; padding: 8px 12px; border-radius: 20px; text-align: center; border: 2px solid #f1f5f9; outline: none; font-weight: 700; color: var(--sky-primary);}
-    .global-settings input[type="number"]:focus { border-color: var(--sky-accent); }
     
     .dashboards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto;}
-    
-    .card { 
-      background: var(--sky-surface); padding: 25px; border-radius: 32px; 
-      box-shadow: var(--shadow-soft); display: flex; flex-direction: column; 
-      border: 1px solid rgba(255,255,255,0.5);
-    }
+    .card { background: var(--sky-surface); padding: 25px; border-radius: 32px; box-shadow: var(--shadow-soft); display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.5); }
     
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     h2 { font-size: 18px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;}
-    .tag { background: #e0f2fe; color: var(--sky-primary); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;}
+    .tag { background: #e0f2fe; color: var(--sky-primary); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
 
-    label { font-weight: 700; margin-top: 15px; display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
-    input[type="text"], input[type="number"], textarea { 
-      width: 100%; padding: 14px 18px; margin: 8px 0; 
-      border: 2px solid #f1f5f9; border-radius: 20px; font-size: 14px; 
-      box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
-      background: #f8fafc; transition: var(--transition); outline: none;
-    }
+    label { font-weight: 700; margin-top: 15px; display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+    input[type="text"], textarea { width: 100%; padding: 14px 18px; margin: 8px 0; border: 2px solid #f1f5f9; border-radius: 20px; font-size: 13px; font-family: monospace; box-sizing: border-box; background: #f8fafc; transition: var(--transition); outline: none; }
     input:focus, textarea:focus { border-color: var(--sky-accent); background: #fff; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
-    textarea { height: 120px; resize: vertical; }
+    textarea { height: 140px; resize: vertical; line-height: 1.5; }
     
     .input-group { display: flex; gap: 8px; align-items: center; margin-bottom: 5px; }
     .input-group input { margin: 0; }
     
-    button { 
-      padding: 16px; font-size: 14px; color: white; border: none; border-radius: 20px; 
-      cursor: pointer; width: 100%; font-weight: 800; transition: var(--transition); 
-      display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px;
-    }
+    button { padding: 16px; font-size: 14px; color: white; border: none; border-radius: 20px; cursor: pointer; width: 100%; font-weight: 800; transition: var(--transition); display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; }
     button:active { transform: scale(0.97); }
     
-    .btn-detect { background: #f1f5f9; color: var(--text-main); width: auto; padding: 14px 20px; white-space: nowrap; }
-    .btn-detect:hover { background: #e2e8f0; }
+    .btn-action-row { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-action-row button { margin: 0; }
+    
+    .btn-detect { background: #f1f5f9; color: var(--text-main); width: auto; padding: 14px 20px; }
     .btn-start { background: linear-gradient(135deg, var(--sky-accent) 0%, var(--sky-primary) 100%); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3); }
-    .btn-stop { background: var(--danger); box-shadow: 0 8px 20px rgba(251, 113, 133, 0.3); }
-    .btn-result { background: var(--success); margin-top: auto; box-shadow: 0 8px 20px rgba(52, 211, 153, 0.3); }
     .btn-save { background: var(--text-main); color: #fff; }
+    .btn-edit { background: #f1f5f9; color: var(--text-main); }
     .btn-reset { background: transparent; color: var(--danger); border: 2px dashed var(--danger); }
     
     .toast { margin-top: 15px; padding: 12px; border-radius: 16px; font-size: 13px; font-weight: 700; text-align: center; display: none; }
     .toast.info { background: #e0f2fe; color: var(--sky-primary); display: block; }
     .toast.success { background: #d1fae5; color: #059669; display: block; }
-    .toast.error { background: #ffe4e6; color: #e11d48; display: block; }
-
-    .scoreBoard { background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 24px; padding: 10px; height: 160px; overflow-y: auto; margin: 15px 0; }
-    .score-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-    .score-row:last-child { border-bottom: none; }
-    .score-name { font-weight: 700; color: var(--text-main); }
-    .score-pts { background: var(--sky-primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
-    .empty-state { text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; font-weight: 500; }
     
-    .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; background-color: var(--success); box-shadow: 0 0 12px var(--success); margin-left: 8px; transition: 0.3s; }
-    .status-dot.offline { background-color: var(--danger); box-shadow: 0 0 12px var(--danger); }
-
-    .progress-box { background: #f0fdf4; border: 2px solid #d1fae5; padding: 15px; border-radius: 20px; text-align: center; margin-bottom: 15px; }
-    .progress-text { font-size: 15px; font-weight: 800; color: #059669; }
-    .progress-sub { font-size: 12px; color: #10b981; margin-top: 4px; font-weight: 600;}
+    /* Visual Progress Bar */
+    .progress-box { background: #f0fdf4; border: 2px solid #d1fae5; padding: 15px; border-radius: 20px; margin-bottom: 15px; }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .progress-text { font-size: 14px; font-weight: 800; color: #059669; }
+    .progress-sub { font-size: 12px; color: #10b981; font-weight: 600;}
+    
+    .progress-track { width: 100%; height: 8px; background: #d1fae5; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #059669; width: 0%; transition: width 0.5s ease-out; border-radius: 10px; }
 
     /* Custom Modal */
     #modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; opacity: 0; transition: opacity 0.3s ease;}
-    .modal-box { background: var(--sky-surface); padding: 30px; border-radius: 32px; width: 100%; max-width: 360px; text-align: center; transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5);}
+    .modal-box { background: var(--sky-surface); padding: 30px; border-radius: 32px; width: 100%; max-width: 360px; text-align: center; transform: translateY(20px); transition: transform 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
     .modal-box h3 { margin: 0 0 10px 0; color: var(--text-main); font-weight: 800; font-size: 20px; }
     .modal-box p { color: var(--text-muted); font-size: 14px; line-height: 1.5; font-weight: 500; margin-bottom: 25px; word-break: break-word;}
     .modal-actions { display: flex; gap: 10px; }
@@ -120,6 +93,16 @@
   </style>
 </head>
 <body>
+
+  <!-- Login Overlay -->
+  <div id="login-screen">
+    <div class="login-box">
+      <i data-lucide="cloud" size="48" color="var(--sky-primary)" style="margin-bottom: 15px;"></i>
+      <h2 style="justify-content: center; margin-bottom: 5px;">SkyBase Admin</h2>
+      <p style="color: var(--text-muted); font-size: 13px; font-weight: 600; margin-bottom: 25px;">Verified Email Access Only</p>
+      <button class="btn-start" onclick="signInWithGoogle()"><i data-lucide="mail"></i> Sign in with Google</button>
+    </div>
+  </div>
 
   <!-- Custom Alert Modal -->
   <div id="modal-overlay">
@@ -133,109 +116,137 @@
     </div>
   </div>
 
-  <div class="header">
-    <h1><i data-lucide="cloud"></i> SkyBase Controller</h1>
-    <p>Cloud-synced Batch Orchestration <span id="connStatus" class="status-dot" title="Database Connected"></span></p>
-  </div>
+  <div id="app-content">
+    <div class="header">
+      <button class="logout-btn" onclick="signOut()"><i data-lucide="log-out"></i> Exit</button>
+      <h1><i data-lucide="cloud"></i> SkyBase Controller</h1>
+      <p>Cloud-synced Batch Orchestration <span id="connStatus" class="tag" style="background:#d1fae5; color:#059669; padding: 2px 8px; margin-left: 5px;">Offline</span></p>
+    </div>
 
-  <div class="global-settings">
-    <label>Timer <input type="number" id="globalTimer" value="15" min="5"></label>
-    <label>Delay <input type="number" id="globalDelay" value="5" min="0"></label>
-    <label>Batch Size <input type="number" id="globalBatch" value="30" min="1"></label>
-    <label><input type="checkbox" id="globalProtect" checked style="width: auto; margin:0; accent-color: var(--sky-primary);"> Protect Content</label>
-  </div>
+    <div class="global-settings">
+      <label>Timer <input type="number" id="globalTimer" value="15" min="5"></label>
+      <label>Delay <input type="number" id="globalDelay" value="5" min="0"></label>
+      <label>Batch Size <input type="number" id="globalBatch" value="30" min="1"></label>
+      <label><input type="checkbox" id="globalProtect" checked style="width: auto; margin:0; accent-color: var(--sky-primary);"> Protect Content</label>
+    </div>
 
-  <div class="dashboards">
-    
-    <!-- MODULE TEMPLATE (Repeated for IBPS, MCAER, NET) -->
-    <div class="card" id="module_ibps">
-      <div class="card-header">
-        <h2><i data-lucide="book-open"></i> IBPS</h2>
-        <span class="tag">CLOUD SYNCED</span>
-      </div>
+    <div class="dashboards">
       
-      <label>Group Chat ID</label>
-      <div class="input-group">
-        <input type="text" id="chatId_ibps" placeholder="-100xxxxxxxxx">
-        <button class="btn-detect" onclick="autoDetectGroup('ibps')"><i data-lucide="search"></i></button>
-      </div>
-
-      <div id="setup_ibps">
-        <label>Cloud Database Upload (Raw Text or JSON)</label>
-        <textarea id="data_ibps" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
-        <button class="btn-save" onclick="syncToCloud('ibps')"><i data-lucide="cloud-upload"></i> Upload to SkyBase</button>
-      </div>
-
-      <div id="run_ibps" style="display:none;">
-        <div class="progress-box">
-          <div class="progress-text">Progress: <span id="prog_ibps">0</span> / <span id="total_ibps">0</span></div>
-          <div class="progress-sub" id="next_ibps">Next Batch: 1 to 30</div>
+      <!-- MODULE: IBPS -->
+      <div class="card" id="module_ibps">
+        <div class="card-header">
+          <h2><i data-lucide="book-open"></i> IBPS</h2>
+          <span class="tag">CLOUD SYNCED</span>
         </div>
-        <button id="startBtn_ibps" class="btn-start" onclick="triggerWorker('ibps')"><i data-lucide="play"></i> Dispatch Batch</button>
-        <button class="btn-reset" onclick="resetCloud('ibps')"><i data-lucide="trash-2"></i> Wipe Cloud Data</button>
-      </div>
-      
-      <div id="status_ibps" class="toast">Awaiting Data</div>
-    </div>
-
-    <!-- MCAER -->
-    <div class="card" id="module_mcaer">
-      <div class="card-header">
-        <h2><i data-lucide="leaf"></i> MCAER</h2>
-        <span class="tag">CLOUD SYNCED</span>
-      </div>
-      <label>Group Chat ID</label>
-      <div class="input-group">
-        <input type="text" id="chatId_mcaer" placeholder="-100xxxxxxxxx">
-        <button class="btn-detect" onclick="autoDetectGroup('mcaer')"><i data-lucide="search"></i></button>
-      </div>
-      <div id="setup_mcaer">
-        <label>Cloud Database Upload (Raw Text or JSON)</label>
-        <textarea id="data_mcaer" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
-        <button class="btn-save" onclick="syncToCloud('mcaer')"><i data-lucide="cloud-upload"></i> Upload to SkyBase</button>
-      </div>
-      <div id="run_mcaer" style="display:none;">
-        <div class="progress-box">
-          <div class="progress-text">Progress: <span id="prog_mcaer">0</span> / <span id="total_mcaer">0</span></div>
-          <div class="progress-sub" id="next_mcaer">Next Batch: 1 to 30</div>
+        
+        <label>Group Chat ID</label>
+        <div class="input-group">
+          <input type="text" id="chatId_ibps" placeholder="-100xxxxxxxxx">
+          <button class="btn-detect" onclick="autoDetectGroup('ibps')"><i data-lucide="search"></i></button>
         </div>
-        <button id="startBtn_mcaer" class="btn-start" onclick="triggerWorker('mcaer')"><i data-lucide="play"></i> Dispatch Batch</button>
-        <button class="btn-reset" onclick="resetCloud('mcaer')"><i data-lucide="trash-2"></i> Wipe Cloud Data</button>
-      </div>
-      <div id="status_mcaer" class="toast">Awaiting Data</div>
-    </div>
 
-    <!-- NET -->
-    <div class="card" id="module_net">
-      <div class="card-header">
-        <h2><i data-lucide="graduation-cap"></i> NET</h2>
-        <span class="tag">CLOUD SYNCED</span>
-      </div>
-      <label>Group Chat ID</label>
-      <div class="input-group">
-        <input type="text" id="chatId_net" placeholder="-100xxxxxxxxx">
-        <button class="btn-detect" onclick="autoDetectGroup('net')"><i data-lucide="search"></i></button>
-      </div>
-      <div id="setup_net">
-        <label>Cloud Database Upload (Raw Text or JSON)</label>
-        <textarea id="data_net" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
-        <button class="btn-save" onclick="syncToCloud('net')"><i data-lucide="cloud-upload"></i> Upload to SkyBase</button>
-      </div>
-      <div id="run_net" style="display:none;">
-        <div class="progress-box">
-          <div class="progress-text">Progress: <span id="prog_net">0</span> / <span id="total_net">0</span></div>
-          <div class="progress-sub" id="next_net">Next Batch: 1 to 30</div>
+        <div id="setup_ibps">
+          <label>Cloud Database Upload (Raw Text or JSON)</label>
+          <textarea id="data_ibps" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
+          <div class="btn-action-row">
+            <button class="btn-save" onclick="syncToCloud('ibps')" style="flex: 2;"><i data-lucide="cloud-upload"></i> Upload</button>
+            <button class="btn-edit" onclick="readCloudData('ibps')" style="flex: 1;"><i data-lucide="download-cloud"></i> Edit</button>
+          </div>
         </div>
-        <button id="startBtn_net" class="btn-start" onclick="triggerWorker('net')"><i data-lucide="play"></i> Dispatch Batch</button>
-        <button class="btn-reset" onclick="resetCloud('net')"><i data-lucide="trash-2"></i> Wipe Cloud Data</button>
-      </div>
-      <div id="status_net" class="toast">Awaiting Data</div>
-    </div>
 
+        <div id="run_ibps" style="display:none;">
+          <div class="progress-box">
+            <div class="progress-header">
+              <span class="progress-text" id="status_text_ibps">Progress: 0 / 0</span>
+              <span class="progress-sub" id="next_ibps">Ready</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="pb_ibps"></div></div>
+          </div>
+          <button id="startBtn_ibps" class="btn-start" onclick="triggerWorker('ibps')"><i data-lucide="play"></i> Dispatch Next Batch</button>
+          <button class="btn-reset" onclick="resetCloud('ibps')"><i data-lucide="trash-2"></i> Wipe Database</button>
+        </div>
+        
+        <div id="toast_ibps" class="toast">Awaiting Data</div>
+      </div>
+
+      <!-- MODULE: MCAER -->
+      <div class="card" id="module_mcaer">
+        <div class="card-header">
+          <h2><i data-lucide="leaf"></i> MCAER</h2>
+          <span class="tag">CLOUD SYNCED</span>
+        </div>
+        
+        <label>Group Chat ID</label>
+        <div class="input-group">
+          <input type="text" id="chatId_mcaer" placeholder="-100xxxxxxxxx">
+          <button class="btn-detect" onclick="autoDetectGroup('mcaer')"><i data-lucide="search"></i></button>
+        </div>
+
+        <div id="setup_mcaer">
+          <label>Cloud Database Upload (Raw Text or JSON)</label>
+          <textarea id="data_mcaer" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
+          <div class="btn-action-row">
+            <button class="btn-save" onclick="syncToCloud('mcaer')" style="flex: 2;"><i data-lucide="cloud-upload"></i> Upload</button>
+            <button class="btn-edit" onclick="readCloudData('mcaer')" style="flex: 1;"><i data-lucide="download-cloud"></i> Edit</button>
+          </div>
+        </div>
+
+        <div id="run_mcaer" style="display:none;">
+          <div class="progress-box">
+            <div class="progress-header">
+              <span class="progress-text" id="status_text_mcaer">Progress: 0 / 0</span>
+              <span class="progress-sub" id="next_mcaer">Ready</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="pb_mcaer"></div></div>
+          </div>
+          <button id="startBtn_mcaer" class="btn-start" onclick="triggerWorker('mcaer')"><i data-lucide="play"></i> Dispatch Next Batch</button>
+          <button class="btn-reset" onclick="resetCloud('mcaer')"><i data-lucide="trash-2"></i> Wipe Database</button>
+        </div>
+        
+        <div id="toast_mcaer" class="toast">Awaiting Data</div>
+      </div>
+
+      <!-- MODULE: NET -->
+      <div class="card" id="module_net">
+        <div class="card-header">
+          <h2><i data-lucide="graduation-cap"></i> NET</h2>
+          <span class="tag">CLOUD SYNCED</span>
+        </div>
+        
+        <label>Group Chat ID</label>
+        <div class="input-group">
+          <input type="text" id="chatId_net" placeholder="-100xxxxxxxxx">
+          <button class="btn-detect" onclick="autoDetectGroup('net')"><i data-lucide="search"></i></button>
+        </div>
+
+        <div id="setup_net">
+          <label>Cloud Database Upload (Raw Text or JSON)</label>
+          <textarea id="data_net" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
+          <div class="btn-action-row">
+            <button class="btn-save" onclick="syncToCloud('net')" style="flex: 2;"><i data-lucide="cloud-upload"></i> Upload</button>
+            <button class="btn-edit" onclick="readCloudData('net')" style="flex: 1;"><i data-lucide="download-cloud"></i> Edit</button>
+          </div>
+        </div>
+
+        <div id="run_net" style="display:none;">
+          <div class="progress-box">
+            <div class="progress-header">
+              <span class="progress-text" id="status_text_net">Progress: 0 / 0</span>
+              <span class="progress-sub" id="next_net">Ready</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="pb_net"></div></div>
+          </div>
+          <button id="startBtn_net" class="btn-start" onclick="triggerWorker('net')"><i data-lucide="play"></i> Dispatch Next Batch</button>
+          <button class="btn-reset" onclick="resetCloud('net')"><i data-lucide="trash-2"></i> Wipe Database</button>
+        </div>
+        
+        <div id="toast_net" class="toast">Awaiting Data</div>
+      </div>
+
+    </div>
   </div>
 
   <script>
-    // System Config
     lucide.createIcons();
     const token = "8783125069:AAEQtewJ-ikqVhOakiJEazutduY-BPwyp7U"; 
     
@@ -248,13 +259,30 @@
     };
     if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
+    const provider = new firebase.auth.GoogleAuthProvider();
 
-    // Check connection status visually
-    db.ref('.info/connected').on('value', snap => {
-      document.getElementById('connStatus').className = snap.val() === true ? 'status-dot' : 'status-dot offline';
+    // AUTHENTICATION GUARD
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        if (user.email === 'vishalchalse007@gmail.com') {
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('app-content').style.display = 'block';
+          initSystem();
+        } else {
+          auth.signOut();
+          customAlert("Access Denied", "Unauthorized Email Address. This tool is locked.");
+        }
+      } else {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('app-content').style.display = 'none';
+      }
     });
 
-    // Modal System
+    function signInWithGoogle() { auth.signInWithPopup(provider).catch(err => customAlert("Auth Error", err.message)); }
+    function signOut() { auth.signOut(); }
+
+    // MODAL UTILITIES
     function customAlert(title, text) {
       document.getElementById('m-title').innerText = title;
       document.getElementById('m-text').innerText = text;
@@ -274,27 +302,27 @@
     }
 
     function openModal() {
-      const overlay = document.getElementById('modal-overlay');
-      const box = document.getElementById('modal-box');
-      overlay.style.display = 'flex';
-      setTimeout(() => { overlay.style.opacity = '1'; box.style.transform = 'translateY(0)'; }, 10);
+      document.getElementById('modal-overlay').style.display = 'flex';
+      setTimeout(() => { 
+        document.getElementById('modal-overlay').style.opacity = '1'; 
+        document.getElementById('modal-box').style.transform = 'translateY(0)'; 
+      }, 10);
     }
 
     function closeModal() {
-      const overlay = document.getElementById('modal-overlay');
-      const box = document.getElementById('modal-box');
-      overlay.style.opacity = '0';
-      box.style.transform = 'translateY(20px)';
-      setTimeout(() => { overlay.style.display = 'none'; }, 300);
+      document.getElementById('modal-overlay').style.opacity = '0';
+      document.getElementById('modal-box').style.transform = 'translateY(20px)';
+      setTimeout(() => { document.getElementById('modal-overlay').style.display = 'none'; }, 300);
     }
 
     function showToast(groupId, message, type) {
-      const statusDiv = document.getElementById(`status_${groupId}`);
-      statusDiv.innerText = message;
-      statusDiv.className = `toast ${type}`;
+      const toastDiv = document.getElementById(`toast_${groupId}`);
+      toastDiv.innerText = message;
+      toastDiv.className = `toast ${type}`;
+      setTimeout(() => { toastDiv.style.display = 'none'; }, 5000);
     }
 
-    // Auto-Parser for Raw Text
+    // PARSER & DATA MANAGEMENT
     function parseInputData(rawText) {
       rawText = rawText.trim();
       if(!rawText) return [];
@@ -330,39 +358,21 @@
       return results;
     }
 
-    // Cloud Database Logic
-    function syncToCloud(groupId) {
-      const rawText = document.getElementById(`data_${groupId}`).value;
-      const parsedArray = parseInputData(rawText);
-      
-      if(!parsedArray || parsedArray.length === 0) {
-        return customAlert("Format Error", "Invalid data format. Paste valid JSON or structured text.");
-      }
-
-      db.ref(`sky_exams/${groupId}`).set({
-        questions: parsedArray,
-        currentIndex: 0
-      }).then(() => {
-        showToast(groupId, `Successfully synced ${parsedArray.length} questions to SkyBase!`, "success");
-        document.getElementById(`data_${groupId}`).value = "";
-      }).catch(err => {
-        customAlert("Upload Blocked", `Firebase rejected the upload: ${err.message}`);
-      });
-    }
-
-    function resetCloud(groupId) {
-      customConfirm("Wipe Cloud Data?", `Are you sure you want to delete all stored questions for ${groupId.toUpperCase()}?`, () => {
-        db.ref(`sky_exams/${groupId}`).remove().then(() => {
-          showToast(groupId, "Cloud memory cleared.", "info");
-        }).catch(err => {
-          customAlert("Deletion Blocked", `Firebase rejected the deletion: ${err.message}`);
-        });
-      });
-    }
-
-    // Live sync listener for UI updates
+    // CLOUD SYNC & UI LOGIC
     let cloudDataState = {};
-    window.onload = () => {
+
+    function initSystem() {
+      db.ref('.info/connected').on('value', snap => {
+        const statusSpan = document.getElementById('connStatus');
+        if (snap.val() === true) {
+            statusSpan.innerText = "Online";
+            statusSpan.style.background = "#d1fae5"; statusSpan.style.color = "#059669";
+        } else {
+            statusSpan.innerText = "Disconnected";
+            statusSpan.style.background = "#ffe4e6"; statusSpan.style.color = "#e11d48";
+        }
+      });
+
       ['ibps', 'mcaer', 'net'].forEach(groupId => {
         db.ref(`sky_exams/${groupId}`).on('value', snap => {
           const data = snap.val();
@@ -370,7 +380,39 @@
           updateDashboardUI(groupId, data);
         });
       });
-    };
+    }
+
+    function syncToCloud(groupId) {
+      const rawText = document.getElementById(`data_${groupId}`).value;
+      const parsedArray = parseInputData(rawText);
+      
+      if(!parsedArray || parsedArray.length === 0) return customAlert("Format Error", "Invalid data format.");
+
+      db.ref(`sky_exams/${groupId}`).update({
+        questions: parsedArray,
+        currentIndex: 0
+      }).then(() => {
+        showToast(groupId, `✅ Saved ${parsedArray.length} questions.`, "success");
+        document.getElementById(`data_${groupId}`).value = "";
+      }).catch(err => customAlert("Upload Blocked", err.message));
+    }
+
+    function readCloudData(groupId) {
+      const data = cloudDataState[groupId];
+      if (!data || !data.questions) return customAlert("Empty", "No questions exist in the database for this module.");
+      
+      document.getElementById(`data_${groupId}`).value = JSON.stringify(data.questions, null, 2);
+      
+      document.getElementById(`setup_${groupId}`).style.display = "block";
+      document.getElementById(`run_${groupId}`).style.display = "none";
+      showToast(groupId, "Data loaded into editor. Edit and click Upload to update.", "info");
+    }
+
+    function resetCloud(groupId) {
+      customConfirm("Wipe Database?", `Delete all questions for ${groupId.toUpperCase()}?`, () => {
+        db.ref(`sky_exams/${groupId}`).remove().then(() => showToast(groupId, "Database wiped.", "info")).catch(err => customAlert("Error", err.message));
+      });
+    }
 
     function updateDashboardUI(groupId, dbData) {
       const setupDiv = document.getElementById(`setup_${groupId}`);
@@ -381,16 +423,32 @@
         const currentIndex = dbData.currentIndex || 0;
         const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
         const endRange = Math.min(currentIndex + batchSize, arr.length);
+        const triggerStatus = dbData.trigger ? dbData.trigger.status : "idle";
 
-        document.getElementById(`prog_${groupId}`).innerText = currentIndex;
-        document.getElementById(`total_${groupId}`).innerText = arr.length;
+        // Update Text
+        document.getElementById(`status_text_${groupId}`).innerText = `Progress: ${currentIndex} / ${arr.length}`;
         
+        // Visual Progress Bar Math
+        const percentage = arr.length === 0 ? 0 : (currentIndex / arr.length) * 100;
+        document.getElementById(`pb_${groupId}`).style.width = `${percentage}%`;
+
         if (currentIndex >= arr.length) {
-            document.getElementById(`next_${groupId}`).innerText = "🎉 All questions completed!";
+            document.getElementById(`next_${groupId}`).innerText = "🎉 Database Completed";
+            document.getElementById(`pb_${groupId}`).style.background = "#0ea5e9"; // Sky blue when fully done
             document.getElementById(`startBtn_${groupId}`).style.display = "none";
         } else {
-            document.getElementById(`next_${groupId}`).innerText = `Next Batch: Q${currentIndex + 1} to Q${endRange}`;
+            document.getElementById(`pb_${groupId}`).style.background = "#059669"; // Green while running
             document.getElementById(`startBtn_${groupId}`).style.display = "flex";
+            
+            if (triggerStatus === "running") {
+                document.getElementById(`next_${groupId}`).innerText = "⚡ Test Running...";
+                document.getElementById(`startBtn_${groupId}`).style.display = "none";
+            } else if (triggerStatus === "pending") {
+                document.getElementById(`next_${groupId}`).innerText = "⏳ Worker Starting...";
+                document.getElementById(`startBtn_${groupId}`).style.display = "none";
+            } else {
+                document.getElementById(`next_${groupId}`).innerText = `Next: Q${currentIndex + 1} to Q${endRange}`;
+            }
         }
 
         setupDiv.style.display = "none";
@@ -407,7 +465,6 @@
 
     // Auto Detect Chat ID
     async function autoDetectGroup(groupId) {
-      showToast(groupId, "Searching for recent group message...", "info");
       try {
         const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?limit=100`);
         const data = await res.json();
@@ -421,10 +478,10 @@
           }
         }
         customAlert("Not Found", "Send a message in your Telegram group first, then try again.");
-      } catch (e) { showToast(groupId, "Network error.", "error"); }
+      } catch (e) { customAlert("Network Error", "Could not connect to Telegram."); }
     }
 
-    // Trigger the Node.js Background Worker
+    // Trigger Worker
     function triggerWorker(groupId) {
       const chatId = document.getElementById(`chatId_${groupId}`).value.trim();
       if(!chatId) return customAlert("Missing Info", "Please detect or enter your Group Chat ID first.");
@@ -443,10 +500,8 @@
         protectContent: isProtected,
         timestamp: Date.now()
       }).then(() => {
-        showToast(groupId, "🚀 Batch task dispatched to background worker!", "success");
-      }).catch(err => {
-        customAlert("Trigger Blocked", `Firebase rejected the trigger command: ${err.message}`);
-      });
+        showToast(groupId, "🚀 Worker dispatched! You can now close this page.", "success");
+      }).catch(err => customAlert("Trigger Blocked", err.message));
     }
   </script>
 </body>
