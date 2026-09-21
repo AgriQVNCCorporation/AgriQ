@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Schedule PDF Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #f4f7f9;
+      color: #111827;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: white;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      border: 1px solid #e5e7eb;
+    }
+    h1 { margin-top: 0; color: #001f3f; font-size: 24px; border-bottom: 2px solid #f3f4f6; padding-bottom: 12px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #374151; }
+    input[type="file"] {
+      display: block; width: 100%; padding: 10px; border: 1px dashed #d1d5db; border-radius: 8px; background: #f8fafc; font-size: 13px;
+    }
+    textarea {
+      width: 100%; height: 220px; padding: 14px; border: 1px solid #d1d5db;
+      border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 13px; resize: vertical; box-sizing: border-box;
+      background: #fdfdfd;
+    }
+    textarea:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
+    button {
+      background: #001f3f; color: white; border: none; padding: 14px 24px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; font-size: 15px; transition: background 0.2s;
+    }
+    button:hover { background: #003366; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Professional Schedule Builder</h1>
+    
+    <div class="form-group">
+      <label>1. Brand Logo (Top Right)</label>
+      <input type="file" id="logoUpload" accept="image/png, image/jpeg">
+    </div>
+
+    <div class="form-group">
+      <label>2. Background Watermark (Centered)</label>
+      <input type="file" id="watermarkUpload" accept="image/png, image/jpeg">
+    </div>
+
+    <div class="form-group">
+      <label>3. Schedule Data (JSON Format)</label>
+      <textarea id="jsonInput" placeholder='[
+  {
+    "date": "2026-10-01",
+    "topic": "Advanced Agriculture Frameworks",
+    "time": "8:00 pm - 9:00 pm"
+  }
+]'></textarea>
+    </div>
+
+    <button onclick="generatePDF()">📄 Generate Professional PDF</button>
+  </div>
+
+  <script>
+    const readFileAsBase64 = (inputId) => {
+      return new Promise((resolve) => {
+        const file = document.getElementById(inputId).files[0];
+        if (!file) return resolve(null);
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    };
+
+    async function generatePDF() {
+      let scheduleData;
+      try {
+        const rawJson = document.getElementById('jsonInput').value.trim();
+        if (!rawJson) return alert("Please paste the JSON schedule data.");
+        scheduleData = JSON.parse(rawJson);
+        if (!Array.isArray(scheduleData)) throw new Error("JSON must be an array.");
+      } catch (error) {
+        return alert("Invalid JSON format. Please check your syntax.");
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ compress: true });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // --- 1. DRAW DOUBLE THIN BLACK BORDERS ---
+      doc.setDrawColor(0, 0, 0); // Solid Black
+      
+      // Outer Border
+      doc.setLineWidth(0.6); 
+      doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+      
+      // Inner Border
+      doc.setLineWidth(0.2); 
+      doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
+
+      // --- 2. LOAD ASSETS ---
+      const watermark = await readFileAsBase64('watermarkUpload');
+      const logo = await readFileAsBase64('logoUpload');
+
+      // --- 3. APPLY WATERMARK ---
+      if (watermark) {
+        doc.setGState(new doc.GState({ opacity: 0.05 })); // Very faint for professional look
+        doc.addImage(watermark, 'JPEG', (pageWidth/2) - 75, (pageHeight/2) - 75, 150, 150, undefined, 'FAST');
+        doc.setGState(new doc.GState({ opacity: 1.0 })); 
+      }
+
+      // --- 4. HEADER & LOGO ---
+      // Adding a subtle top dividing line for structure
+      doc.setLineWidth(0.2);
+      doc.line(12, 42, pageWidth - 12, 42);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(22);
+      doc.text("OFFICIAL MASTER SCHEDULE", 18, 30);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 18, 36);
+      
+      if (logo) {
+        // Positioned inside the double borders
+        doc.addImage(logo, 'JPEG', pageWidth - 48, 16, 24, 24, undefined, 'FAST');
+      }
+
+      // --- 5. TABLE GENERATION ---
+      const tableRows = scheduleData.map(item => [
+        item.date || "N/A", 
+        item.topic || "N/A", 
+        item.time || "N/A"
+      ]);
+
+      doc.autoTable({
+        startY: 50,
+        head: [['Date', 'Topic / Subject', 'Time Window']],
+        body: tableRows,
+        theme: 'grid', // Switches to a formal bordered grid rather than striped
+        headStyles: { 
+            fillColor: [240, 240, 240], // Light gray header
+            textColor: [0, 0, 0],       // Black text
+            fontStyle: 'bold',
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+        },
+        styles: { 
+            fontSize: 11, 
+            cellPadding: 7, 
+            textColor: [0, 0, 0],
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0], // Thin black borders for all cells
+            font: 'helvetica'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 40 },
+          2: { cellWidth: 50, fontStyle: 'italic' } 
+        },
+        margin: { left: 18, right: 18 } // Keeps table nicely inside the page borders
+      });
+
+      // --- 6. FOOTER ---
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text("CONFIDENTIAL & PROPRIETARY", pageWidth / 2, pageHeight - 16, { align: "center" });
+
+      // Save
+      doc.save(`Official_Schedule_${new Date().getTime()}.pdf`);
+    }
+  </script>
+</body>
+</html>
