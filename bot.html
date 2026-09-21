@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AlphaCatchBot | Advanced Batch Controller</title>
+  <title>Agriq pro Bot | Advanced Batch Controller</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  
   <style>
     :root {
-      /* AgriQ Pro Inspired Color Palette */
-      --primary: #001f3f;       /* Deep Navy */
+      --primary: #001f3f;       
       --primary-hover: #003366; 
-      --accent: #0066cc;        /* Bright Blue */
-      --success: #228b22;       /* Leaf Green */
+      --accent: #0066cc;        
+      --success: #228b22;       
       --success-hover: #1e7a1e;
       --danger: #ef4444; 
       --warning: #f59e0b; 
@@ -22,130 +24,68 @@
       --border-color: #e5e7eb;
     }
     
-    body { 
-      font-family: 'Inter', sans-serif; 
-      padding: 20px; 
-      margin: 0; 
-      background-color: var(--bg-color); 
-      color: var(--text-main); 
-    }
-
-    /* Top Navigation */
-    .top-nav {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: -10px;
-    }
-
-    .admin-btn {
-      background: var(--primary);
-      color: white;
-      text-decoration: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: background 0.2s;
-    }
-
-    .admin-btn:hover {
-      background: var(--primary-hover);
-    }
+    body { font-family: 'Inter', sans-serif; padding: 20px; margin: 0; background-color: var(--bg-color); color: var(--text-main); }
+    .top-nav { display: flex; justify-content: flex-end; margin-bottom: -10px; }
+    .admin-btn { background: #001f3f; color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .admin-btn:hover { background: #003366; }
 
     .header { text-align: center; margin-bottom: 25px; }
-    .header h1 { margin: 0; font-size: 28px; color: var(--primary); font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 { margin: 0; font-size: 28px; color: #001f3f; font-weight: 700; letter-spacing: -0.5px; }
     .header p { margin: 8px 0 0 0; font-size: 14px; color: var(--text-muted); font-weight: 500;}
     
-    .global-settings { 
-      background: var(--card-bg); 
-      padding: 20px; 
-      border-radius: 12px; 
-      margin-bottom: 25px; 
-      display: flex; 
-      gap: 20px; 
-      flex-wrap: wrap; 
-      align-items: center; 
-      justify-content: center; 
-      border: 1px solid var(--border-color); 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-    }
+    .global-settings { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: center; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .global-settings label { margin-top: 0; font-weight: 600; font-size: 13px; display: flex; align-items: center; white-space: nowrap;}
+    .global-settings input[type="number"] { width: 60px; margin: 0 8px; padding: 6px; border-radius: 6px; border: 1px solid #d1d5db;}
+    .global-settings input[type="checkbox"] { margin-right: 6px; width: 16px; height: 16px; cursor: pointer; }
     
-    .global-settings label { margin-top: 0; font-weight: 600; font-size: 14px; display: flex; align-items: center;}
-    .global-settings input[type="number"] { width: 70px; margin: 0 10px; padding: 8px; }
-    
+    .logo-upload-wrapper { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: #e0f2fe; border: 1px dashed var(--accent); border-radius: 8px; }
+    .logo-upload-wrapper span { font-size: 12px; font-weight: 700; color: var(--accent); }
+    input[type="file"] { font-size: 11px; max-width: 180px; }
+
     .dashboards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 25px; }
-    .card { 
-      background: var(--card-bg); 
-      padding: 24px; 
-      border-radius: 16px; 
-      box-shadow: 0 6px 20px rgba(0,0,0,0.04); 
-      border: 1px solid var(--border-color); 
-      display: flex; 
-      flex-direction: column; 
-    }
-    
+    .card { background: var(--card-bg); padding: 24px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); border: 1px solid var(--border-color); display: flex; flex-direction: column; }
     .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
-    h2 { font-size: 20px; margin: 0; color: var(--primary); }
+    h2 { font-size: 20px; margin: 0; color: #001f3f; }
     .tag { background: #e0f2fe; color: var(--accent); padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
 
-    label { font-weight: 600; margin-top: 15px; display: block; font-size: 13px; color: var(--primary); }
-    input[type="text"], input[type="number"], textarea { 
-      width: 100%; 
-      padding: 12px; 
-      margin: 8px 0 12px 0; 
-      border: 1px solid #d1d5db; 
-      border-radius: 8px; 
-      font-size: 14px; 
-      box-sizing: border-box; 
-      font-family: 'Inter', sans-serif; 
-      transition: border-color 0.2s;
-    }
-    input[type="text"]:focus, input[type="number"]:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1); }
+    label { font-weight: 600; margin-top: 15px; display: block; font-size: 13px; color: #001f3f; }
+    input[type="text"], textarea { width: 100%; padding: 12px; margin: 8px 0 12px 0; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
+    input[type="text"]:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1); }
     textarea { height: 120px; resize: none; font-family: monospace; font-size: 13px; line-height: 1.5; }
     
     .input-group { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
     .input-group input { margin: 0; }
     .detect-btn { background: var(--accent); width: auto; padding: 12px 16px; margin: 0; white-space: nowrap; font-size: 13px; }
-    .detect-btn:hover { background: #0052a3; }
     
-    button { 
-      padding: 14px; 
-      font-size: 14px; 
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      width: 100%; 
-      font-weight: 600; 
-      transition: all 0.15s ease; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      gap: 8px; 
-      margin-top: 10px; 
-    }
+    button { padding: 14px; font-size: 14px; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; transition: all 0.15s ease; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; }
     button:active { transform: scale(0.98); }
     
     .btn-start { background: var(--success); }
     .btn-start:hover { background: var(--success-hover); }
     .btn-stop { background: var(--danger); display: none; }
-    .btn-result { background: var(--primary); margin-top: auto; }
+    .action-row { display: flex; gap: 10px; margin-top: auto; }
+    .btn-result { background: #001f3f; flex: 1; margin-top: 0; }
+    .btn-pdf { background: #0066cc; flex: 1; margin-top: 0; }
     .btn-save { background: var(--accent); color: #fff; }
-    .btn-manage { background: #f3f4f6; color: var(--primary); border: 1px solid #d1d5db; margin-top: 10px; }
+    .btn-manage { background: #f3f4f6; color: #001f3f; border: 1px solid #d1d5db; margin-top: 10px; }
     .btn-manage:hover { background: #e5e7eb; }
     .btn-reset { background: transparent; color: var(--danger); border: 1px solid var(--danger); margin-top: 10px; padding: 10px; font-size: 13px; }
     
+    /* Range Controls UI */
+    .range-controls { display: flex; gap: 10px; align-items: center; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); }
+    .range-controls label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-main); margin:0; }
+    .range-controls input { width: 65px; padding: 8px; margin: 0; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; text-align: center; }
+    .btn-reset-range { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; width: auto; padding: 8px 12px; font-size: 12px; margin: 0; margin-left: auto; border-radius: 6px;}
+    .btn-reset-range:hover { background: #fee2e2; }
+
     .toast { margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: center; display: none; }
     .toast.info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; display: block; }
     .toast.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; display: block; }
     .toast.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; display: block; }
 
     .scoreBoard { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 160px; overflow-y: auto; margin-top: 15px; margin-bottom: 15px; }
-    .score-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    .score-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; transition: background 0.2s; }
+    .score-row:hover { background: #f1f5f9; }
     .score-row:last-child { border-bottom: none; }
     .score-name { font-weight: 600; color: #334155; }
     .score-pts { background: var(--success); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; }
@@ -154,34 +94,24 @@
     .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; background-color: var(--success); box-shadow: 0 0 8px var(--success); margin-left: 8px; }
     .status-dot.offline { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
 
-    .progress-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
-    .progress-text { font-size: 16px; font-weight: 700; color: #166534; }
-    .progress-sub { font-size: 13px; color: #15803d; margin-top: 6px; font-weight: 500; }
+    .progress-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; margin-bottom: 15px; }
+    .progress-stats { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; color: #166534; margin-bottom: 8px; }
+    .progress-bar-container { width: 100%; height: 10px; background: #dcfce7; border-radius: 5px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--success); width: 0%; transition: width 1s linear; }
+    .progress-sub { display: flex; justify-content: space-between; font-size: 12px; color: #15803d; margin-top: 8px; font-weight: 600; }
 
-    /* Modal Styles */
-    .modal {
-      display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;
-    }
-    .modal-content {
-      background-color: var(--card-bg); margin: auto; padding: 25px; border-radius: 16px;
-      width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+    .modal-content { background-color: var(--card-bg); margin: auto; padding: 25px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px; }
-    .modal-header h3 { margin: 0; color: var(--primary); }
+    .modal-header h3 { margin: 0; color: #001f3f; }
     .close-btn { color: var(--text-muted); font-size: 24px; font-weight: bold; cursor: pointer; }
-    .close-btn:hover { color: var(--danger); }
     
-    .q-list-item { 
-      background: #f8fafc; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; 
-      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;
-    }
+    .q-list-item { background: #f8fafc; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; }
     .q-text { font-size: 13px; color: var(--text-main); flex-grow: 1; }
     .q-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .q-actions button { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
     .btn-edit { background: var(--warning); color: white; }
     .btn-del { background: var(--danger); color: white; }
-
     #editArea { display: none; background: #fff; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-top: 15px; }
   </style>
 </head>
@@ -191,21 +121,23 @@
     <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" type="audio/wav">
   </audio>
 
-  <!-- Admin Navigation -->
-  <div class="top-nav">
-    <a href="admin.html" class="admin-btn">⚙️ Admin Home</a>
-  </div>
+  <div class="top-nav"><a href="admin.html" class="admin-btn">⚙️ Admin Home</a></div>
 
   <div class="header">
-    <h1>AlphaCatchBot</h1>
+    <h1>Agriq Pro </h1>
     <p>Multi-Group Batch Controller <span id="connStatus" class="status-dot" title="Listening to Telegram"></span></p>
   </div>
 
   <div class="global-settings">
-    <label>Timer (sec): <input type="number" id="globalTimer" value="15" min="5"></label>
-    <label>Delay (sec): <input type="number" id="globalDelay" value="5" min="0"></label>
-    <label>Qs per Batch: <input type="number" id="globalBatch" value="30" min="1"></label>
-    <label><input type="checkbox" id="globalProtect" checked style="margin-right: 8px; width: 16px; height: 16px;"> Protect Content</label>
+    <label>Timer (s): <input type="number" id="globalTimer" value="30" min="5" max="600" step="5"></label>
+    <label>Delay (s): <input type="number" id="globalDelay" value="12" min="0" max="60" step="1"></label>
+    <label>Qs/Batch: <input type="number" id="globalBatch" value="40" min="1"></label>
+    <label><input type="checkbox" id="globalShuffleOpts" checked> Shuffle Opts</label>
+    <label><input type="checkbox" id="globalProtect" checked> Protect</label>
+    <div class="logo-upload-wrapper">
+      <span>🖼️ Brand Logo for PDF:</span>
+      <input type="file" id="logoUpload" accept="image/png, image/jpeg">
+    </div>
   </div>
 
   <div class="dashboards">
@@ -226,20 +158,38 @@
       </div>
 
       <div id="run_ibps" style="display:none;">
-        <div class="progress-box">
-          <div class="progress-text">Progress: <span id="prog_ibps">0</span> / <span id="total_ibps">0</span> Qs</div>
-          <div class="progress-sub" id="next_ibps">Next Batch: 1 to 30</div>
+        
+        <!-- NEW RANGE SELECTOR UI -->
+        <div class="range-controls">
+          <label>Start Q: <input type="number" id="startQ_ibps" min="1"></label>
+          <label>End Q: <input type="number" id="endQ_ibps" min="1"></label>
+          <button class="btn-reset-range" onclick="resetRange('ibps')">🔄 Reset 1</button>
         </div>
-        <button id="startBtn_ibps" class="btn-start" onclick="startBatch('ibps')">🚀 Start Next Batch</button>
+
+        <div class="progress-box">
+          <div class="progress-stats">
+            <span>Pushed: <span id="pushed_ibps">0</span></span>
+            <span>Total Qs: <span id="remain_ibps">0</span></span>
+          </div>
+          <div class="progress-bar-container"><div class="progress-bar-fill" id="bar_ibps"></div></div>
+          <div class="progress-sub">
+            <span id="eta_ibps">ETA: --:--</span>
+          </div>
+        </div>
+        <button id="startBtn_ibps" class="btn-start" onclick="startBatch('ibps')">🚀 Start Selected Batch</button>
         <button id="stopBtn_ibps" class="btn-stop" onclick="stopExam('ibps')">🛑 Stop Exam</button>
         <button class="btn-manage" onclick="openManager('ibps')">📝 Manage Questions</button>
-        <button class="btn-reset" onclick="resetMemory('ibps')">🔄 Clear Memory</button>
+        <button class="btn-reset" onclick="clearMemory('ibps')">🗑️ Clear Memory</button>
       </div>
       
       <div id="status_ibps" class="toast">Ready</div>
       <label>Live Scoreboard:</label>
       <div id="scoreBoard_ibps" class="scoreBoard"><div class="empty-state">Waiting for answers...</div></div>
-      <button class="btn-result" onclick="postLeaderboard('ibps')">🏆 Post Results</button>
+      
+      <div class="action-row">
+        <button class="btn-result" onclick="postLeaderboard('ibps')">🏆 Post Telegram</button>
+        <button class="btn-pdf" onclick="generatePDF('ibps')">📄 Generate PDF</button>
+      </div>
     </div>
 
     <!-- 2. MCAER MODULE -->
@@ -258,20 +208,36 @@
       </div>
 
       <div id="run_mcaer" style="display:none;">
-        <div class="progress-box">
-          <div class="progress-text">Progress: <span id="prog_mcaer">0</span> / <span id="total_mcaer">0</span> Qs</div>
-          <div class="progress-sub" id="next_mcaer">Next Batch: 1 to 30</div>
+        <div class="range-controls">
+          <label>Start Q: <input type="number" id="startQ_mcaer" min="1"></label>
+          <label>End Q: <input type="number" id="endQ_mcaer" min="1"></label>
+          <button class="btn-reset-range" onclick="resetRange('mcaer')">🔄 Reset 1</button>
         </div>
-        <button id="startBtn_mcaer" class="btn-start" onclick="startBatch('mcaer')">🚀 Start Next Batch</button>
+
+        <div class="progress-box">
+          <div class="progress-stats">
+            <span>Pushed: <span id="pushed_mcaer">0</span></span>
+            <span>Total Qs: <span id="remain_mcaer">0</span></span>
+          </div>
+          <div class="progress-bar-container"><div class="progress-bar-fill" id="bar_mcaer"></div></div>
+          <div class="progress-sub">
+            <span id="eta_mcaer">ETA: --:--</span>
+          </div>
+        </div>
+        <button id="startBtn_mcaer" class="btn-start" onclick="startBatch('mcaer')">🚀 Start Selected Batch</button>
         <button id="stopBtn_mcaer" class="btn-stop" onclick="stopExam('mcaer')">🛑 Stop Exam</button>
         <button class="btn-manage" onclick="openManager('mcaer')">📝 Manage Questions</button>
-        <button class="btn-reset" onclick="resetMemory('mcaer')">🔄 Clear Memory</button>
+        <button class="btn-reset" onclick="clearMemory('mcaer')">🗑️ Clear Memory</button>
       </div>
       
       <div id="status_mcaer" class="toast">Ready</div>
       <label>Live Scoreboard:</label>
       <div id="scoreBoard_mcaer" class="scoreBoard"><div class="empty-state">Waiting for answers...</div></div>
-      <button class="btn-result" onclick="postLeaderboard('mcaer')">🏆 Post Results</button>
+      
+      <div class="action-row">
+        <button class="btn-result" onclick="postLeaderboard('mcaer')">🏆 Post Telegram</button>
+        <button class="btn-pdf" onclick="generatePDF('mcaer')">📄 Generate PDF</button>
+      </div>
     </div>
 
     <!-- 3. NET MODULE -->
@@ -290,20 +256,36 @@
       </div>
 
       <div id="run_net" style="display:none;">
-        <div class="progress-box">
-          <div class="progress-text">Progress: <span id="prog_net">0</span> / <span id="total_net">0</span> Qs</div>
-          <div class="progress-sub" id="next_net">Next Batch: 1 to 30</div>
+        <div class="range-controls">
+          <label>Start Q: <input type="number" id="startQ_net" min="1"></label>
+          <label>End Q: <input type="number" id="endQ_net" min="1"></label>
+          <button class="btn-reset-range" onclick="resetRange('net')">🔄 Reset 1</button>
         </div>
-        <button id="startBtn_net" class="btn-start" onclick="startBatch('net')">🚀 Start Next Batch</button>
+
+        <div class="progress-box">
+          <div class="progress-stats">
+            <span>Pushed: <span id="pushed_net">0</span></span>
+            <span>Total Qs: <span id="remain_net">0</span></span>
+          </div>
+          <div class="progress-bar-container"><div class="progress-bar-fill" id="bar_net"></div></div>
+          <div class="progress-sub">
+            <span id="eta_net">ETA: --:--</span>
+          </div>
+        </div>
+        <button id="startBtn_net" class="btn-start" onclick="startBatch('net')">🚀 Start Selected Batch</button>
         <button id="stopBtn_net" class="btn-stop" onclick="stopExam('net')">🛑 Stop Exam</button>
         <button class="btn-manage" onclick="openManager('net')">📝 Manage Questions</button>
-        <button class="btn-reset" onclick="resetMemory('net')">🔄 Clear Memory</button>
+        <button class="btn-reset" onclick="clearMemory('net')">🗑️ Clear Memory</button>
       </div>
       
       <div id="status_net" class="toast">Ready</div>
       <label>Live Scoreboard:</label>
       <div id="scoreBoard_net" class="scoreBoard"><div class="empty-state">Waiting for answers...</div></div>
-      <button class="btn-result" onclick="postLeaderboard('net')">🏆 Post Results</button>
+      
+      <div class="action-row">
+        <button class="btn-result" onclick="postLeaderboard('net')">🏆 Post Telegram</button>
+        <button class="btn-pdf" onclick="generatePDF('net')">📄 Generate PDF</button>
+      </div>
     </div>
 
   </div>
@@ -315,11 +297,7 @@
         <h3 id="modalTitle">Manage Questions</h3>
         <span class="close-btn" onclick="closeManager()">&times;</span>
       </div>
-      
-      <div id="qListArea">
-        <div id="qListContainer"></div>
-      </div>
-
+      <div id="qListArea"><div id="qListContainer"></div></div>
       <div id="editArea">
         <label>Edit Question JSON:</label>
         <textarea id="editJsonText" style="height: 180px;"></textarea>
@@ -329,7 +307,6 @@
           <button class="btn-reset" onclick="cancelEdit()" style="margin-top: 10px;">Cancel</button>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -341,6 +318,7 @@
     let wakeLock = null;
     let anyActiveExams = 0;
     let currentManageGroup = "";
+    let customLogoBase64 = null; 
 
     const state = {
       ibps: { isCancelled: false, scores: {}, batchTotal: 0 },
@@ -348,14 +326,29 @@
       net: { isCancelled: false, scores: {}, batchTotal: 0 }
     };
 
+    document.getElementById('logoUpload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) { customLogoBase64 = event.target.result; };
+      reader.readAsDataURL(file);
+    });
+
     async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} }
     function enableBackgroundMode() { document.getElementById("bgAudio").play().catch(()=>{}); }
     function disableBackgroundMode() { if(anyActiveExams <= 0) document.getElementById("bgAudio").pause(); }
 
+    function shuffleArray(array) {
+      let shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
     window.onload = () => {
-      refreshUI('ibps');
-      refreshUI('mcaer');
-      refreshUI('net');
+      refreshUI('ibps'); refreshUI('mcaer'); refreshUI('net');
       listenForAnswers(); 
     }
 
@@ -365,26 +358,20 @@
       statusDiv.className = `toast ${type}`;
     }
 
-    // --- MEMORY & BATCHING LOGIC --- //
     function saveToMemory(groupId) {
       const rawText = document.getElementById(`data_${groupId}`).value.trim();
       if(!rawText) return showToast(groupId, "Please paste JSON data first.", "error");
-      
       try {
         let jsonArray = JSON.parse(rawText);
         if (!Array.isArray(jsonArray)) jsonArray = [jsonArray];
-        
         localStorage.setItem(`db_${groupId}_qs`, JSON.stringify(jsonArray));
         localStorage.setItem(`db_${groupId}_idx`, 0); 
-        
         showToast(groupId, `Successfully saved ${jsonArray.length} questions!`, "success");
         refreshUI(groupId);
-      } catch (e) {
-        showToast(groupId, "Invalid JSON format.", "error");
-      }
+      } catch (e) { showToast(groupId, "Invalid JSON format.", "error"); }
     }
 
-    function resetMemory(groupId) {
+    function clearMemory(groupId) {
       if(confirm(`Are you sure you want to clear the saved questions for ${groupId.toUpperCase()}?`)) {
         localStorage.removeItem(`db_${groupId}_qs`);
         localStorage.removeItem(`db_${groupId}_idx`);
@@ -392,6 +379,13 @@
         refreshUI(groupId);
         showToast(groupId, "Memory cleared.", "info");
       }
+    }
+    
+    // NEW RESET FUNCTION
+    function resetRange(groupId) {
+        localStorage.setItem(`db_${groupId}_idx`, 0);
+        refreshUI(groupId);
+        showToast(groupId, "Target range reset back to Question 1.", "info");
     }
 
     function refreshUI(groupId) {
@@ -402,20 +396,23 @@
       if(qsData) {
         const arr = JSON.parse(qsData);
         const currentIndex = parseInt(localStorage.getItem(`db_${groupId}_idx`)) || 0;
-        const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
-        const endRange = Math.min(currentIndex + batchSize, arr.length);
-
-        document.getElementById(`prog_${groupId}`).innerText = currentIndex;
-        document.getElementById(`total_${groupId}`).innerText = arr.length;
+        const globalBatch = parseInt(document.getElementById("globalBatch").value) || 40;
         
-        if (currentIndex >= arr.length) {
-            document.getElementById(`next_${groupId}`).innerText = "🎉 All questions completed!";
-            document.getElementById(`startBtn_${groupId}`).style.display = "none";
-        } else {
-            document.getElementById(`next_${groupId}`).innerText = `Next Batch: Q${currentIndex + 1} to Q${endRange}`;
-            document.getElementById(`startBtn_${groupId}`).style.display = "flex";
-        }
+        // Populate Range Inputs Based on Current Index
+        let startVisual = currentIndex + 1;
+        let endVisual = Math.min(currentIndex + globalBatch, arr.length);
+        
+        // Failsafe bounds
+        if (startVisual > arr.length) startVisual = arr.length;
+        
+        document.getElementById(`startQ_${groupId}`).value = startVisual;
+        document.getElementById(`endQ_${groupId}`).value = endVisual;
 
+        document.getElementById(`pushed_${groupId}`).innerText = currentIndex;
+        document.getElementById(`remain_${groupId}`).innerText = arr.length;
+        document.getElementById(`bar_${groupId}`).style.width = `0%`;
+        document.getElementById(`eta_${groupId}`).innerText = `ETA: --:--`;
+        
         setupDiv.style.display = "none";
         runDiv.style.display = "block";
       } else {
@@ -424,33 +421,18 @@
       }
     }
 
-    document.getElementById("globalBatch").addEventListener('change', () => {
-       refreshUI('ibps'); refreshUI('mcaer'); refreshUI('net');
-    });
+    document.getElementById("globalBatch").addEventListener('change', () => { refreshUI('ibps'); refreshUI('mcaer'); refreshUI('net'); });
 
-    // --- QUESTION MANAGER MODAL LOGIC --- //
     function openManager(groupId) {
-      currentManageGroup = groupId;
-      document.getElementById('modalTitle').innerText = `Manage Questions - ${groupId.toUpperCase()}`;
-      renderQuestionList();
-      document.getElementById('qModal').style.display = 'flex';
+      currentManageGroup = groupId; document.getElementById('modalTitle').innerText = `Manage Questions - ${groupId.toUpperCase()}`;
+      renderQuestionList(); document.getElementById('qModal').style.display = 'flex';
     }
-
-    function closeManager() {
-      document.getElementById('qModal').style.display = 'none';
-      cancelEdit();
-    }
-
+    function closeManager() { document.getElementById('qModal').style.display = 'none'; cancelEdit(); }
+    
     function renderQuestionList() {
       const qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
-      const container = document.getElementById('qListContainer');
-      container.innerHTML = '';
-      
-      if(qs.length === 0) {
-        container.innerHTML = '<p class="empty-state">No questions found in memory.</p>';
-        return;
-      }
-
+      const container = document.getElementById('qListContainer'); container.innerHTML = '';
+      if(qs.length === 0) return container.innerHTML = '<p class="empty-state">No questions found in memory.</p>';
       qs.forEach((q, idx) => {
         container.innerHTML += `
           <div class="q-list-item">
@@ -459,56 +441,36 @@
               <button class="btn-edit" onclick="startEdit(${idx})">Edit</button>
               <button class="btn-del" onclick="deleteQuestion(${idx})">Del</button>
             </div>
-          </div>
-        `;
+          </div>`;
       });
     }
-
+    
     function deleteQuestion(idx) {
       if(confirm(`Are you sure you want to delete Question ${idx + 1}?`)) {
-        let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
-        qs.splice(idx, 1);
+        let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]'); qs.splice(idx, 1);
         localStorage.setItem(`db_${currentManageGroup}_qs`, JSON.stringify(qs));
-        renderQuestionList();
-        refreshUI(currentManageGroup);
+        renderQuestionList(); refreshUI(currentManageGroup);
       }
     }
-
+    
     function startEdit(idx) {
       let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
-      document.getElementById('editIndex').value = idx;
-      document.getElementById('editJsonText').value = JSON.stringify(qs[idx], null, 2);
-      
-      document.getElementById('qListArea').style.display = 'none';
-      document.getElementById('editArea').style.display = 'block';
+      document.getElementById('editIndex').value = idx; document.getElementById('editJsonText').value = JSON.stringify(qs[idx], null, 2);
+      document.getElementById('qListArea').style.display = 'none'; document.getElementById('editArea').style.display = 'block';
     }
-
+    
     function saveEdit() {
       const idx = document.getElementById('editIndex').value;
-      const jsonText = document.getElementById('editJsonText').value;
-      
       try {
-        const updatedQ = JSON.parse(jsonText);
-        let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]');
-        qs[idx] = updatedQ;
+        const updatedQ = JSON.parse(document.getElementById('editJsonText').value);
+        let qs = JSON.parse(localStorage.getItem(`db_${currentManageGroup}_qs`) || '[]'); qs[idx] = updatedQ;
         localStorage.setItem(`db_${currentManageGroup}_qs`, JSON.stringify(qs));
-        
-        cancelEdit();
-        renderQuestionList();
-        refreshUI(currentManageGroup);
-        alert("Question updated successfully!");
-      } catch (e) {
-        alert("Invalid JSON format. Please check your syntax.");
-      }
+        cancelEdit(); renderQuestionList(); refreshUI(currentManageGroup); showToast(currentManageGroup, "Question updated successfully!", "success");
+      } catch (e) { alert("Invalid JSON format."); }
     }
+    
+    function cancelEdit() { document.getElementById('editArea').style.display = 'none'; document.getElementById('qListArea').style.display = 'block'; }
 
-    function cancelEdit() {
-      document.getElementById('editArea').style.display = 'none';
-      document.getElementById('qListArea').style.display = 'block';
-    }
-
-
-    // --- EXECUTION LOGIC --- //
     async function autoDetectGroup(groupId) {
       showToast(groupId, "Searching for recent group message...", "info");
       try {
@@ -522,39 +484,53 @@
               return showToast(groupId, `✅ Linked to: ${msg.chat.title}`, "success");
             }
           }
-          showToast(groupId, "No group found. Send a message in your group first.", "error");
-        } else {
-          showToast(groupId, "No recent activity found.", "error");
         }
-      } catch (e) {
-        showToast(groupId, "Network error.", "error");
-      }
+        showToast(groupId, "No group found. Send a message in your group first.", "error");
+      } catch (e) { showToast(groupId, "Network error.", "error"); }
     }
 
     function stopExam(groupId) {
-      state[groupId].isCancelled = true;
-      anyActiveExams--;
-      disableBackgroundMode();
+      state[groupId].isCancelled = true; anyActiveExams--; disableBackgroundMode();
       showToast(groupId, "Batch aborted manually.", "error");
+    }
+
+    function updateProgressBar(groupId, elapsedSec, totalSec) {
+        if(totalSec <= 0) return;
+        const remain = Math.max(0, totalSec - elapsedSec);
+        const mins = Math.floor(remain / 60);
+        const secs = remain % 60;
+        document.getElementById(`eta_${groupId}`).innerText = `ETA: ${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+        const pct = Math.min(100, (elapsedSec / totalSec) * 100);
+        document.getElementById(`bar_${groupId}`).style.width = `${pct}%`;
     }
 
     async function startBatch(groupId) {
       const chatId = document.getElementById(`chatId_${groupId}`).value.trim();
       if(!chatId) return showToast(groupId, "Missing Chat ID.", "error");
 
-      const qsData = localStorage.getItem(`db_${groupId}_qs`);
+      let qsData = localStorage.getItem(`db_${groupId}_qs`);
       if(!qsData) return showToast(groupId, "No questions in memory.", "error");
+      let allQuestions = JSON.parse(qsData);
 
-      const allQuestions = JSON.parse(qsData);
-      const currentIndex = parseInt(localStorage.getItem(`db_${groupId}_idx`)) || 0;
-      const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
-      
-      const endIndex = Math.min(currentIndex + batchSize, allQuestions.length);
-      const batchQuestions = allQuestions.slice(currentIndex, endIndex);
+      // GET RANGE FROM UI
+      let startVisual = parseInt(document.getElementById(`startQ_${groupId}`).value) || 1;
+      let endVisual = parseInt(document.getElementById(`endQ_${groupId}`).value) || allQuestions.length;
 
-      await requestWakeLock(); 
-      anyActiveExams++;
-      enableBackgroundMode();
+      // Validate Range
+      if (startVisual < 1) startVisual = 1;
+      if (endVisual > allQuestions.length) endVisual = allQuestions.length;
+      if (startVisual > endVisual) {
+          showToast(groupId, "Start Q cannot be greater than End Q.", "error");
+          return;
+      }
+
+      const startIdx = startVisual - 1;
+      const endIdx = endVisual; 
+      const batchQuestions = allQuestions.slice(startIdx, endIdx);
+
+      if(batchQuestions.length === 0) return showToast(groupId, "No questions in selected range.", "error");
+
+      await requestWakeLock(); anyActiveExams++; enableBackgroundMode();
       
       state[groupId].isCancelled = false;
       state[groupId].batchTotal = batchQuestions.length;
@@ -564,31 +540,46 @@
       document.getElementById(`startBtn_${groupId}`).style.display = "none";
       document.getElementById(`stopBtn_${groupId}`).style.display = "flex";
       
-      const timerSec = parseInt(document.getElementById("globalTimer").value) || 15;
-      const delayGap = parseInt(document.getElementById("globalDelay").value) || 5;
+      const timerSec = Math.max(5, Math.min(600, parseInt(document.getElementById("globalTimer").value) || 30));
+      const delayGap = Math.max(0, parseInt(document.getElementById("globalDelay").value) || 12);
       const isProtected = document.getElementById("globalProtect").checked;
+      const doShuffleOpts = document.getElementById("globalShuffleOpts").checked;
+
+      let batchTotalTimeSec = (batchQuestions.length * timerSec) + ((batchQuestions.length - 1) * delayGap);
+      let batchElapsedSec = 0;
 
       for (let i = 0; i < batchQuestions.length; i++) {
         if (state[groupId].isCancelled) break;
         
-        let visualQNumber = currentIndex + i + 1;
+        let visualQNumber = startIdx + i + 1; // Accurate numbering based on selected range
         showToast(groupId, `Sending Q${visualQNumber} (Batch ${i+1}/${batchQuestions.length})...`, "info");
         
-        const success = await sendSingleQuiz(chatId, batchQuestions[i], groupId, timerSec, isProtected, visualQNumber);
-        if (!success) break; 
+        const success = await sendSingleQuiz(chatId, batchQuestions[i], groupId, timerSec, isProtected, visualQNumber, doShuffleOpts);
+        if (!success) {
+            showToast(groupId, `Failed to send Q${visualQNumber}. Telegram API error.`, "error");
+            break; 
+        }
+
+        document.getElementById(`pushed_${groupId}`).innerText = visualQNumber;
 
         if (i < batchQuestions.length - 1) {
-          const totalWait = timerSec + delayGap;
-          for(let sec = totalWait; sec > 0; sec--) {
+          for(let sec = timerSec; sec > 0; sec--) {
             if (state[groupId].isCancelled) break;
-            if(sec > delayGap) showToast(groupId, `Q${visualQNumber} open... ${sec - delayGap}s left`, "info");
-            else showToast(groupId, `Delay: Next Q in ${sec}s...`, "info");
+            showToast(groupId, `Q${visualQNumber} open... ${sec}s left`, "info");
+            updateProgressBar(groupId, ++batchElapsedSec, batchTotalTimeSec);
+            await new Promise(res => setTimeout(res, 1000));
+          }
+          for(let sec = delayGap; sec > 0; sec--) {
+            if (state[groupId].isCancelled) break;
+            showToast(groupId, `Delay: Next Q in ${sec}s...`, "info");
+            updateProgressBar(groupId, ++batchElapsedSec, batchTotalTimeSec);
             await new Promise(res => setTimeout(res, 1000));
           }
         } else {
             for(let sec = timerSec; sec > 0; sec--) {
                if (state[groupId].isCancelled) break;
                showToast(groupId, `Final Q open... ${sec}s left`, "info");
+               updateProgressBar(groupId, ++batchElapsedSec, batchTotalTimeSec);
                await new Promise(res => setTimeout(res, 1000));
             }
         }
@@ -599,25 +590,35 @@
 
       if (!state[groupId].isCancelled) {
         showToast(groupId, "Batch Complete! Auto-posting results...", "success");
-        localStorage.setItem(`db_${groupId}_idx`, endIndex);
+        // Update index memory to where this batch finished
+        localStorage.setItem(`db_${groupId}_idx`, endIdx);
+        updateProgressBar(groupId, batchTotalTimeSec, batchTotalTimeSec); 
         refreshUI(groupId);
         
-        anyActiveExams--;
-        disableBackgroundMode();
-        
+        anyActiveExams--; disableBackgroundMode();
         setTimeout(() => { postLeaderboard(groupId); }, 2000);
       }
     }
 
-    async function sendSingleQuiz(chatId, item, groupId, timerSec, isProtected, qNumber) {
+    async function sendSingleQuiz(chatId, item, groupId, timerSec, isProtected, qNumber, doShuffleOpts) {
       if (!item.question || !item.options) return false;
-      let correctIndex = item.options.indexOf(item.answer);
-      if (correctIndex === -1) correctIndex = 0; 
+      
+      let finalOptions = [...item.options].map(opt => String(opt).trim());
+      if (doShuffleOpts) finalOptions = shuffleArray(finalOptions);
+      finalOptions = finalOptions.slice(0, 10);
+      
+      let safeAnswer = String(item.answer).trim();
+      let correctIndex = finalOptions.indexOf(safeAnswer);
+      
+      if (correctIndex === -1) {
+          finalOptions[0] = safeAnswer.substring(0, 100); 
+          correctIndex = 0; 
+      }
       
       const data = {
         chat_id: chatId,
         question: `[Q${qNumber} - ${groupId.toUpperCase()}] ${item.question.substring(0, 270)}`, 
-        options: JSON.stringify(item.options.slice(0, 10)), 
+        options: JSON.stringify(finalOptions), 
         type: "quiz",
         correct_option_id: correctIndex, 
         is_anonymous: false,
@@ -633,36 +634,52 @@
         if(result.ok) {
           globalPollMap[result.result.poll.id] = { correctIndex: correctIndex, groupId: groupId };
           return true;
-        }
+        } 
         return false;
       } catch(e) { return false; }
     }
 
-    // --- LISTENER & SCOREBOARD --- //
+    // UPDATED ROBUST POLLING LOGIC
     async function listenForAnswers() {
       const connDot = document.getElementById("connStatus");
       while (true) {
         try {
-          const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${updateOffset}&timeout=30&allowed_updates=["poll_answer"]`);
-          if (!res.ok) throw new Error();
+          const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ offset: updateOffset, timeout: 10, allowed_updates: ["poll_answer"] })
+          });
           
+          if (!res.ok) throw new Error("HTTP Status: " + res.status);
           const data = await res.json();
           connDot.className = "status-dot"; 
 
-          if(data.ok && data.result.length > 0) {
-            for(let update of data.result) {
-              updateOffset = update.update_id + 1; 
-              if(update.poll_answer) {
+          if (data.ok && data.result.length > 0) {
+            updateOffset = data.result[data.result.length - 1].update_id + 1;
+            
+            for (let update of data.result) {
+              if (update.poll_answer) {
                 const ans = update.poll_answer;
                 const pollData = globalPollMap[ans.poll_id];
+                
                 if (pollData) {
-                    const uId = ans.user.id;
-                    const uName = (ans.user.first_name + (ans.user.last_name ? " " + ans.user.last_name : "")).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const uId = ans.user ? ans.user.id : (ans.voter_chat ? ans.voter_chat.id : "unknown");
+                    let uName = "Unknown Student";
+                    if (ans.user) uName = (ans.user.first_name + " " + (ans.user.last_name || "")).trim();
+                    else if (ans.voter_chat) uName = ans.voter_chat.title;
+                    
+                    uName = uName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                     const gId = pollData.groupId;
 
-                    if(!state[gId].scores[uId]) state[gId].scores[uId] = { name: uName, score: 0 };
-                    if(pollData.correctIndex === ans.option_ids[0]) state[gId].scores[uId].score += 1;
+                    if (!state[gId].scores[uId]) {
+                        state[gId].scores[uId] = { name: uName, score: 0 };
+                    }
                     
+                    if (ans.option_ids && ans.option_ids.length > 0) {
+                        if (pollData.correctIndex === ans.option_ids[0]) {
+                            state[gId].scores[uId].score += 1;
+                        }
+                    }
                     renderScoreboard(gId);
                 }
               }
@@ -670,7 +687,7 @@
           }
         } catch(e) {
           connDot.className = "status-dot offline"; 
-          await new Promise(res => setTimeout(res, 3000)); 
+          await new Promise(res => setTimeout(res, 2000)); 
         }
       }
     }
@@ -713,12 +730,71 @@
 
       try {
         const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { 
-            method: "POST", 
-            headers: { "Content-Type": "application/json" }, 
-            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: "HTML" }) 
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: "HTML" }) 
         });
         if((await res.json()).ok) showToast(groupId, "Leaderboard posted successfully!", "success");
       } catch(e) {}
+    }
+
+    function generatePDF(groupId) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      const sorted = Object.values(state[groupId].scores).sort((a, b) => b.score - a.score);
+      if(sorted.length === 0) return alert("No scores recorded yet. Wait for answers.");
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
+      if(customLogoBase64) {
+          doc.setGState(new doc.GState({opacity: 0.08}));
+          doc.addImage(customLogoBase64, 'PNG', (pageWidth/2) - 60, (pageHeight/2) - 60, 120, 120);
+          doc.setGState(new doc.GState({opacity: 1.0}));
+          doc.addImage(customLogoBase64, 'PNG', pageWidth - 35, 12, 22, 22);
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 31, 63); 
+      doc.setFontSize(24);
+      doc.text(`Official Exam Results`, 14, 24);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(0, 102, 204); 
+      doc.text(`Module: ${groupId.toUpperCase()} | AgriQ Pro `, 14, 32);
+      
+      const dateString = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      doc.setFontSize(11);
+      doc.setTextColor(107, 114, 128);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Date: ${dateString}`, 14, 40);
+      doc.text(`Questions in Session: ${state[groupId].batchTotal}`, 14, 46);
+
+      const tableData = sorted.map((u, i) => {
+          let rankStr = (i + 1).toString();
+          if (i === 0) rankStr = '1 (Gold)';
+          if (i === 1) rankStr = '2 (Silver)';
+          if (i === 2) rankStr = '3 (Bronze)';
+          return [rankStr, u.name, `${u.score} pts`];
+      });
+
+      doc.autoTable({
+          startY: 55,
+          head: [['Rank', 'Student Name', 'Total Score']],
+          body: tableData,
+          theme: 'striped',
+          headStyles: { fillColor: [0, 102, 204], textColor: 255, fontSize: 12, fontStyle: 'bold' },
+          bodyStyles: { fontSize: 11, textColor: 50 },
+          alternateRowStyles: { fillColor: [244, 247, 249] },
+          styles: { cellPadding: 6 },
+          columnStyles: { 0: { fontStyle: 'bold', textColor: [0, 31, 63] }, 2: { fontStyle: 'bold', textColor: [34, 139, 34] } }
+      });
+
+      const finalY = doc.lastAutoTable.finalY || 60;
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Generated By AgriQ Pro Admin", 14, finalY + 15);
+
+      doc.save(`Toppers_${groupId.toUpperCase()}_${new Date().getTime()}.pdf`);
     }
   </script>
 </body>
