@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AlphaCatch | Sky Cloud Controller</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --sky-bg: #f0f9ff;
+      --sky-surface: #ffffff;
+      --sky-primary: #0ea5e9;
+      --sky-primary-hover: #0284c7;
+      --sky-accent: #38bdf8;
+      --text-main: #334155;
+      --text-muted: #94a3b8;
+      --danger: #fb7185;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --shadow-soft: 0 12px 40px rgba(14, 165, 233, 0.08);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      padding: 20px; margin: 0; 
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); 
+      color: var(--text-main); 
+      min-height: 100vh;
+    }
+
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { margin: 0; font-size: 28px; color: var(--sky-primary); font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+    .header p { margin: 5px 0 0 0; font-size: 14px; color: var(--text-muted); font-weight: 500; }
+    
+    .global-settings { 
+      background: var(--sky-surface); padding: 15px 25px; border-radius: 100px; 
+      margin: 0 auto 30px auto; display: flex; gap: 20px; flex-wrap: wrap; 
+      align-items: center; justify-content: center; box-shadow: var(--shadow-soft); 
+      max-width: 800px;
+    }
+    .global-settings label { margin: 0; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; color: var(--text-main);}
+    .global-settings input[type="number"] { width: 60px; padding: 8px 12px; border-radius: 20px; text-align: center; border: 2px solid #f1f5f9; outline: none; font-weight: 700; color: var(--sky-primary);}
+    .global-settings input[type="number"]:focus { border-color: var(--sky-accent); }
+    
+    .dashboards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto;}
+    
+    .card { 
+      background: var(--sky-surface); padding: 25px; border-radius: 32px; 
+      box-shadow: var(--shadow-soft); display: flex; flex-direction: column; 
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h2 { font-size: 18px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;}
+    .tag { background: #e0f2fe; color: var(--sky-primary); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;}
+
+    label { font-weight: 700; margin-top: 15px; display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+    input[type="text"], input[type="number"], textarea { 
+      width: 100%; padding: 14px 18px; margin: 8px 0; 
+      border: 2px solid #f1f5f9; border-radius: 20px; font-size: 14px; 
+      box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
+      background: #f8fafc; transition: var(--transition); outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--sky-accent); background: #fff; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+    textarea { height: 120px; resize: vertical; }
+    
+    .input-group { display: flex; gap: 8px; align-items: center; margin-bottom: 5px; }
+    .input-group input { margin: 0; }
+    
+    button { 
+      padding: 16px; font-size: 14px; color: white; border: none; border-radius: 20px; 
+      cursor: pointer; width: 100%; font-weight: 800; transition: var(--transition); 
+      display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px;
+    }
+    button:active { transform: scale(0.97); }
+    
+    .btn-detect { background: #f1f5f9; color: var(--text-main); width: auto; padding: 14px 20px; white-space: nowrap; }
+    .btn-detect:hover { background: #e2e8f0; }
+    .btn-start { background: linear-gradient(135deg, var(--sky-accent) 0%, var(--sky-primary) 100%); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3); }
+    .btn-stop { background: var(--danger); box-shadow: 0 8px 20px rgba(251, 113, 133, 0.3); }
+    .btn-result { background: var(--success); margin-top: auto; box-shadow: 0 8px 20px rgba(52, 211, 153, 0.3); }
+    .btn-save { background: var(--text-main); color: #fff; }
+    .btn-reset { background: transparent; color: var(--danger); border: 2px dashed var(--danger); }
+    
+    .toast { margin-top: 15px; padding: 12px; border-radius: 16px; font-size: 13px; font-weight: 700; text-align: center; display: none; }
+    .toast.info { background: #e0f2fe; color: var(--sky-primary); display: block; }
+    .toast.success { background: #d1fae5; color: #059669; display: block; }
+    .toast.error { background: #ffe4e6; color: #e11d48; display: block; }
+
+    .scoreBoard { background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 24px; padding: 10px; height: 160px; overflow-y: auto; margin: 15px 0; }
+    .score-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .score-row:last-child { border-bottom: none; }
+    .score-name { font-weight: 700; color: var(--text-main); }
+    .score-pts { background: var(--sky-primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .empty-state { text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; font-weight: 500; }
+    
+    .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; background-color: var(--success); box-shadow: 0 0 12px var(--success); margin-left: 8px; transition: 0.3s; }
+    .status-dot.offline { background-color: var(--danger); box-shadow: 0 0 12px var(--danger); }
+
+    .progress-box { background: #f0fdf4; border: 2px solid #d1fae5; padding: 15px; border-radius: 20px; text-align: center; margin-bottom: 15px; }
+    .progress-text { font-size: 15px; font-weight: 800; color: #059669; }
+    .progress-sub { font-size: 12px; color: #10b981; margin-top: 4px; font-weight: 600;}
+
+    /* Custom Modal */
+    #modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; opacity: 0; transition: opacity 0.3s ease;}
+    .modal-box { background: var(--sky-surface); padding: 30px; border-radius: 32px; width: 100%; max-width: 360px; text-align: center; transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5);}
+    .modal-box h3 { margin: 0 0 10px 0; color: var(--text-main); font-weight: 800; font-size: 20px; }
+    .modal-box p { color: var(--text-muted); font-size: 14px; line-height: 1.5; font-weight: 500; margin-bottom: 25px; word-break: break-word;}
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-btn { flex: 1; padding: 14px; margin: 0; border-radius: 16px; border: none; font-weight: 800; cursor: pointer;}
+    .m-cancel { background: #f1f5f9; color: var(--text-main); }
+    .m-confirm { background: var(--sky-primary); color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Custom Alert Modal -->
+  <div id="modal-overlay">
+    <div class="modal-box" id="modal-box">
+      <h3 id="m-title">Title</h3>
+      <p id="m-text">Message</p>
+      <div class="modal-actions">
+        <button class="modal-btn m-cancel" id="m-cancel" onclick="closeModal()">Cancel</button>
+        <button class="modal-btn m-confirm" id="m-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1><i data-lucide="cloud"></i> SkyBase Controller</h1>
+    <p>Cloud-synced Batch Orchestration <span id="connStatus" class="status-dot" title="Database Connected"></span></p>
+  </div>
+
+  <div class="global-settings">
+    <label>Timer <input type="number" id="globalTimer" value="15" min="5"></label>
+    <label>Delay <input type="number" id="globalDelay" value="5" min="0"></label>
+    <label>Batch Size <input type="number" id="globalBatch" value="30" min="1"></label>
+    <label><input type="checkbox" id="globalProtect" checked style="width: auto; margin:0; accent-color: var(--sky-primary);"> Protect Content</label>
+  </div>
+
+  <div class="dashboards">
+    
+    <!-- MODULE TEMPLATE (Repeated for IBPS, MCAER, NET) -->
+    <div class="card" id="module_ibps">
+      <div class="card-header">
+        <h2><i data-lucide="book-open"></i> IBPS</h2>
+        <span class="tag">CLOUD SYNCED</span>
+      </div>
+      
+      <label>Group Chat ID</label>
+      <div class="input-group">
+        <input type="text" id="chatId_ibps" placeholder="-100xxxxxxxxx">
+        <button class="btn-detect" onclick="autoDetectGroup('ibps')"><i data-lucide="search"></i></button>
+      </div>
+
+      <div id="setup_ibps">
+        <label>Cloud Database Upload (Raw Text or JSON)</label>
+        <textarea id="data_ibps" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
+        <button class="btn-save" onclick="syncToCloud('ibps')"><i data-lucide="cloud-upload"></i> Upload to SkyBase</button>
+      </div>
+
+      <div id="run_ibps" style="display:none;">
+        <div class="progress-box">
+          <div class="progress-text">Progress: <span id="prog_ibps">0</span> / <span id="total_ibps">0</span></div>
+          <div class="progress-sub" id="next_ibps">Next Batch: 1 to 30</div>
+        </div>
+        <button id="startBtn_ibps" class="btn-start" onclick="triggerWorker('ibps')"><i data-lucide="play"></i> Dispatch Batch</button>
+        <button class="btn-reset" onclick="resetCloud('ibps')"><i data-lucide="trash-2"></i> Wipe Cloud Data</button>
+      </div>
+      
+      <div id="status_ibps" class="toast">Awaiting Data</div>
+    </div>
+
+    <!-- MCAER -->
+    <div class="card" id="module_mcaer">
+      <div class="card-header">
+        <h2><i data-lucide="leaf"></i> MCAER</h2>
+        <span class="tag">CLOUD SYNCED</span>
+      </div>
+      <label>Group Chat ID</label>
+      <div class="input-group">
+        <input type="text" id="chatId_mcaer" placeholder="-100xxxxxxxxx">
+        <button class="btn-detect" onclick="autoDetectGroup('mcaer')"><i data-lucide="search"></i></button>
+      </div>
+      <div id="setup_mcaer">
+        <label>Cloud Database Upload (Raw Text or JSON)</label>
+        <textarea id="data_mcaer" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
+        <button class="btn-save" onclick="syncToCloud('mcaer')"><i data-lucide="cloud-upload"></i> Upload to SkyBase</button>
+      </div>
+      <div id="run_mcaer" style="display:none;">
+        <div class="progress-box">
+          <div class="progress-text">Progress: <span id="prog_mcaer">0</span> / <span id="total_mcaer">0</span></div>
+          <div class="progress-sub" id="next_mcaer">Next Batch: 1 to 30</div>
+        </div>
+        <button id="startBtn_mcaer" class="btn-start" onclick="triggerWorker('mcaer')"><i data-lucide="play"></i> Dispatch Batch</button>
+        <button class="btn-reset" onclick="resetCloud('mcaer')"><i data-lucide="trash-2"></i> Wipe Cloud Data</button>
+      </div>
+      <div id="status_mcaer" class="toast">Awaiting Data</div>
+    </div>
+
+    <!-- NET -->
+    <div class="card" id="module_net">
+      <div class="card-header">
+        <h2><i data-lucide="graduation-cap"></i> NET</h2>
+        <span class="tag">CLOUD SYNCED</span>
+      </div>
+      <label>Group Chat ID</label>
+      <div class="input-group">
+        <input type="text" id="chatId_net" placeholder="-100xxxxxxxxx">
+        <button class="btn-detect" onclick="autoDetectGroup('net')"><i data-lucide="search"></i></button>
+      </div>
+      <div id="setup_net">
+        <label>Cloud Database Upload (Raw Text or JSON)</label>
+        <textarea id="data_net" placeholder='1. Question text... A. Option 1... Answer: A'></textarea>
+        <button class="btn-save" onclick="syncToCloud('net')"><i data-lucide="cloud-upload"></i> Upload to SkyBase</button>
+      </div>
+      <div id="run_net" style="display:none;">
+        <div class="progress-box">
+          <div class="progress-text">Progress: <span id="prog_net">0</span> / <span id="total_net">0</span></div>
+          <div class="progress-sub" id="next_net">Next Batch: 1 to 30</div>
+        </div>
+        <button id="startBtn_net" class="btn-start" onclick="triggerWorker('net')"><i data-lucide="play"></i> Dispatch Batch</button>
+        <button class="btn-reset" onclick="resetCloud('net')"><i data-lucide="trash-2"></i> Wipe Cloud Data</button>
+      </div>
+      <div id="status_net" class="toast">Awaiting Data</div>
+    </div>
+
+  </div>
+
+  <script>
+    // System Config
+    lucide.createIcons();
+    const token = "8783125069:AAEQtewJ-ikqVhOakiJEazutduY-BPwyp7U"; 
+    
+    // FIREBASE INITIALIZATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+      authDomain: "agri-mcar.firebaseapp.com",
+      databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+      projectId: "agri-mcar"
+    };
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Check connection status visually
+    db.ref('.info/connected').on('value', snap => {
+      document.getElementById('connStatus').className = snap.val() === true ? 'status-dot' : 'status-dot offline';
+    });
+
+    // Modal System
+    function customAlert(title, text) {
+      document.getElementById('m-title').innerText = title;
+      document.getElementById('m-text').innerText = text;
+      document.getElementById('m-cancel').style.display = 'none';
+      document.getElementById('m-confirm').innerText = "OK";
+      document.getElementById('m-confirm').onclick = closeModal;
+      openModal();
+    }
+    
+    function customConfirm(title, text, onConfirm) {
+      document.getElementById('m-title').innerText = title;
+      document.getElementById('m-text').innerText = text;
+      document.getElementById('m-cancel').style.display = 'block';
+      document.getElementById('m-confirm').innerText = "Confirm";
+      document.getElementById('m-confirm').onclick = () => { closeModal(); onConfirm(); };
+      openModal();
+    }
+
+    function openModal() {
+      const overlay = document.getElementById('modal-overlay');
+      const box = document.getElementById('modal-box');
+      overlay.style.display = 'flex';
+      setTimeout(() => { overlay.style.opacity = '1'; box.style.transform = 'translateY(0)'; }, 10);
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      const box = document.getElementById('modal-box');
+      overlay.style.opacity = '0';
+      box.style.transform = 'translateY(20px)';
+      setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    }
+
+    function showToast(groupId, message, type) {
+      const statusDiv = document.getElementById(`status_${groupId}`);
+      statusDiv.innerText = message;
+      statusDiv.className = `toast ${type}`;
+    }
+
+    // Auto-Parser for Raw Text
+    function parseInputData(rawText) {
+      rawText = rawText.trim();
+      if(!rawText) return [];
+      if (rawText.startsWith("[") || rawText.startsWith("{")) {
+          try { let parsed = JSON.parse(rawText); return Array.isArray(parsed) ? parsed : [parsed]; } 
+          catch(e) { return null; }
+      }
+      const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== '');
+      const results = [];
+      let currentItem = null;
+
+      for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const qMatch = line.match(/^(\d+)\.\s*(.*)/);
+          if (qMatch) {
+              if (currentItem) results.push(currentItem);
+              currentItem = { question: qMatch[2], options: [] };
+          } else if (currentItem) {
+              const optMatch = line.match(/^[A-Z]\.\s*(.*)/i);
+              const ansMatch = line.match(/^Answer:\s*([A-Z])/i);
+              if (optMatch) currentItem.options.push(optMatch[1]);
+              else if (ansMatch) {
+                  const letter = ansMatch[1].toUpperCase();
+                  const index = letter.charCodeAt(0) - 65;
+                  currentItem.answer = currentItem.options[index] || letter;
+              } else {
+                  if (currentItem.options.length === 0) currentItem.question += " " + line;
+                  else currentItem.options[currentItem.options.length - 1] += " " + line;
+              }
+          }
+      }
+      if (currentItem) results.push(currentItem);
+      return results;
+    }
+
+    // Cloud Database Logic
+    function syncToCloud(groupId) {
+      const rawText = document.getElementById(`data_${groupId}`).value;
+      const parsedArray = parseInputData(rawText);
+      
+      if(!parsedArray || parsedArray.length === 0) {
+        return customAlert("Format Error", "Invalid data format. Paste valid JSON or structured text.");
+      }
+
+      db.ref(`sky_exams/${groupId}`).set({
+        questions: parsedArray,
+        currentIndex: 0
+      }).then(() => {
+        showToast(groupId, `Successfully synced ${parsedArray.length} questions to SkyBase!`, "success");
+        document.getElementById(`data_${groupId}`).value = "";
+      }).catch(err => {
+        customAlert("Upload Blocked", `Firebase rejected the upload: ${err.message}`);
+      });
+    }
+
+    function resetCloud(groupId) {
+      customConfirm("Wipe Cloud Data?", `Are you sure you want to delete all stored questions for ${groupId.toUpperCase()}?`, () => {
+        db.ref(`sky_exams/${groupId}`).remove().then(() => {
+          showToast(groupId, "Cloud memory cleared.", "info");
+        }).catch(err => {
+          customAlert("Deletion Blocked", `Firebase rejected the deletion: ${err.message}`);
+        });
+      });
+    }
+
+    // Live sync listener for UI updates
+    let cloudDataState = {};
+    window.onload = () => {
+      ['ibps', 'mcaer', 'net'].forEach(groupId => {
+        db.ref(`sky_exams/${groupId}`).on('value', snap => {
+          const data = snap.val();
+          cloudDataState[groupId] = data;
+          updateDashboardUI(groupId, data);
+        });
+      });
+    };
+
+    function updateDashboardUI(groupId, dbData) {
+      const setupDiv = document.getElementById(`setup_${groupId}`);
+      const runDiv = document.getElementById(`run_${groupId}`);
+      
+      if(dbData && dbData.questions) {
+        const arr = dbData.questions;
+        const currentIndex = dbData.currentIndex || 0;
+        const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
+        const endRange = Math.min(currentIndex + batchSize, arr.length);
+
+        document.getElementById(`prog_${groupId}`).innerText = currentIndex;
+        document.getElementById(`total_${groupId}`).innerText = arr.length;
+        
+        if (currentIndex >= arr.length) {
+            document.getElementById(`next_${groupId}`).innerText = "🎉 All questions completed!";
+            document.getElementById(`startBtn_${groupId}`).style.display = "none";
+        } else {
+            document.getElementById(`next_${groupId}`).innerText = `Next Batch: Q${currentIndex + 1} to Q${endRange}`;
+            document.getElementById(`startBtn_${groupId}`).style.display = "flex";
+        }
+
+        setupDiv.style.display = "none";
+        runDiv.style.display = "block";
+      } else {
+        setupDiv.style.display = "block";
+        runDiv.style.display = "none";
+      }
+    }
+
+    document.getElementById("globalBatch").addEventListener('change', () => {
+      ['ibps', 'mcaer', 'net'].forEach(g => updateDashboardUI(g, cloudDataState[g]));
+    });
+
+    // Auto Detect Chat ID
+    async function autoDetectGroup(groupId) {
+      showToast(groupId, "Searching for recent group message...", "info");
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?limit=100`);
+        const data = await res.json();
+        if (data.ok && data.result.length > 0) {
+          for (let i = data.result.length - 1; i >= 0; i--) {
+            let msg = data.result[i].message || data.result[i].my_chat_member;
+            if (msg && msg.chat && (msg.chat.type === "group" || msg.chat.type === "supergroup")) {
+              document.getElementById(`chatId_${groupId}`).value = msg.chat.id;
+              return showToast(groupId, `✅ Linked to: ${msg.chat.title}`, "success");
+            }
+          }
+        }
+        customAlert("Not Found", "Send a message in your Telegram group first, then try again.");
+      } catch (e) { showToast(groupId, "Network error.", "error"); }
+    }
+
+    // Trigger the Node.js Background Worker
+    function triggerWorker(groupId) {
+      const chatId = document.getElementById(`chatId_${groupId}`).value.trim();
+      if(!chatId) return customAlert("Missing Info", "Please detect or enter your Group Chat ID first.");
+
+      const timerSec = parseInt(document.getElementById("globalTimer").value) || 15;
+      const delayGap = parseInt(document.getElementById("globalDelay").value) || 5;
+      const batchSize = parseInt(document.getElementById("globalBatch").value) || 30;
+      const isProtected = document.getElementById("globalProtect").checked;
+
+      db.ref(`sky_exams/${groupId}/trigger`).set({
+        status: "pending",
+        chatId: chatId,
+        batchSize: batchSize,
+        timerSec: timerSec,
+        delayGap: delayGap,
+        protectContent: isProtected,
+        timestamp: Date.now()
+      }).then(() => {
+        showToast(groupId, "🚀 Batch task dispatched to background worker!", "success");
+      }).catch(err => {
+        customAlert("Trigger Blocked", `Firebase rejected the trigger command: ${err.message}`);
+      });
+    }
+  </script>
+</body>
+</html>
