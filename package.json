@@ -1,0 +1,13 @@
+{
+  "name": "alphacatch-worker",
+  "version": "1.0.0",
+  "description": "Background worker for AlphaCatch Telegram exams",
+  "main": "worker.js",
+  "scripts": {
+    "start": "node worker.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}
