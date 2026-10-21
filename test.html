@@ -8,9 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#f0f9ff">
     <title>AgriQ Pro | Active Sky Test</title>
-    
-    <!-- Added 'Mukta' font for excellent Marathi/Devanagari rendering -->
-    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -33,12 +31,7 @@
             --glass: rgba(255, 255, 255, 0.8);
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            /* Added Mukta as the primary fallback for Marathi text */
-            font-family: 'Plus Jakarta Sans', 'Mukta', sans-serif; 
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
             background-color: var(--bg); 
@@ -76,7 +69,7 @@
         .timer-badge { 
             background: #fff; color: var(--primary); padding: 8px 16px; 
             border-radius: 12px; border: 1.5px solid var(--border); 
-            font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 14px;
+            font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px;
         }
 
         .profile-container { width: 42px; height: 42px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
@@ -129,15 +122,10 @@
             vertical-align: middle;
         }
 
-        /* Boosted line height and font sizing for Marathi character clarity */
-        #q-display {
-            font-size: 17px; font-weight: 600; line-height: 1.6; color: var(--text-main);
-        }
-
         .opt-box { 
             background: #fff; border: 1.5px solid var(--border); padding: 18px; 
-            border-radius: 20px; margin-bottom: 12px; font-weight: 600; cursor: pointer; color: var(--text-main);
-            transition: 0.2s; font-size: 15px; line-height: 1.5;
+            border-radius: 20px; margin-bottom: 12px; font-weight: 700; cursor: pointer; color: var(--text-main);
+            transition: 0.2s; font-size: 14px; line-height: 1.4;
         }
         .opt-box.selected { border-color: var(--success); background: var(--success); color: #fff; box-shadow: 0 8px 20px var(--success-glow); }
 
@@ -150,7 +138,7 @@
         }
 
         .btn-row { display: flex; gap: 10px; }
-        .btn-primary { flex: 1.5; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
+        .btn-primary { flex: 1.5; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
         .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: #fff; color: var(--text-main); border: 1.5px solid var(--border); font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
 
         #custom-modal { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.3); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(8px); }
@@ -162,7 +150,7 @@
 
     <div id="app-loader">
         <div id="loader-icon" style="color:var(--primary);"><i data-lucide="cloud-lightning" size="64" fill="currentColor"></i></div>
-        <p style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">SYNCING SCALES...</p>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">SYNCING SCALES...</p>
     </div>
 
     <div id="pause-overlay">
@@ -175,7 +163,7 @@
     <div id="custom-modal">
         <div class="modal-content">
             <div id="modal-title" style="font-weight:900; margin-bottom:10px; text-transform:uppercase; color:var(--primary);">Alert</div>
-            <div id="modal-text" style="font-size:14px; color:var(--text-dim); margin-bottom:25px;">Message</div>
+            <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:25px;">Message</div>
             <div class="modal-actions" style="display:flex; gap:12px;">
                 <button class="btn-sec" id="modal-cancel-btn">CANCEL</button>
                 <button class="btn-primary" id="modal-confirm-btn">CONFIRM</button>
@@ -207,7 +195,7 @@
                 QUESTION <span id="q-current-count">--</span> OF <span id="q-total-count">--</span>
                 <span id="retake-badge" class="retake-badge">RETAKE</span>
             </span>
-            <div id="q-display">Preparing your assessment...</div>
+            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6; color: var(--text-main);">Preparing your assessment...</div>
         </div>
 
         <div id="opts-display"></div>
@@ -249,10 +237,15 @@
         const reviewIndexParam = params.get('reviewIndex');
         const isReviewMode = reviewIndexParam !== null;
         
+        // Grab the version and random parameters from the URL
         const dbVersion = params.get('v');
         const isRandomMode = params.get('random') === 'true';
         
+        // Initialize Active Session ID
         let activeSessionId = folderKey ? `${folderKey}_${moduleKey}` : moduleKey; 
+        // ----------------------------------------------------
+        // FIX: Append '_v2' to prevent session collision
+        // ----------------------------------------------------
         if (dbVersion === '2') {
             activeSessionId += '_v2';
         }
@@ -264,16 +257,17 @@
         let isSubmitting = false;
         let isPaused = false;
 
+        // Auto-save function to persist test progress
         function saveProgress() {
             if (isReviewMode || isSubmitting) return;
             const progress = {
-                questions, 
+                questions, // Saves the completely generated/shuffled array so it isn't lost
                 userChoices,
                 markedQuestions,
                 currentIdx,
                 totalSecondsRemaining,
                 isPaused,
-                isRandomMode 
+                isRandomMode // Reference just in case
             };
             localStorage.setItem(`test_progress_${activeSessionId}`, JSON.stringify(progress));
         }
@@ -282,6 +276,7 @@
             localStorage.removeItem(`test_progress_${activeSessionId}`);
         }
 
+        // Comprehensive background event handling
         function handleBackgroundChange() {
             if (!isSubmitting && !isPaused && !isReviewMode) {
                 togglePause();
@@ -299,6 +294,7 @@
             document.getElementById('retake-badge').style.display = 'inline-block';
         }
 
+        // --- BACK BUTTON INTERCEPTION --- //
         window.history.pushState({ page: 'test' }, null, window.location.href);
 
         window.addEventListener('popstate', function(event) {
@@ -318,6 +314,7 @@
                 window.location.replace('analysis.html');
             }
         });
+        // -------------------------------- //
 
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = 'dashboard.html';
@@ -336,6 +333,7 @@
             }
         });
 
+        // ---------------- REVIEW MODE LOGIC ---------------- //
         function setupReviewMode(index) {
             document.getElementById('app-loader').classList.add('fade-out');
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
@@ -404,6 +402,7 @@
             lucide.createIcons();
         }
 
+        // ---------------- NORMAL TEST LOGIC ---------------- //
         async function loadQuestions() {
             if (!moduleKey) return window.location.href = 'courses.html';
 
@@ -448,6 +447,9 @@
                     const data = snap.val();
                     
                     if (data.current_session_id) {
+                        // ----------------------------------------------------
+                        // FIX: Ensure db-provided session ID gets _v2 appended
+                        // ----------------------------------------------------
                         activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
                     }
 
@@ -482,6 +484,7 @@
                 return showModal("EMPTY TEST", "There are no questions in this module.", "alert", () => window.location.href='courses.html');
             }
 
+            // Check for saved progress FIRST
             const savedProgress = localStorage.getItem(`test_progress_${activeSessionId}`);
             let restoredQuestions = null;
 
@@ -495,7 +498,7 @@
                         totalSecondsRemaining = parsed.totalSecondsRemaining;
                     }
                     if (parsed.questions && parsed.questions.length > 0) {
-                        restoredQuestions = parsed.questions; 
+                        restoredQuestions = parsed.questions; // Grab exact previous question configuration
                     }
                 } catch(e) {
                     console.error("Could not restore saved progress.");
@@ -503,8 +506,10 @@
             }
 
             if (restoredQuestions) {
+                // Restore exact layout to prevent reshuffling on resume
                 questions = restoredQuestions;
             } else {
+                // Brand new test: Process and shuffle based on switch
                 const processedQuestions = isRandomMode ? shuffleArray([...dataArray]) : [...dataArray];
 
                 questions = processedQuestions.map(q => {
@@ -658,7 +663,7 @@
             if(isSubmitting) return;
             isSubmitting = true;
             clearInterval(timer);
-            clearProgress(); 
+            clearProgress(); // Clear saved progress upon successful submission
 
             let correctCount = 0;
             const details = questions.map((q, i) => {
@@ -674,6 +679,7 @@
                 };
             });
 
+            // Award full normal marks regardless of retake status
             let earnedXP = correctCount;
 
             const resultData = { 
@@ -715,24 +721,14 @@
             }
         }
 
-        // --- BUG FIX: Correctly toggle cancel button state based on modal type ---
         function showModal(title, text, type, onConfirm) {
             const m = document.getElementById('custom-modal');
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-text').innerHTML = text;
             m.style.display = 'flex';
-            
             document.getElementById('modal-confirm-btn').onclick = () => { m.style.display='none'; if(onConfirm) onConfirm(); };
-            cancelBtn.onclick = () => m.style.display='none';
-            
-            // Re-show cancel button for confirm type, hide only for alert
-            if(type === 'alert') {
-                cancelBtn.classList.add('hidden');
-            } else {
-                cancelBtn.classList.remove('hidden');
-            }
+            document.getElementById('modal-cancel-btn').onclick = () => m.style.display='none';
+            if(type === 'alert') document.getElementById('modal-cancel-btn').classList.add('hidden');
         }
 
         lucide.createIcons();
