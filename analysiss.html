@@ -253,64 +253,41 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        // --- INSTANT OFFLINE LOAD ---
-        // Trigger instant offline load before Firebase Auth even resolves
-        document.addEventListener('DOMContentLoaded', () => {
-            // Instantly load the cached name from prior visits
-            const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
-            document.getElementById('user-tag').innerText = cachedName.toUpperCase();
-            document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
-
-            // Load analysis immediately from local storage
-            loadAnalysis();
-        });
-
-        // --- BACKGROUND FIREBASE SYNC ---
         auth.onAuthStateChanged(user => {
-            if (!user) {
-                // If there's no user and no cached offline test data, boot them
-                if (!localStorage.getItem('agriq_last_result')) {
-                    window.location.href = 'dashboard.html';
-                }
-                return;
-            }
-            
-            // Sync fresh profile name in the background
-            db.ref(`students/${user.uid}`).once('value').then(snap => {
+            if (!user) return window.location.href = 'dashboard.html';
+            db.ref(`students/${user.uid}`).once('value', snap => {
                 const d = snap.val();
-                if(d && d.name) {
-                    const freshName = d.name.toUpperCase();
-                    document.getElementById('user-tag').innerText = freshName;
-                    document.getElementById('user-initial').innerText = freshName[0];
-                    
-                    // Update global caches for next offline load
-                    localStorage.setItem('agriq_cached_username', freshName);
-                    
-                    // Sync with profile cache if it exists
-                    const cacheKey = `agriq_profile_cache_${user.uid}`;
-                    const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
-                    localStorage.setItem(cacheKey, JSON.stringify({ ...existing, name: d.name }));
+                if(d) {
+                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
+                    document.getElementById('user-initial').innerText = d.name[0];
                 }
-            }).catch(e => console.warn("Background fetch skipped. User is offline."));
+            });
+            loadAnalysis();
         });
 
         function loadAnalysis() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (!data) return; // Wait for auth listener to boot them if no cache
+            if (!data) return window.location.href = 'dashboard.html';
 
+            // RE-CALCULATION FIX: Use rawScore to bypass any old 0-score retake logic that might have saved.
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+            
+            // Calculate accurate percentage based on raw score
             const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
 
+            // Base Stats
             document.getElementById('acc-val').innerText = `${calculatedAccuracy}%`;
             document.getElementById('score-val').innerHTML = `${displayScore}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
             document.getElementById('chart-acc-text').innerText = `${calculatedAccuracy}%`;
 
+            // Dynamic Feedback Message
             let msg = "Keep Practicing!";
             if (calculatedAccuracy >= 90) msg = "Elite Performance! 🏆";
             else if (calculatedAccuracy >= 75) msg = "Outstanding Work! 🚀";
             else if (calculatedAccuracy >= 50) msg = "Good Job! 👍";
             document.getElementById('feedback-msg').innerText = msg;
 
+            // MCAER Rank Logic Calculator
             let predictedRank = "1500+";
             if (calculatedAccuracy >= 95) predictedRank = "1 - 50";
             else if (calculatedAccuracy >= 88) predictedRank = "51 - 150";
@@ -319,9 +296,9 @@
             else if (calculatedAccuracy >= 55) predictedRank = "801 - 1500";
             document.getElementById('mcaer-rank').innerText = predictedRank;
 
+            // Analyze Details
             let cCount = 0, wCount = 0, sCount = 0;
             const container = document.getElementById('review-container');
-            container.innerHTML = ''; // Clear container to avoid duplicate rendering on background sync
             
             data.details.forEach((item, i) => {
                 let status = "wrong";
@@ -342,7 +319,7 @@
                     badgeClass = "skip";
                     badgeText = "SKIPPED";
                     badgeIcon = "minus";
-                    answerColor = "var(--primary)";
+                    answerColor = "var(--primary)"; // Changed text color for skipped answer to blue
                     sCount++;
                 } else {
                     wCount++;
@@ -375,27 +352,33 @@
                 container.appendChild(card);
             });
 
+            // Update Metrics
             document.getElementById('count-c').innerText = cCount;
             document.getElementById('count-w').innerText = wCount;
             document.getElementById('count-s').innerText = sCount;
 
+            // Render Circular Graph (Conic Gradient)
             setTimeout(() => {
                 const totalQ = data.total || 1;
                 const cDeg = (cCount / totalQ) * 360;
                 const wDeg = cDeg + ((wCount / totalQ) * 360);
                 
+                // Colors: Green (Correct), Red (Wrong), Blue (Skipped)
                 const chartElement = document.getElementById('result-chart');
                 chartElement.style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
             }, 100);
             
             lucide.createIcons();
-            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 400);
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 800);
         }
 
+        // Filtering Logic
         function filterCards(type, btn) {
+            // Update Active Pill
             document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
 
+            // Show/Hide Cards
             const cards = document.querySelectorAll('.analysis-card');
             cards.forEach(card => {
                 if (type === 'all' || card.classList.contains(`type-${type}`)) {
@@ -406,50 +389,12 @@
             });
         }
 
-        // --- HELPER FUNCTION: DRAW PROMO FOOTER LINKS ---
-        function drawPromoFooter(doc, yPos, margin, maxLineWidth) {
-            if (yPos > 210) { doc.addPage(); yPos = 25; }
-            
-            yPos += 10;
-            doc.setDrawColor(226, 232, 240); doc.setFillColor(248, 250, 252);
-            doc.roundedRect(margin, yPos, maxLineWidth, 64, 3, 3, "FD");
-
-            yPos += 9;
-            doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(0, 45, 77);
-            doc.text("About AgriQ Pro", margin + 6, yPos);
-            yPos += 6;
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(100, 116, 139);
-            const aboutDesc = "AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.";
-            const splitAbout = doc.splitTextToSize(aboutDesc, maxLineWidth - 12);
-            doc.text(splitAbout, margin + 6, yPos);
-            yPos += (splitAbout.length * 5) + 3;
-
-            const btnW = 75; const btnH = 11;
-            doc.setFillColor(37, 211, 102); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
-            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
-            doc.text("Join WhatsApp Group", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
-            doc.link(margin + 6, yPos, btnW, btnH, { url: "https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=gi_t" });
-
-            yPos += btnH + 4; 
-            doc.setFillColor(0, 132, 255); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
-            doc.setTextColor(255, 255, 255);
-            doc.text("Get AgriQ Pro App", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
-            doc.link(margin + 6, yPos, btnW, btnH, { url: "https://agriqvnccorporation.github.io/AgriQ/index.html" });
-
-            return yPos + btnH + 10;
-        }
-
         // --- ENHANCED PDF GENERATION FUNCTION ---
         function downloadMissedQuestionsPDF() {
-            // Prevent crash if user is completely offline and jsPDF CDN failed to load
-            if (!window.jspdf) {
-                alert("The PDF generator is not available offline. Please connect to the internet to download this report.");
-                return;
-            }
-
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data || !data.details) return;
 
+            // Filter out correctly answered questions
             const missedQuestions = data.details.filter(item => item.user !== item.actual);
 
             if (missedQuestions.length === 0) {
@@ -460,185 +405,94 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const margin = 20; 
+            let yPos = 20;
+            const margin = 15;
             const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
-            const optionLabels = ["A", "B", "C", "D"];
-            
-            let yPos = 25;
 
-            // Date formatting
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-            // --- COVER PAGE HEADER ---
-            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(0, 45, 77);
-            doc.text("AgriQ", margin + 5, yPos);
-            const titleWidth = doc.getTextWidth("AgriQ ");
-            doc.setTextColor(0, 132, 255); doc.text("Pro", margin + 5 + titleWidth, yPos);
-            doc.setFontSize(12); doc.setTextColor(0, 132, 255);
-            doc.text("MCAER PG CET - 2026", margin + maxLineWidth - 5, yPos, { align: "right" });
-            
+            // Add Document Title
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("AgriQ Pro - Missed & Skipped Questions Review", margin, yPos);
             yPos += 15;
 
-            // Top Info Box
-            doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.5);
-            doc.rect(margin, yPos, maxLineWidth, 28);
-            
-            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            doc.text(`Date: ${formattedDate}`, margin + 5, yPos + 7);
-            doc.text(`Report Type: Missed Questions Analysis`, margin + (maxLineWidth/2), yPos + 7);
-            
-            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
-            const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
-
-            doc.text(`Original Score: ${displayScore} / ${data.total} (${calcAcc}%)`, margin + 5, yPos + 15);
-            doc.text(`Total Missed/Skipped: ${missedQuestions.length}`, margin + (maxLineWidth/2), yPos + 15);
-            
-            doc.text("Candidate Info:", margin + 5, yPos + 23);
-            doc.setFont("helvetica", "normal");
-            let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
-            doc.text(userNameText, margin + 5 + doc.getTextWidth("Candidate Info: ") + 2, yPos + 23);
-
-            yPos += 40;
-
-            // Instructions Header
-            doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
-            doc.text("Performance Review Guidelines:", margin, yPos);
-            yPos += 2;
-            doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2);
-            doc.line(margin, yPos, margin + maxLineWidth, yPos);
-            yPos += 6;
-
-            // Instructions Text (Tailored for active recall workflow)
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            const instructions = [
-                "1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.",
-                "2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.",
-                "3. Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material."
-            ];
-
-            instructions.forEach(inst => {
-                let splitInst = doc.splitTextToSize(inst, maxLineWidth - 5);
-                doc.text(splitInst, margin + 5, yPos);
-                yPos += (splitInst.length * 5) + 3;
-            });
-
-            doc.addPage();
-            yPos = 25;
-
-            // --- QUESTIONS LOOP ---
+            // Loop through missed questions and format them onto the PDF
             missedQuestions.forEach((item, index) => {
-                if (yPos > 260) { doc.addPage(); yPos = 25; }
-
-                const qNumber = index + 1;
-                const qText = `Q${qNumber}. ${item.question || "Unknown Question"}`;
-                
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); doc.setTextColor(0, 30, 50);
-                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
-                doc.text(splitQuestion, margin, yPos);
-                yPos += (splitQuestion.length * 5) + 3;
-
-                doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-                
-                if (item.options && Array.isArray(item.options)) {
-                    const optionsToPrint = item.options.slice(0, 4); 
-                    const colWidth = (maxLineWidth - 5) / 2; 
-
-                    let optStartY = yPos; let rowMaxY = [0, 0]; 
-
-                    optionsToPrint.forEach((opt, optIndex) => {
-                        let row = Math.floor(optIndex / 2); let col = optIndex % 2; 
-                        let xPos = margin + 2 + (col * colWidth);
-                        let yOffset = row === 0 ? 0 : rowMaxY[0];
-                        let currentY = optStartY + yOffset;
-
-                        let isCorrect = (opt === item.actual);
-                        let isUser = (opt === item.user);
-
-                        // 1. Draw the Label (e.g., [A], [B])
-                        doc.setFont("helvetica", "bold");
-                        if (isCorrect) doc.setTextColor(22, 163, 74); // Green
-                        else if (isUser) doc.setTextColor(220, 38, 38); // Red
-                        else doc.setTextColor(0, 132, 255); // Blue
-                        
-                        doc.text(`[${optionLabels[optIndex]}]`, xPos, currentY);
-
-                        // 2. Prepare the Option Text with the status appended at the end
-                        doc.setFont("helvetica", "normal");
-                        if (isCorrect) doc.setTextColor(22, 163, 74);
-                        else if (isUser) doc.setTextColor(220, 38, 38);
-                        else doc.setTextColor(70, 70, 70); // Dark Gray
-                        
-                        let textToPrint = opt;
-                        if (isCorrect) textToPrint += " (Correct)";
-                        if (isUser) textToPrint += " (Yours)";
-                        
-                        // 3. Draw the text starting safely to the right of the label
-                        const optText = doc.splitTextToSize(textToPrint, colWidth - 12);
-                        doc.text(optText, xPos + 9, currentY);
-
-                        // 4. Calculate row height for wrapping
-                        let optHeight = (optText.length * 4.5) + 2;
-                        if (optHeight > rowMaxY[row]) rowMaxY[row] = optHeight;
-                    });
-                    yPos = optStartY + rowMaxY[0] + rowMaxY[1] + 2; 
-                    
-                    if(item.user === "SKIPPED") {
-                        doc.setFont("helvetica", "italic"); doc.setTextColor(0, 132, 255);
-                        doc.text("Status: You skipped this question.", margin + 2, yPos);
-                        yPos += 5;
-                    }
-                } else {
-                     // Fallback for older test formats
-                     if (item.user === "SKIPPED") {
-                         doc.setTextColor(0, 132, 255); doc.text(`Your Answer: SKIPPED`, margin + 5, yPos);
-                     } else {
-                         doc.setTextColor(220, 38, 38); doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
-                     }
-                     yPos += 6;
-                     doc.setTextColor(22, 163, 74); doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
-                     yPos += 8; 
+                // Add new page if we are too close to the bottom
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
                 }
 
-                yPos += 4;
-                doc.setDrawColor(240, 244, 248); doc.setLineWidth(0.5);
-                doc.line(margin, yPos, doc.internal.pageSize.width - margin, yPos);
-                yPos += 6;
+                // Render Question Text
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0); // Black
+                const qText = `Q${index + 1}. ${item.question}`;
+                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
+                doc.text(splitQuestion, margin, yPos);
+                yPos += (splitQuestion.length * 6) + 4;
+
+                // Render Options if they were saved in localStorage
+                if (item.options && item.options.length > 0) {
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(11);
+                    
+                    item.options.forEach(opt => {
+                        // Check bounds inside the options loop
+                        if (yPos > 280) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
+                        
+                        let prefix = "- ";
+                        
+                        if (opt === item.actual) {
+                            doc.setTextColor(22, 163, 74); // Green for correct
+                            prefix = "[Correct] ";
+                        } else if (opt === item.user) {
+                            doc.setTextColor(220, 38, 38); // Red for wrongly chosen
+                            prefix = "[Your Answer] ";
+                        } else {
+                            doc.setTextColor(80, 80, 80); // Dark gray for neutral options
+                        }
+                        
+                        const optText = doc.splitTextToSize(`${prefix}${opt}`, maxLineWidth - 5);
+                        doc.text(optText, margin + 5, yPos);
+                        yPos += (optText.length * 6) + 2;
+                    });
+                    
+                    // Show "Skipped" message if skipped
+                    if (item.user === "SKIPPED") {
+                        if (yPos > 280) { doc.addPage(); yPos = 20; }
+                        doc.setFont("helvetica", "italic");
+                        doc.setFontSize(10);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text("Status: You skipped this question.", margin + 5, yPos);
+                        yPos += 8;
+                    }
+
+                } else {
+                    // Fallback for older test results that didn't save options
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(11);
+                    if (item.user === "SKIPPED") {
+                        doc.setTextColor(100, 100, 100); // Gray for skipped
+                    } else {
+                        doc.setTextColor(220, 38, 38); // Red for wrong
+                    }
+                    doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
+                    yPos += 6;
+
+                    // Render Correct Answer
+                    doc.setTextColor(22, 163, 74); // Green for correct
+                    doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
+                    yPos += 12; 
+                }
+                
+                yPos += 8; // Extra padding before the next question
             });
 
-            // --- PROMO FOOTER ---
-            yPos = drawPromoFooter(doc, yPos, margin, maxLineWidth);
-
-            // --- APPLY GLOBAL BORDERS & WATERMARK ---
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                const pageWidth = doc.internal.pageSize.width;
-                const pageHeight = doc.internal.pageSize.height;
-
-                // Double Border
-                doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.8);
-                doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
-                doc.setDrawColor(0, 132, 255); doc.setLineWidth(0.2);
-                doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
-
-                // Watermark
-                doc.setGState(new doc.GState({opacity: 0.05})); 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(70);
-                const text1 = "AgriQ "; const text2 = "Pro";
-                const totalW = doc.getTextWidth(text1) + doc.getTextWidth(text2);
-                const rad = 45 * Math.PI / 180;
-                const startX = (pageWidth / 2) - (totalW / 2) * Math.cos(rad);
-                const startY = (pageHeight / 2) + (totalW / 2) * Math.sin(rad);
-                doc.setTextColor(0, 45, 77); doc.text(text1, startX, startY, { angle: 45 });
-                doc.setTextColor(0, 132, 255); doc.text(text2, startX + doc.getTextWidth(text1) * Math.cos(rad), startY - doc.getTextWidth(text1) * Math.sin(rad), { angle: 45 });
-                doc.setGState(new doc.GState({opacity: 1.0})); 
-
-                // Pagination
-                doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(150, 150, 150);
-                doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 14, { align: "center" });
-            }
-
+            // Trigger the download
             doc.save("AgriQ_Missed_Questions.pdf");
         }
     </script>
