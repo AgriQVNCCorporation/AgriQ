@@ -152,4 +152,367 @@
     </div>
 
     <header>
-        <div style="display:flex; align-
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="profile-container" id="user-initial">U</div>
+            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">TEST ANALYSIS</span></div>
+        </div>
+        
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a href="leaderboard.html" class="icon-btn">
+                <i data-lucide="trophy" size="20"></i>
+            </a>
+            <div id="user-tag" style="font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono';">STUDENT</div>
+        </div>
+    </header>
+
+    <main>
+        <div>
+            <h1 class="feedback-title" id="feedback-msg">Assessment Complete!</h1>
+            <p class="feedback-sub">Here is your detailed performance breakdown.</p>
+        </div>
+
+        <div class="stat-banner">
+            <div class="stat-card" style="border-color: var(--primary); background: #f0f9ff;">
+                <span class="stat-val" id="acc-val">0%</span>
+                <span class="stat-lbl">Accuracy Target</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val" id="score-val" style="color: var(--text-main);">0<span style="font-size:18px; color:var(--text-dim)">/0</span></span>
+                <span class="stat-lbl">Final Score</span>
+            </div>
+            <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
+                <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
+                <span class="stat-lbl">Projected MCAER Rank</span>
+                <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
+            </div>
+        </div>
+
+        <div class="metrics-container">
+            <div class="chart-title">Assessing Questions</div>
+            
+            <div class="donut-chart" id="result-chart">
+                <div class="donut-inner">
+                    <span id="chart-acc-text">0%</span>
+                </div>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <div class="m-dot" style="background:var(--success)"></div>
+                    <span class="m-val" id="count-c">0</span>
+                    <span class="m-lbl">Correct</span>
+                </div>
+                <div class="metric-item">
+                    <div class="m-dot" style="background:var(--danger)"></div>
+                    <span class="m-val" id="count-w">0</span>
+                    <span class="m-lbl">Wrong</span>
+                </div>
+                <div class="metric-item">
+                    <div class="m-dot" style="background:var(--primary)"></div>
+                    <span class="m-val" id="count-s">0</span>
+                    <span class="m-lbl">Skipped</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-scroll">
+            <div class="filter-pill active" onclick="filterCards('all', this)">All Questions</div>
+            <div class="filter-pill" onclick="filterCards('correct', this)">Correct <i data-lucide="check" size="12"></i></div>
+            <div class="filter-pill" onclick="filterCards('wrong', this)">Wrong <i data-lucide="x" size="12"></i></div>
+            <div class="filter-pill" onclick="filterCards('skipped', this)">Skipped <i data-lucide="minus" size="12"></i></div>
+        </div>
+
+        <div id="review-container"></div>
+
+        <div class="btn-group">
+            <button class="btn-action outline" id="download-btn" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
+                <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
+            </button>
+            <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
+                <i data-lucide="award" size="20"></i> VIEW RANKINGS
+            </button>
+            <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
+                <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
+            </button>
+        </div>
+    </main>
+
+    <script>
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function () { window.location.href = "dashboard.html"; };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
+            authDomain: "agri-mcar.firebaseapp.com",
+            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
+            projectId: "agri-mcar"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+            if (!user) return window.location.href = 'dashboard.html';
+            db.ref(`students/${user.uid}`).once('value', snap => {
+                const d = snap.val();
+                if(d) {
+                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
+                    document.getElementById('user-initial').innerText = d.name[0];
+                }
+            });
+            loadAnalysis();
+        });
+
+        function loadAnalysis() {
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (!data) return window.location.href = 'dashboard.html';
+
+            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+            const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
+
+            document.getElementById('acc-val').innerText = `${calculatedAccuracy}%`;
+            document.getElementById('score-val').innerHTML = `${displayScore}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
+            document.getElementById('chart-acc-text').innerText = `${calculatedAccuracy}%`;
+
+            let msg = "Keep Practicing!";
+            if (calculatedAccuracy >= 90) msg = "Elite Performance! 🏆";
+            else if (calculatedAccuracy >= 75) msg = "Outstanding Work! 🚀";
+            else if (calculatedAccuracy >= 50) msg = "Good Job! 👍";
+            document.getElementById('feedback-msg').innerText = msg;
+
+            let predictedRank = "1500+";
+            if (calculatedAccuracy >= 95) predictedRank = "1 - 50";
+            else if (calculatedAccuracy >= 88) predictedRank = "51 - 150";
+            else if (calculatedAccuracy >= 80) predictedRank = "151 - 400";
+            else if (calculatedAccuracy >= 70) predictedRank = "401 - 800";
+            else if (calculatedAccuracy >= 55) predictedRank = "801 - 1500";
+            document.getElementById('mcaer-rank').innerText = predictedRank;
+
+            let cCount = 0, wCount = 0, sCount = 0;
+            const container = document.getElementById('review-container');
+            
+            data.details.forEach((item, i) => {
+                let status = "wrong";
+                let badgeClass = "fail";
+                let badgeText = "WRONG";
+                let badgeIcon = "x";
+                let answerColor = "var(--danger)";
+
+                if (item.user === item.actual) {
+                    status = "correct";
+                    badgeClass = "pass";
+                    badgeText = "CORRECT";
+                    badgeIcon = "check";
+                    answerColor = "var(--success)";
+                    cCount++;
+                } else if (item.user === "SKIPPED") {
+                    status = "skipped";
+                    badgeClass = "skip";
+                    badgeText = "SKIPPED";
+                    badgeIcon = "minus";
+                    answerColor = "var(--primary)"; 
+                    sCount++;
+                } else {
+                    wCount++;
+                }
+
+                const card = document.createElement('div');
+                card.className = `analysis-card type-${status}`;
+                card.style.animationDelay = `${i * 0.05}s`;
+                card.innerHTML = `
+                    <span class="status-badge ${badgeClass}"><i data-lucide="${badgeIcon}" size="10"></i> ${badgeText}</span>
+                    <div class="q-title"><span style="color:var(--text-dim); font-weight:800; font-family:'JetBrains Mono'; margin-right:5px;">Q${i+1}.</span> ${item.question}</div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">YOURS</span>
+                        <span style="color:${answerColor}; font-weight:800;">${item.user}</span>
+                    </div>
+                    
+                    ${status !== "correct" ? `
+                    <div class="data-row" style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2);">
+                        <span class="data-label" style="color:var(--success);">CORRECT</span>
+                        <span style="color:var(--success); font-weight:800;">${item.actual}</span>
+                    </div>` : ''}
+                    
+                    <div style="text-align: right;">
+                        <a href="test.html?reviewIndex=${i}" class="view-options-btn">
+                            VIEW OPTIONS <i data-lucide="external-link" size="12"></i>
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('count-c').innerText = cCount;
+            document.getElementById('count-w').innerText = wCount;
+            document.getElementById('count-s').innerText = sCount;
+
+            setTimeout(() => {
+                const totalQ = data.total || 1;
+                const cDeg = (cCount / totalQ) * 360;
+                const wDeg = cDeg + ((wCount / totalQ) * 360);
+                document.getElementById('result-chart').style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
+            }, 100);
+            
+            lucide.createIcons();
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 800);
+        }
+
+        function filterCards(type, btn) {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+
+            const cards = document.querySelectorAll('.analysis-card');
+            cards.forEach(card => {
+                card.style.display = (type === 'all' || card.classList.contains(`type-${type}`)) ? 'block' : 'none';
+            });
+        }
+
+        // --- UPGRADED HTML2PDF IMPLEMENTATION (SUPPORTS MARATHI & PROFESSIONAL LAYOUT) ---
+        function downloadMissedQuestionsPDF() {
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (!data || !data.details) return;
+
+            const missedQuestions = data.details.filter(item => item.user !== item.actual);
+
+            if (missedQuestions.length === 0) {
+                alert("Perfect score! You don't have any missed or skipped questions to download.");
+                return;
+            }
+
+            // UI Loading State
+            const btn = document.getElementById('download-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="lucide-spin" size="20"></i> GENERATING...';
+            btn.style.pointerEvents = 'none';
+            lucide.createIcons();
+
+            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+            const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
+            const userName = document.getElementById('user-tag').innerText || 'STUDENT';
+            const currentDate = new Date().toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'});
+
+            // Create a hidden container for the PDF render
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.top = '-9999px';
+            container.style.width = '750px'; 
+            container.style.padding = '30px';
+            container.style.backgroundColor = '#ffffff';
+            container.style.fontFamily = 'Arial, "Noto Sans", sans-serif'; 
+
+            // Header Section
+            let htmlContent = `
+                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 20px;">
+                    <h1 style="color: #1e3a8a; font-size: 26px; font-weight: bold; margin: 0;">AgriQ <span style="color: #3b82f6;">Pro</span></h1>
+                    <h2 style="color: #1e3a8a; font-size: 14px; font-weight: bold; margin: 0;">TEST ANALYSIS - 2026</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px; font-weight: bold; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; color: #1e293b;">
+                    <div>Date: ${currentDate}</div>
+                    <div>Report Type: Missed Questions Analysis</div>
+                    <div>Original Score: ${displayScore} / ${data.total} (${calculatedAccuracy}%)</div>
+                    <div>Total Missed/Skipped: ${missedQuestions.length}</div>
+                    <div style="grid-column: span 2;">Candidate Info: ${userName}</div>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #1e3a8a; font-size: 13px; margin-bottom: 12px; font-weight: bold;">Performance Review Guidelines:</h3>
+                    <ol style="font-size: 11px; color: #475569; padding-left: 20px; line-height: 1.6; margin: 0;">
+                        <li style="margin-bottom: 6px;">This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.</li>
+                        <li style="margin-bottom: 6px;">During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.</li>
+                        <li>Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material.</li>
+                    </ol>
+                </div>
+            `;
+
+            // Questions Section
+            const labels = ['A', 'B', 'C', 'D'];
+            missedQuestions.forEach((item, index) => {
+                let optionsHtml = '';
+                
+                if (item.options && item.options.length > 0) {
+                    optionsHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; font-size: 11.5px;">`;
+                    item.options.forEach((opt, i) => {
+                        let color = '#475569';
+                        let suffix = '';
+                        if (opt === item.actual) {
+                            color = '#16a34a'; 
+                            suffix = ' (Correct)';
+                        } else if (opt === item.user) {
+                            color = '#dc2626'; 
+                        }
+                        optionsHtml += `<div style="color: ${color};">[${labels[i] || '*'}] ${opt}${suffix}</div>`;
+                    });
+                    optionsHtml += `</div>`;
+                } else {
+                    optionsHtml = `
+                        <div style="margin-top: 12px; font-size: 11.5px;">
+                            <div style="color: #dc2626; margin-bottom: 6px;">[Your Answer] ${item.user}</div>
+                            <div style="color: #16a34a;">[Correct] ${item.actual}</div>
+                        </div>
+                    `;
+                }
+
+                let statusHtml = '';
+                if (item.user === "SKIPPED") {
+                     statusHtml = `<div style="color: #3b82f6; font-size: 10px; font-style: italic; margin-top: 14px;">Status: You skipped this question.</div>`;
+                }
+
+                htmlContent += `
+                    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid;">
+                        <div style="font-size: 12.5px; font-weight: bold; color: #0f172a; line-height: 1.4;">Q${index + 1}. ${item.question}</div>
+                        ${optionsHtml}
+                        ${statusHtml}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = htmlContent;
+            document.body.appendChild(container);
+
+            const opt = {
+                margin:       [20, 15, 20, 15], 
+                filename:     'AgriQ_Test_Analysis.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // Generate PDF and add Professional styling overlays (Borders, Watermark, Pagination)
+            html2pdf().from(container).set(opt).toPdf().get('pdf').then(function(pdf) {
+                const totalPages = pdf.internal.getNumberOfPages();
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    
+                    // Double border exactly like reference
+                    pdf.setDrawColor(30, 58, 138);
+                    pdf.setLineWidth(0.5);
+                    pdf.rect(10, 10, 190, 277);
+                    pdf.setLineWidth(0.2);
+                    pdf.rect(11, 11, 188, 275);
+
+                    // Diagonal Watermark
+                    pdf.setTextColor(245, 248, 255); 
+                    pdf.setFontSize(75);
+                    pdf.text("AgriQ Pro", 105, 170, { angle: 45, align: 'center' });
+
+                    // Centered Pagination
+                    pdf.setTextColor(100, 100, 100);
+                    pdf.setFontSize(8);
+                    pdf.text(`Page ${i} of ${totalPages}`, 105, 283, { align: 'center' });
+                }
+            }).save().then(() => {
+                document.body.removeChild(container);
+                btn.innerHTML = originalHtml;
+                btn.style.pointerEvents = 'auto';
+                lucide.createIcons();
+            });
+        }
+    </script>
+</body>
+</html>
