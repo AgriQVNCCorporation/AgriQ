@@ -160,7 +160,7 @@
     <header>
         <div style="display:flex; align-items:center; gap:12px;">
             <div class="profile-container" id="user-initial">U</div>
-            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">ANALYSIS</span></div>
+            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">ANALYSIS.</span></div>
         </div>
         <div id="user-tag" class="user-tag-badge">STUDENT</div>
     </header>
@@ -235,7 +235,11 @@
             </button>
             <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
                 <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
+            
             </button>
+            <button class="btn-action outline" onclick="window.location.href='leaderboard.html'">
+                <i data-lucide="layout-grid" size="20"></i> leaderboard 
+                </button>
         </div>
     </main>
 
@@ -411,7 +415,7 @@
         }
 
         // --- HELPER FUNCTION: DRAW PROMO FOOTER LINKS ---
-        function drawPromoFooter(doc, yPos, margin, maxLineWidth) {
+        function drawPromoFooter(doc, yPos, margin, maxLineWidth, pdfFont) {
             if (yPos > 210) { doc.addPage(); yPos = 25; }
             
             yPos += 10;
@@ -419,10 +423,10 @@
             doc.roundedRect(margin, yPos, maxLineWidth, 64, 3, 3, "FD");
 
             yPos += 9;
-            doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(0, 45, 77);
+            doc.setFont(pdfFont, "bold"); doc.setFontSize(13); doc.setTextColor(0, 45, 77);
             doc.text("About AgriQ Pro", margin + 6, yPos);
             yPos += 6;
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(100, 116, 139);
+            doc.setFont(pdfFont, "normal"); doc.setFontSize(10); doc.setTextColor(100, 116, 139);
             const aboutDesc = "AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.";
             const splitAbout = doc.splitTextToSize(aboutDesc, maxLineWidth - 12);
             doc.text(splitAbout, margin + 6, yPos);
@@ -430,7 +434,7 @@
 
             const btnW = 75; const btnH = 11;
             doc.setFillColor(37, 211, 102); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
-            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+            doc.setFont(pdfFont, "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
             doc.text("Join WhatsApp Group", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
             doc.link(margin + 6, yPos, btnW, btnH, { url: "https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=gi_t" });
 
@@ -444,8 +448,7 @@
         }
 
         // --- ENHANCED PDF GENERATION FUNCTION ---
-        function downloadMissedQuestionsPDF() {
-            // Check if the jsPDF CDN successfully loaded (in case of offline mode)
+        async function downloadMissedQuestionsPDF() {
             if (!window.jspdf) {
                 alert("The PDF generator is not available offline. Please connect to the internet to download this report.");
                 return;
@@ -461,8 +464,47 @@
                 return;
             }
 
+            // UI Feedback during async loading
+            const dlBtn = document.querySelector('.btn-action.primary');
+            const originalBtnHtml = dlBtn ? dlBtn.innerHTML : '';
+            if (dlBtn) {
+                dlBtn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING PDF...';
+                dlBtn.style.pointerEvents = 'none';
+                if (window.lucide) lucide.createIcons();
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            
+            // Default font variable tracking
+            let pdfFont = "helvetica";
+            
+            try {
+                // Asynchronously fetch Marathi (Devanagari) Support Font - Noto Sans Devanagari 
+                const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansdevanagari/NotoSansDevanagari-Regular.ttf';
+                const fontResponse = await fetch(fontUrl);
+                
+                if (fontResponse.ok) {
+                    const fontBuffer = await fontResponse.arrayBuffer();
+                    const fontBytes = new Uint8Array(fontBuffer);
+                    let fontBinary = '';
+                    for (let i = 0; i < fontBytes.byteLength; i++) {
+                        fontBinary += String.fromCharCode(fontBytes[i]);
+                    }
+                    const fontBase64 = window.btoa(fontBinary);
+                    
+                    doc.addFileToVFS("NotoSansDevanagari.ttf", fontBase64);
+                    doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "normal");
+                    
+                    // Registering fallback weights mapping to the loaded regular font to avoid throwing errors
+                    doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "bold");
+                    doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "italic");
+                    
+                    pdfFont = "NotoSansDevanagari";
+                }
+            } catch (error) {
+                console.warn("Failed to load Marathi font. Falling back to default styling.", error);
+            }
             
             const margin = 20; 
             const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
@@ -475,7 +517,7 @@
             const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
             // --- COVER PAGE HEADER ---
-            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(0, 45, 77);
+            doc.setFont(pdfFont, "bold"); doc.setFontSize(22); doc.setTextColor(0, 45, 77);
             doc.text("AgriQ", margin + 5, yPos);
             const titleWidth = doc.getTextWidth("AgriQ ");
             doc.setTextColor(0, 132, 255); doc.text("Pro", margin + 5 + titleWidth, yPos);
@@ -488,7 +530,7 @@
             doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.5);
             doc.rect(margin, yPos, maxLineWidth, 28);
             
-            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+            doc.setFont(pdfFont, "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
             doc.text(`Date: ${formattedDate}`, margin + 5, yPos + 7);
             doc.text(`Report Type: Missed Questions Analysis`, margin + (maxLineWidth/2), yPos + 7);
             
@@ -499,14 +541,14 @@
             doc.text(`Total Missed/Skipped: ${missedQuestions.length}`, margin + (maxLineWidth/2), yPos + 15);
             
             doc.text("Candidate Info:", margin + 5, yPos + 23);
-            doc.setFont("helvetica", "normal");
+            doc.setFont(pdfFont, "normal");
             let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
             doc.text(userNameText, margin + 5 + doc.getTextWidth("Candidate Info: ") + 2, yPos + 23);
 
             yPos += 40;
 
             // Instructions Header
-            doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
+            doc.setFont(pdfFont, "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
             doc.text("Performance Review Guidelines:", margin, yPos);
             yPos += 2;
             doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2);
@@ -514,7 +556,7 @@
             yPos += 6;
 
             // Instructions Text (Tailored for active recall workflow)
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+            doc.setFont(pdfFont, "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
             const instructions = [
                 "1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.",
                 "2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.",
@@ -537,12 +579,12 @@
                 const qNumber = index + 1;
                 const qText = `Q${qNumber}. ${item.question || "Unknown Question"}`;
                 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); doc.setTextColor(0, 30, 50);
+                doc.setFont(pdfFont, "bold"); doc.setFontSize(10.5); doc.setTextColor(0, 30, 50);
                 const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
                 doc.text(splitQuestion, margin, yPos);
                 yPos += (splitQuestion.length * 5) + 3;
 
-                doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+                doc.setFont(pdfFont, "normal"); doc.setFontSize(9.5);
                 
                 if (item.options && Array.isArray(item.options)) {
                     const optionsToPrint = item.options.slice(0, 4); 
@@ -566,21 +608,21 @@
                         else if (isUser) doc.setTextColor(220, 38, 38);
                         else doc.setTextColor(0, 132, 255);
                         
-                        doc.setFont("helvetica", "bold");
+                        doc.setFont(pdfFont, "bold");
                         doc.text(markerText, xPos, currentY);
 
                         // Set Suffix and Text Color
                         if (isCorrect) {
                             optString += " (Correct)";
                             doc.setTextColor(22, 163, 74); 
-                            doc.setFont("helvetica", "bold");
+                            doc.setFont(pdfFont, "bold");
                         } else if (isUser) {
                             optString += " (Yours)";
                             doc.setTextColor(220, 38, 38);
-                            doc.setFont("helvetica", "bold");
+                            doc.setFont(pdfFont, "bold");
                         } else {
                             doc.setTextColor(70, 70, 70);
-                            doc.setFont("helvetica", "normal");
+                            doc.setFont(pdfFont, "normal");
                         }
 
                         // Split option string and align 8 units to the right of the marker
@@ -593,7 +635,7 @@
                     yPos = optStartY + rowMaxY[0] + rowMaxY[1] + 2; 
                     
                     if(item.user === "SKIPPED") {
-                        doc.setFont("helvetica", "italic"); doc.setTextColor(0, 132, 255);
+                        doc.setFont(pdfFont, "italic"); doc.setTextColor(0, 132, 255);
                         doc.text("Status: You skipped this question.", margin + 2, yPos);
                         yPos += 5;
                     }
@@ -616,7 +658,7 @@
             });
 
             // --- PROMO FOOTER ---
-            yPos = drawPromoFooter(doc, yPos, margin, maxLineWidth);
+            yPos = drawPromoFooter(doc, yPos, margin, maxLineWidth, pdfFont);
 
             // --- APPLY GLOBAL BORDERS & WATERMARK ---
             const pageCount = doc.internal.getNumberOfPages();
@@ -633,7 +675,7 @@
 
                 // Watermark
                 doc.setGState(new doc.GState({opacity: 0.05})); 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(70);
+                doc.setFont(pdfFont, "bold"); doc.setFontSize(70);
                 const text1 = "AgriQ "; const text2 = "Pro";
                 const totalW = doc.getTextWidth(text1) + doc.getTextWidth(text2);
                 const rad = 45 * Math.PI / 180;
@@ -644,11 +686,18 @@
                 doc.setGState(new doc.GState({opacity: 1.0})); 
 
                 // Pagination
-                doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(150, 150, 150);
+                doc.setFontSize(8); doc.setFont(pdfFont, "bold"); doc.setTextColor(150, 150, 150);
                 doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 14, { align: "center" });
             }
 
             doc.save("AgriQ_Missed_Questions.pdf");
+            
+            // Restore UI state
+            if (dlBtn) {
+                dlBtn.innerHTML = originalBtnHtml;
+                dlBtn.style.pointerEvents = 'auto';
+                if (window.lucide) lucide.createIcons();
+            }
         }
     </script>
 </body>
