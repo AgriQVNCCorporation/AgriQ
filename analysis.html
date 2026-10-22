@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#f0f9ff">
-    <title>AgriQ Pro | Test Analysis</title>
+    <title>AgriQ Pro | Mission Analysis</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -16,8 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
-    <!-- Upgraded to html2pdf to support Marathi/Devanagari text and advanced CSS rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -52,18 +51,12 @@
             position: sticky; top: 0; z-index: 100;
         }
 
-        .icon-btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 40px; height: 40px; background: #fff;
-            border: 1.5px solid var(--border); border-radius: 12px;
-            color: var(--primary); text-decoration: none; transition: var(--transition);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
-        .icon-btn:active { transform: scale(0.9); background: var(--primary-glow); }
         .profile-container { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
+        .user-tag-badge { font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono'; background: var(--primary-glow); padding: 8px 14px; border-radius: 12px; }
 
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
+        /* Performance Summary Banner */
         .feedback-title { font-size: 20px; font-weight: 900; margin-bottom: 5px; color: var(--text-main); }
         .feedback-sub { font-size: 13px; color: var(--text-dim); font-weight: 600; margin-bottom: 25px; }
 
@@ -76,12 +69,13 @@
         .stat-val { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; display: block; color: var(--primary); line-height: 1.1; }
         .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; display: block; }
 
+        /* Detailed Metrics - Circular Chart */
         .metrics-container { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 25px 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; }
         .chart-title { font-size: 14px; font-weight: 900; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
         
         .donut-chart { 
             width: 150px; height: 150px; border-radius: 50%; 
-            background: #e2e8f0; 
+            background: #e2e8f0; /* Default */
             display: flex; align-items: center; justify-content: center;
             margin-bottom: 25px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.05);
@@ -99,6 +93,7 @@
         .m-val { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; color: var(--text-main); }
         .m-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
 
+        /* Filter Pills */
         .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 10px; scrollbar-width: none; }
         .filter-scroll::-webkit-scrollbar { display: none; }
         .filter-pill { 
@@ -107,6 +102,7 @@
         }
         .filter-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px var(--primary-glow); }
 
+        /* Analysis Cards */
         .analysis-card {
             background: #fff; border: 1.5px solid var(--border); border-radius: 24px; padding: 22px; margin-bottom: 16px;
             position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02); animation: slideUp 0.5s ease backwards; transition: 0.3s;
@@ -123,15 +119,6 @@
         .data-row { display: flex; align-items: center; gap: 12px; font-size: 13px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; }
         .data-label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
 
-        .btn-group { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
-        .btn-action { 
-            padding: 20px; border-radius: 20px; border: none; font-weight: 900; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            gap: 10px; transition: 0.2s; font-size: 15px;
-        }
-        .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
-        .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
-        
         .view-options-btn {
             margin-top: 15px; display: inline-flex; align-items: center; gap: 6px;
             font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none;
@@ -140,29 +127,42 @@
         }
         .view-options-btn:active { transform: scale(0.95); }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .lucide-spin { animation: spin 1s linear infinite; }
+        /* WhatsApp Admin Notice & Buttons */
+        .whatsapp-notice {
+            background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3);
+            border-radius: 20px; padding: 18px 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 16px; margin-top: 25px;
+        }
+        .w-icon {
+            background: #25D366; color: white; width: 44px; height: 44px;
+            border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .whatsapp-notice p { margin: 0; font-size: 13px; font-weight: 800; color: #166534; line-height: 1.5; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+        .btn-action { 
+            padding: 20px; border-radius: 20px; border: none; font-weight: 900; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            gap: 10px; transition: 0.2s; font-size: 15px;
+        }
+        .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
+        .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
+        .btn-action:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
 
     <div id="analysis-loader">
-        <div style="color:var(--primary);"><i data-lucide="bar-chart-3" size="64"></i></div>
+        <div style="color:var(--primary);"><i data-lucide="bar-chart-3" class="lucide lucide-bar-chart-3" size="64"></i></div>
         <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">DECODING RESULTS...</p>
     </div>
 
     <header>
         <div style="display:flex; align-items:center; gap:12px;">
             <div class="profile-container" id="user-initial">U</div>
-            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">TEST ANALYSIS</span></div>
+            <div style="font-weight: 900; font-size: 14px; letter-spacing: -0.5px;">AgriQ <span style="color:var(--primary);">ANALYSIS</span></div>
         </div>
-        
-        <div style="display:flex; align-items:center; gap:10px;">
-            <a href="leaderboard.html" class="icon-btn">
-                <i data-lucide="trophy" size="20"></i>
-            </a>
-            <div id="user-tag" style="font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono';">STUDENT</div>
-        </div>
+        <div id="user-tag" class="user-tag-badge">STUDENT</div>
     </header>
 
     <main>
@@ -224,12 +224,14 @@
 
         <div id="review-container"></div>
 
+        <div class="whatsapp-notice">
+            <div class="w-icon"><i data-lucide="bell-ring" size="22"></i></div>
+            <p>Your result will be declared as soon as possible by the Admin on the WhatsApp group. Thank you!</p>
+        </div>
+
         <div class="btn-group">
-            <button class="btn-action outline" id="download-btn" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
+            <button class="btn-action primary" onclick="downloadMissedQuestionsPDF()">
                 <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
-            </button>
-            <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
-                <i data-lucide="award" size="20"></i> VIEW RANKINGS
             </button>
             <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
                 <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
@@ -238,6 +240,7 @@
     </main>
 
     <script>
+        // Prevent back navigation to the active test
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function () { window.location.href = "dashboard.html"; };
 
@@ -252,21 +255,52 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        auth.onAuthStateChanged(user => {
-            if (!user) return window.location.href = 'dashboard.html';
-            db.ref(`students/${user.uid}`).once('value', snap => {
-                const d = snap.val();
-                if(d) {
-                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
-                    document.getElementById('user-initial').innerText = d.name[0];
-                }
-            });
+        // --- INSTANT OFFLINE LOAD ---
+        function loadOfflineResults() {
+            // Instantly load the cached name from prior visits
+            const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
+            document.getElementById('user-tag').innerText = cachedName.toUpperCase();
+            document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
+
+            // Load analysis immediately from local storage
             loadAnalysis();
+        }
+
+        // Trigger instant offline load before Firebase Auth even resolves
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOfflineResults();
+        });
+
+        // --- BACKGROUND FIREBASE SYNC ---
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // If there's no user and no cached offline test data, boot them
+                if (!localStorage.getItem('agriq_last_result')) {
+                    window.location.href = 'dashboard.html';
+                }
+                return;
+            }
+            
+            // Sync fresh profile name in the background
+            db.ref(`students/${user.uid}`).once('value').then(snap => {
+                const d = snap.val();
+                if(d && d.name) {
+                    const freshName = d.name.toUpperCase();
+                    document.getElementById('user-tag').innerText = freshName;
+                    document.getElementById('user-initial').innerText = freshName[0];
+                    
+                    // Update global caches for next offline load
+                    localStorage.setItem('agriq_cached_username', freshName);
+                    const cacheKey = `agriq_profile_cache_${user.uid}`;
+                    const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
+                    localStorage.setItem(cacheKey, JSON.stringify({ ...existing, name: d.name }));
+                }
+            }).catch(e => console.warn("Background fetch skipped. User is offline."));
         });
 
         function loadAnalysis() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (!data) return window.location.href = 'dashboard.html';
+            if (!data) return; // Silent return if nothing to load; auth listener will redirect if needed
 
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
             const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
@@ -291,6 +325,7 @@
 
             let cCount = 0, wCount = 0, sCount = 0;
             const container = document.getElementById('review-container');
+            container.innerHTML = ''; // Clear container to avoid duplicate rendering
             
             data.details.forEach((item, i) => {
                 let status = "wrong";
@@ -311,7 +346,7 @@
                     badgeClass = "skip";
                     badgeText = "SKIPPED";
                     badgeIcon = "minus";
-                    answerColor = "var(--primary)"; 
+                    answerColor = "var(--primary)";
                     sCount++;
                 } else {
                     wCount++;
@@ -352,11 +387,13 @@
                 const totalQ = data.total || 1;
                 const cDeg = (cCount / totalQ) * 360;
                 const wDeg = cDeg + ((wCount / totalQ) * 360);
-                document.getElementById('result-chart').style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
+                
+                const chartElement = document.getElementById('result-chart');
+                chartElement.style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
             }, 100);
             
             lucide.createIcons();
-            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 800);
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 400);
         }
 
         function filterCards(type, btn) {
@@ -365,12 +402,55 @@
 
             const cards = document.querySelectorAll('.analysis-card');
             cards.forEach(card => {
-                card.style.display = (type === 'all' || card.classList.contains(`type-${type}`)) ? 'block' : 'none';
+                if (type === 'all' || card.classList.contains(`type-${type}`)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
             });
         }
 
-        // --- UPGRADED HTML2PDF IMPLEMENTATION (SUPPORTS MARATHI & PROFESSIONAL LAYOUT) ---
+        // --- HELPER FUNCTION: DRAW PROMO FOOTER LINKS ---
+        function drawPromoFooter(doc, yPos, margin, maxLineWidth) {
+            if (yPos > 210) { doc.addPage(); yPos = 25; }
+            
+            yPos += 10;
+            doc.setDrawColor(226, 232, 240); doc.setFillColor(248, 250, 252);
+            doc.roundedRect(margin, yPos, maxLineWidth, 64, 3, 3, "FD");
+
+            yPos += 9;
+            doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(0, 45, 77);
+            doc.text("About AgriQ Pro", margin + 6, yPos);
+            yPos += 6;
+            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(100, 116, 139);
+            const aboutDesc = "AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.";
+            const splitAbout = doc.splitTextToSize(aboutDesc, maxLineWidth - 12);
+            doc.text(splitAbout, margin + 6, yPos);
+            yPos += (splitAbout.length * 5) + 3;
+
+            const btnW = 75; const btnH = 11;
+            doc.setFillColor(37, 211, 102); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
+            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+            doc.text("Join WhatsApp Group", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
+            doc.link(margin + 6, yPos, btnW, btnH, { url: "https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=gi_t" });
+
+            yPos += btnH + 4; 
+            doc.setFillColor(0, 132, 255); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.text("Get AgriQ Pro App", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
+            doc.link(margin + 6, yPos, btnW, btnH, { url: "https://agriqvnccorporation.github.io/AgriQ/index.html" });
+
+            return yPos + btnH + 10;
+        }
+
+        // --- ENHANCED PDF GENERATION FUNCTION ---
         function downloadMissedQuestionsPDF() {
+            // Check if the jsPDF CDN successfully loaded (in case of offline mode)
+            if (!window.jspdf) {
+                alert("The PDF generator is not available offline. Please connect to the internet to download this report.");
+                return;
+            }
+
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data || !data.details) return;
 
@@ -381,137 +461,194 @@
                 return;
             }
 
-            // UI Loading State
-            const btn = document.getElementById('download-btn');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="loader-2" class="lucide-spin" size="20"></i> GENERATING...';
-            btn.style.pointerEvents = 'none';
-            lucide.createIcons();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const margin = 20; 
+            const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
+            const optionLabels = ["A", "B", "C", "D"];
+            
+            let yPos = 25;
 
+            // Date formatting
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // --- COVER PAGE HEADER ---
+            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(0, 45, 77);
+            doc.text("AgriQ", margin + 5, yPos);
+            const titleWidth = doc.getTextWidth("AgriQ ");
+            doc.setTextColor(0, 132, 255); doc.text("Pro", margin + 5 + titleWidth, yPos);
+            doc.setFontSize(12); doc.setTextColor(0, 132, 255);
+            doc.text("MCAER PG CET - 2026", margin + maxLineWidth - 5, yPos, { align: "right" });
+            
+            yPos += 15;
+
+            // Top Info Box
+            doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.5);
+            doc.rect(margin, yPos, maxLineWidth, 28);
+            
+            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+            doc.text(`Date: ${formattedDate}`, margin + 5, yPos + 7);
+            doc.text(`Report Type: Missed Questions Analysis`, margin + (maxLineWidth/2), yPos + 7);
+            
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
-            const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
-            const userName = document.getElementById('user-tag').innerText || 'STUDENT';
-            const currentDate = new Date().toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'});
+            const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
 
-            // Create a hidden container for the PDF render
-            const container = document.createElement('div');
-            container.style.position = 'absolute';
-            container.style.left = '-9999px';
-            container.style.top = '-9999px';
-            container.style.width = '750px'; 
-            container.style.padding = '30px';
-            container.style.backgroundColor = '#ffffff';
-            container.style.fontFamily = 'Arial, "Noto Sans", sans-serif'; 
+            doc.text(`Original Score: ${displayScore} / ${data.total} (${calcAcc}%)`, margin + 5, yPos + 15);
+            doc.text(`Total Missed/Skipped: ${missedQuestions.length}`, margin + (maxLineWidth/2), yPos + 15);
+            
+            doc.text("Candidate Info:", margin + 5, yPos + 23);
+            doc.setFont("helvetica", "normal");
+            let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
+            doc.text(userNameText, margin + 5 + doc.getTextWidth("Candidate Info: ") + 2, yPos + 23);
 
-            // Header Section
-            let htmlContent = `
-                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 20px;">
-                    <h1 style="color: #1e3a8a; font-size: 26px; font-weight: bold; margin: 0;">AgriQ <span style="color: #3b82f6;">Pro</span></h1>
-                    <h2 style="color: #1e3a8a; font-size: 14px; font-weight: bold; margin: 0;">TEST ANALYSIS - 2026</h2>
-                </div>
+            yPos += 40;
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px; font-weight: bold; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; color: #1e293b;">
-                    <div>Date: ${currentDate}</div>
-                    <div>Report Type: Missed Questions Analysis</div>
-                    <div>Original Score: ${displayScore} / ${data.total} (${calculatedAccuracy}%)</div>
-                    <div>Total Missed/Skipped: ${missedQuestions.length}</div>
-                    <div style="grid-column: span 2;">Candidate Info: ${userName}</div>
-                </div>
+            // Instructions Header
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
+            doc.text("Performance Review Guidelines:", margin, yPos);
+            yPos += 2;
+            doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2);
+            doc.line(margin, yPos, margin + maxLineWidth, yPos);
+            yPos += 6;
 
-                <div style="margin-bottom: 30px;">
-                    <h3 style="color: #1e3a8a; font-size: 13px; margin-bottom: 12px; font-weight: bold;">Performance Review Guidelines:</h3>
-                    <ol style="font-size: 11px; color: #475569; padding-left: 20px; line-height: 1.6; margin: 0;">
-                        <li style="margin-bottom: 6px;">This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.</li>
-                        <li style="margin-bottom: 6px;">During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.</li>
-                        <li>Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material.</li>
-                    </ol>
-                </div>
-            `;
+            // Instructions Text (Tailored for active recall workflow)
+            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+            const instructions = [
+                "1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.",
+                "2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.",
+                "3. Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material."
+            ];
 
-            // Questions Section
-            const labels = ['A', 'B', 'C', 'D'];
+            instructions.forEach(inst => {
+                let splitInst = doc.splitTextToSize(inst, maxLineWidth - 5);
+                doc.text(splitInst, margin + 5, yPos);
+                yPos += (splitInst.length * 5) + 3;
+            });
+
+            doc.addPage();
+            yPos = 25;
+
+            // --- QUESTIONS LOOP ---
             missedQuestions.forEach((item, index) => {
-                let optionsHtml = '';
+                if (yPos > 260) { doc.addPage(); yPos = 25; }
+
+                const qNumber = index + 1;
+                const qText = `Q${qNumber}. ${item.question || "Unknown Question"}`;
                 
-                if (item.options && item.options.length > 0) {
-                    optionsHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; font-size: 11.5px;">`;
-                    item.options.forEach((opt, i) => {
-                        let color = '#475569';
-                        let suffix = '';
-                        if (opt === item.actual) {
-                            color = '#16a34a'; 
-                            suffix = ' (Correct)';
-                        } else if (opt === item.user) {
-                            color = '#dc2626'; 
+                doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); doc.setTextColor(0, 30, 50);
+                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
+                doc.text(splitQuestion, margin, yPos);
+                yPos += (splitQuestion.length * 5) + 3;
+
+                doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+                
+                if (item.options && Array.isArray(item.options)) {
+                    const optionsToPrint = item.options.slice(0, 4); 
+                    const colWidth = (maxLineWidth - 5) / 2; 
+
+                    let optStartY = yPos; let rowMaxY = [0, 0]; 
+
+                    optionsToPrint.forEach((opt, optIndex) => {
+                        let row = Math.floor(optIndex / 2); let col = optIndex % 2; 
+                        let xPos = margin + 2 + (col * colWidth);
+                        let yOffset = row === 0 ? 0 : rowMaxY[0];
+                        let currentY = optStartY + yOffset;
+
+                        let isCorrect = (opt === item.actual);
+                        let isUser = (opt === item.user);
+                        let markerText = `[${optionLabels[optIndex]}]`;
+                        let optString = opt;
+
+                        // Set Marker Color & Draw
+                        if (isCorrect) doc.setTextColor(22, 163, 74);
+                        else if (isUser) doc.setTextColor(220, 38, 38);
+                        else doc.setTextColor(0, 132, 255);
+                        
+                        doc.setFont("helvetica", "bold");
+                        doc.text(markerText, xPos, currentY);
+
+                        // Set Suffix and Text Color
+                        if (isCorrect) {
+                            optString += " (Correct)";
+                            doc.setTextColor(22, 163, 74); 
+                            doc.setFont("helvetica", "bold");
+                        } else if (isUser) {
+                            optString += " (Yours)";
+                            doc.setTextColor(220, 38, 38);
+                            doc.setFont("helvetica", "bold");
+                        } else {
+                            doc.setTextColor(70, 70, 70);
+                            doc.setFont("helvetica", "normal");
                         }
-                        optionsHtml += `<div style="color: ${color};">[${labels[i] || '*'}] ${opt}${suffix}</div>`;
+
+                        // Split option string and align 8 units to the right of the marker
+                        const optText = doc.splitTextToSize(optString, colWidth - 12);
+                        doc.text(optText, xPos + 8, currentY);
+
+                        let optHeight = (optText.length * 4.5) + 2;
+                        if (optHeight > rowMaxY[row]) rowMaxY[row] = optHeight;
                     });
-                    optionsHtml += `</div>`;
-                } else {
-                    optionsHtml = `
-                        <div style="margin-top: 12px; font-size: 11.5px;">
-                            <div style="color: #dc2626; margin-bottom: 6px;">[Your Answer] ${item.user}</div>
-                            <div style="color: #16a34a;">[Correct] ${item.actual}</div>
-                        </div>
-                    `;
-                }
-
-                let statusHtml = '';
-                if (item.user === "SKIPPED") {
-                     statusHtml = `<div style="color: #3b82f6; font-size: 10px; font-style: italic; margin-top: 14px;">Status: You skipped this question.</div>`;
-                }
-
-                htmlContent += `
-                    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid;">
-                        <div style="font-size: 12.5px; font-weight: bold; color: #0f172a; line-height: 1.4;">Q${index + 1}. ${item.question}</div>
-                        ${optionsHtml}
-                        ${statusHtml}
-                    </div>
-                `;
-            });
-
-            container.innerHTML = htmlContent;
-            document.body.appendChild(container);
-
-            const opt = {
-                margin:       [20, 15, 20, 15], 
-                filename:     'AgriQ_Test_Analysis.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-
-            // Generate PDF and add Professional styling overlays (Borders, Watermark, Pagination)
-            html2pdf().from(container).set(opt).toPdf().get('pdf').then(function(pdf) {
-                const totalPages = pdf.internal.getNumberOfPages();
-                
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
+                    yPos = optStartY + rowMaxY[0] + rowMaxY[1] + 2; 
                     
-                    // Double border exactly like reference
-                    pdf.setDrawColor(30, 58, 138);
-                    pdf.setLineWidth(0.5);
-                    pdf.rect(10, 10, 190, 277);
-                    pdf.setLineWidth(0.2);
-                    pdf.rect(11, 11, 188, 275);
-
-                    // Diagonal Watermark
-                    pdf.setTextColor(245, 248, 255); 
-                    pdf.setFontSize(75);
-                    pdf.text("AgriQ Pro", 105, 170, { angle: 45, align: 'center' });
-
-                    // Centered Pagination
-                    pdf.setTextColor(100, 100, 100);
-                    pdf.setFontSize(8);
-                    pdf.text(`Page ${i} of ${totalPages}`, 105, 283, { align: 'center' });
+                    if(item.user === "SKIPPED") {
+                        doc.setFont("helvetica", "italic"); doc.setTextColor(0, 132, 255);
+                        doc.text("Status: You skipped this question.", margin + 2, yPos);
+                        yPos += 5;
+                    }
+                } else {
+                     // Fallback for older test formats
+                     if (item.user === "SKIPPED") {
+                         doc.setTextColor(0, 132, 255); doc.text(`Your Answer: SKIPPED`, margin + 5, yPos);
+                     } else {
+                         doc.setTextColor(220, 38, 38); doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
+                     }
+                     yPos += 6;
+                     doc.setTextColor(22, 163, 74); doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
+                     yPos += 8; 
                 }
-            }).save().then(() => {
-                document.body.removeChild(container);
-                btn.innerHTML = originalHtml;
-                btn.style.pointerEvents = 'auto';
-                lucide.createIcons();
+
+                yPos += 4;
+                doc.setDrawColor(240, 244, 248); doc.setLineWidth(0.5);
+                doc.line(margin, yPos, doc.internal.pageSize.width - margin, yPos);
+                yPos += 6;
             });
+
+            // --- PROMO FOOTER ---
+            yPos = drawPromoFooter(doc, yPos, margin, maxLineWidth);
+
+            // --- APPLY GLOBAL BORDERS & WATERMARK ---
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                const pageWidth = doc.internal.pageSize.width;
+                const pageHeight = doc.internal.pageSize.height;
+
+                // Double Border
+                doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.8);
+                doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+                doc.setDrawColor(0, 132, 255); doc.setLineWidth(0.2);
+                doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
+
+                // Watermark
+                doc.setGState(new doc.GState({opacity: 0.05})); 
+                doc.setFont("helvetica", "bold"); doc.setFontSize(70);
+                const text1 = "AgriQ "; const text2 = "Pro";
+                const totalW = doc.getTextWidth(text1) + doc.getTextWidth(text2);
+                const rad = 45 * Math.PI / 180;
+                const startX = (pageWidth / 2) - (totalW / 2) * Math.cos(rad);
+                const startY = (pageHeight / 2) + (totalW / 2) * Math.sin(rad);
+                doc.setTextColor(0, 45, 77); doc.text(text1, startX, startY, { angle: 45 });
+                doc.setTextColor(0, 132, 255); doc.text(text2, startX + doc.getTextWidth(text1) * Math.cos(rad), startY - doc.getTextWidth(text1) * Math.sin(rad), { angle: 45 });
+                doc.setGState(new doc.GState({opacity: 1.0})); 
+
+                // Pagination
+                doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(150, 150, 150);
+                doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 14, { align: "center" });
+            }
+
+            doc.save("AgriQ_Missed_Questions.pdf");
         }
     </script>
 </body>
