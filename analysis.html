@@ -9,14 +9,16 @@
     <meta name="theme-color" content="#f0f9ff">
     <title>AgriQ Pro | Mission Analysis</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <!-- Added 'Mukta' font for excellent Marathi typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Replaced jsPDF with html2pdf.js to leverage native browser Devanagari text shaping -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -82,7 +84,7 @@
         
         .donut-chart { 
             width: 150px; height: 150px; border-radius: 50%; 
-            background: #e2e8f0; /* Default */
+            background: #e2e8f0;
             display: flex; align-items: center; justify-content: center;
             margin-bottom: 25px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.05);
@@ -121,10 +123,11 @@
         .fail { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .skip { background: rgba(0, 132, 255, 0.1); color: var(--primary); }
 
-        .q-title { font-weight: 700; font-size: 15px; line-height: 1.5; margin-bottom: 18px; padding-right: 80px; color: var(--text-main); }
+        /* Use Mukta for on-screen Marathi questions too */
+        .q-title { font-family: 'Mukta', 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 16px; line-height: 1.5; margin-bottom: 18px; padding-right: 80px; color: var(--text-main); }
         
-        .data-row { display: flex; align-items: center; gap: 12px; font-size: 13px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; }
-        .data-label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
+        .data-row { display: flex; align-items: center; gap: 12px; font-size: 14px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; font-family: 'Mukta', 'Plus Jakarta Sans', sans-serif; }
+        .data-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
 
         .btn-group { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
         .btn-action { 
@@ -182,7 +185,7 @@
             </div>
             <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
                 <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
-                <span class="stat-lbl">Projected MCAER Rank</span>
+                <span class="stat-lbl">Projected Rank</span>
                 <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
             </div>
         </div>
@@ -225,7 +228,7 @@
         <div id="review-container"></div>
 
         <div class="btn-group">
-            <button class="btn-action outline" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
+            <button id="download-btn" class="btn-action outline" onclick="downloadMissedQuestionsPDF()" style="border-color: var(--primary); color: var(--primary);">
                 <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
             </button>
             <button class="btn-action primary" onclick="window.location.href='leaderboard.html'">
@@ -238,7 +241,6 @@
     </main>
 
     <script>
-        // Prevent back navigation to the active test
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function () { window.location.href = "dashboard.html"; };
 
@@ -253,41 +255,48 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        auth.onAuthStateChanged(user => {
-            if (!user) return window.location.href = 'dashboard.html';
-            db.ref(`students/${user.uid}`).once('value', snap => {
-                const d = snap.val();
-                if(d) {
-                    document.getElementById('user-tag').innerText = d.name.toUpperCase();
-                    document.getElementById('user-initial').innerText = d.name[0];
-                }
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
+            document.getElementById('user-tag').innerText = cachedName.toUpperCase();
+            document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
             loadAnalysis();
+        });
+
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                if (!localStorage.getItem('agriq_last_result')) {
+                    window.location.href = 'dashboard.html';
+                }
+                return;
+            }
+            db.ref(`students/${user.uid}`).once('value').then(snap => {
+                const d = snap.val();
+                if(d && d.name) {
+                    const freshName = d.name.toUpperCase();
+                    document.getElementById('user-tag').innerText = freshName;
+                    document.getElementById('user-initial').innerText = freshName[0];
+                    localStorage.setItem('agriq_cached_username', freshName);
+                }
+            }).catch(e => console.warn("Background fetch skipped. User is offline."));
         });
 
         function loadAnalysis() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (!data) return window.location.href = 'dashboard.html';
+            if (!data) return; 
 
-            // RE-CALCULATION FIX: Use rawScore to bypass any old 0-score retake logic that might have saved.
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
-            
-            // Calculate accurate percentage based on raw score
             const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
 
-            // Base Stats
             document.getElementById('acc-val').innerText = `${calculatedAccuracy}%`;
             document.getElementById('score-val').innerHTML = `${displayScore}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
             document.getElementById('chart-acc-text').innerText = `${calculatedAccuracy}%`;
 
-            // Dynamic Feedback Message
             let msg = "Keep Practicing!";
             if (calculatedAccuracy >= 90) msg = "Elite Performance! 🏆";
             else if (calculatedAccuracy >= 75) msg = "Outstanding Work! 🚀";
             else if (calculatedAccuracy >= 50) msg = "Good Job! 👍";
             document.getElementById('feedback-msg').innerText = msg;
 
-            // MCAER Rank Logic Calculator
             let predictedRank = "1500+";
             if (calculatedAccuracy >= 95) predictedRank = "1 - 50";
             else if (calculatedAccuracy >= 88) predictedRank = "51 - 150";
@@ -296,9 +305,9 @@
             else if (calculatedAccuracy >= 55) predictedRank = "801 - 1500";
             document.getElementById('mcaer-rank').innerText = predictedRank;
 
-            // Analyze Details
             let cCount = 0, wCount = 0, sCount = 0;
             const container = document.getElementById('review-container');
+            container.innerHTML = ''; 
             
             data.details.forEach((item, i) => {
                 let status = "wrong";
@@ -319,7 +328,7 @@
                     badgeClass = "skip";
                     badgeText = "SKIPPED";
                     badgeIcon = "minus";
-                    answerColor = "var(--primary)"; // Changed text color for skipped answer to blue
+                    answerColor = "var(--primary)";
                     sCount++;
                 } else {
                     wCount++;
@@ -334,13 +343,13 @@
                     
                     <div class="data-row">
                         <span class="data-label">YOURS</span>
-                        <span style="color:${answerColor}; font-weight:800;">${item.user}</span>
+                        <span style="color:${answerColor}; font-weight:700;">${item.user}</span>
                     </div>
                     
                     ${status !== "correct" ? `
                     <div class="data-row" style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2);">
                         <span class="data-label" style="color:var(--success);">CORRECT</span>
-                        <span style="color:var(--success); font-weight:800;">${item.actual}</span>
+                        <span style="color:var(--success); font-weight:700;">${item.actual}</span>
                     </div>` : ''}
                     
                     <div style="text-align: right;">
@@ -352,33 +361,27 @@
                 container.appendChild(card);
             });
 
-            // Update Metrics
             document.getElementById('count-c').innerText = cCount;
             document.getElementById('count-w').innerText = wCount;
             document.getElementById('count-s').innerText = sCount;
 
-            // Render Circular Graph (Conic Gradient)
             setTimeout(() => {
                 const totalQ = data.total || 1;
                 const cDeg = (cCount / totalQ) * 360;
                 const wDeg = cDeg + ((wCount / totalQ) * 360);
                 
-                // Colors: Green (Correct), Red (Wrong), Blue (Skipped)
                 const chartElement = document.getElementById('result-chart');
                 chartElement.style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
             }, 100);
             
             lucide.createIcons();
-            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 800);
+            setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 400);
         }
 
-        // Filtering Logic
         function filterCards(type, btn) {
-            // Update Active Pill
             document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
 
-            // Show/Hide Cards
             const cards = document.querySelectorAll('.analysis-card');
             cards.forEach(card => {
                 if (type === 'all' || card.classList.contains(`type-${type}`)) {
@@ -389,12 +392,16 @@
             });
         }
 
-        // --- ENHANCED PDF GENERATION FUNCTION ---
+        // --- ENHANCED HTML2PDF GENERATION WITH MARATHI FONT SUPPORT ---
         function downloadMissedQuestionsPDF() {
+            if (!window.html2pdf) {
+                alert("The PDF generator is not available offline. Please connect to the internet to download this report.");
+                return;
+            }
+
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data || !data.details) return;
 
-            // Filter out correctly answered questions
             const missedQuestions = data.details.filter(item => item.user !== item.actual);
 
             if (missedQuestions.length === 0) {
@@ -402,99 +409,187 @@
                 return;
             }
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            // UI Feedback during generation
+            const btn = document.getElementById('download-btn');
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" size="20" style="animation: spin 1s linear infinite;"></i> GENERATING PDF...`;
             
-            let yPos = 20;
-            const margin = 15;
-            const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
+            // Re-initialize spinning icon
+            if (window.lucide) { lucide.createIcons(); }
 
-            // Add Document Title
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("AgriQ Pro - Missed & Skipped Questions Review", margin, yPos);
-            yPos += 15;
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+            const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
+            const userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
 
-            // Loop through missed questions and format them onto the PDF
-            missedQuestions.forEach((item, index) => {
-                // Add new page if we are too close to the bottom
-                if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-
-                // Render Question Text
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(12);
-                doc.setTextColor(0, 0, 0); // Black
-                const qText = `Q${index + 1}. ${item.question}`;
-                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
-                doc.text(splitQuestion, margin, yPos);
-                yPos += (splitQuestion.length * 6) + 4;
-
-                // Render Options if they were saved in localStorage
-                if (item.options && item.options.length > 0) {
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(11);
+            // Create invisible DOM container to render HTML template
+            const container = document.createElement('div');
+            container.id = 'pdf-export-wrapper';
+            
+            // Build the HTML template replacing the former imperative coordinate setup
+            let htmlContent = `
+                <style>
+                    /* Load Mukta to ensure excellent Marathi text rendering */
+                    @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&display=swap');
                     
-                    item.options.forEach(opt => {
-                        // Check bounds inside the options loop
-                        if (yPos > 280) {
-                            doc.addPage();
-                            yPos = 20;
-                        }
+                    #pdf-export-wrapper {
+                        width: 794px;
+                        padding: 40px;
+                        background: #ffffff;
+                        font-family: 'Mukta', 'Plus Jakarta Sans', sans-serif;
+                        color: #002d4d;
+                        box-sizing: border-box;
+                    }
+                    .pdf-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; border-bottom: 2px solid #0084ff; padding-bottom: 15px; }
+                    .pdf-title { font-size: 32px; font-weight: 700; color: #002d4d; margin: 0; line-height: 1; font-family: 'Plus Jakarta Sans', sans-serif; }
+                    .pdf-title span { color: #0084ff; }
+                    .pdf-subtitle { font-size: 14px; color: #0084ff; font-weight: 600; }
+                    
+                    .pdf-info-box { border: 1.5px solid #002d4d; border-radius: 8px; padding: 18px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #fafcff; }
+                    .pdf-info-item { font-size: 14px; font-weight: 600; color: #334155; }
+                    .pdf-info-item span { color: #0f172a; font-weight: 700; }
+                    
+                    .pdf-instructions { margin-bottom: 35px; background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #0084ff; }
+                    .pdf-instructions h3 { color: #005096; font-size: 16px; margin: 0 0 10px 0; font-weight: 700; }
+                    .pdf-instructions p { margin: 6px 0; font-size: 13px; color: #475569; line-height: 1.5; }
+                    
+                    /* page-break-inside: avoid ensures questions don't get cut in half */
+                    .q-block { page-break-inside: avoid; margin-bottom: 24px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 18px; }
+                    .q-text { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 14px; line-height: 1.5; }
+                    .q-text span { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #64748b; font-weight: 800; }
+                    
+                    .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                    .opt-item { font-size: 14px; display: flex; gap: 10px; line-height: 1.4; padding: 4px 0; }
+                    .opt-label { font-weight: 700; }
+                    
+                    .opt-correct { color: #16a34a; font-weight: 600; background: #f0fdf4; padding: 4px 8px; border-radius: 6px; border: 1px solid #bbf7d0; }
+                    .opt-wrong { color: #dc2626; font-weight: 600; background: #fef2f2; padding: 4px 8px; border-radius: 6px; border: 1px solid #fecaca; }
+                    .opt-neutral { color: #475569; padding: 4px 8px; }
+                    
+                    .status-skipped { color: #0084ff; font-style: italic; font-size: 13px; margin-top: 10px; font-weight: 600; background: #eff6ff; display: inline-block; padding: 6px 12px; border-radius: 6px; border: 1px solid #bfdbfe; }
+                    
+                    .pdf-footer { margin-top: 40px; padding: 24px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; page-break-inside: avoid; text-align: center; }
+                    .pdf-footer h4 { color: #002d4d; margin: 0 0 8px 0; font-size: 18px; font-weight: 700; }
+                    .pdf-footer p { color: #64748b; font-size: 13px; margin: 0 auto 20px; line-height: 1.5; max-width: 600px; }
+                    .pdf-footer-links { display: flex; justify-content: center; gap: 15px; }
+                    .pdf-btn { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; color: white; display: inline-block; }
+                    .btn-wa { background: #25D366; }
+                    .btn-app { background: #0084ff; }
+                </style>
+                
+                <div class="pdf-header">
+                    <h1 class="pdf-title">AgriQ <span>Pro</span></h1>
+                    <div class="pdf-subtitle">MCAER PG CET - 2026</div>
+                </div>
+                
+                <div class="pdf-info-box">
+                    <div class="pdf-info-item">Date: <span>${formattedDate}</span></div>
+                    <div class="pdf-info-item">Report: <span>Missed Questions Analysis</span></div>
+                    <div class="pdf-info-item">Score: <span>${displayScore} / ${data.total} (${calcAcc}%)</span></div>
+                    <div class="pdf-info-item">Needs Review: <span>${missedQuestions.length} Questions</span></div>
+                    <div class="pdf-info-item" style="grid-column: span 2;">Candidate: <span>${userNameText}</span></div>
+                </div>
+                
+                <div class="pdf-instructions">
+                    <h3>Performance Review Guidelines:</h3>
+                    <p>1. This document isolates the questions you answered incorrectly or chose to skip.</p>
+                    <p>2. The correct answer is explicitly marked in green, while incorrect selections are flagged in red.</p>
+                    <p>3. Use this targeted report to identify weak areas and apply active recall methods to master this material.</p>
+                </div>
+                
+                <div class="questions-container">
+            `;
+            
+            const optionLabels = ["A", "B", "C", "D"];
+            
+            missedQuestions.forEach((item, index) => {
+                htmlContent += `<div class="q-block">
+                    <div class="q-text"><span>Q${index + 1}.</span> ${item.question || "Unknown Question"}</div>`;
+                    
+                if (item.options && Array.isArray(item.options)) {
+                    htmlContent += `<div class="opt-grid">`;
+                    
+                    const optionsToPrint = item.options.slice(0, 4);
+                    optionsToPrint.forEach((opt, optIndex) => {
+                        let isCorrect = (opt === item.actual);
+                        let isUser = (opt === item.user);
                         
-                        let prefix = "- ";
+                        let optClass = "opt-neutral";
+                        let suffix = "";
                         
-                        if (opt === item.actual) {
-                            doc.setTextColor(22, 163, 74); // Green for correct
-                            prefix = "[Correct] ";
-                        } else if (opt === item.user) {
-                            doc.setTextColor(220, 38, 38); // Red for wrongly chosen
-                            prefix = "[Your Answer] ";
-                        } else {
-                            doc.setTextColor(80, 80, 80); // Dark gray for neutral options
-                        }
+                        if (isCorrect) { optClass = "opt-correct"; suffix = " (Correct)"; }
+                        else if (isUser) { optClass = "opt-wrong"; suffix = " (Yours)"; }
                         
-                        const optText = doc.splitTextToSize(`${prefix}${opt}`, maxLineWidth - 5);
-                        doc.text(optText, margin + 5, yPos);
-                        yPos += (optText.length * 6) + 2;
+                        htmlContent += `
+                        <div class="opt-item ${optClass}">
+                            <span class="opt-label">[${optionLabels[optIndex]}]</span> 
+                            <span>${opt}${suffix}</span>
+                        </div>`;
                     });
                     
-                    // Show "Skipped" message if skipped
+                    htmlContent += `</div>`;
+                    
                     if (item.user === "SKIPPED") {
-                        if (yPos > 280) { doc.addPage(); yPos = 20; }
-                        doc.setFont("helvetica", "italic");
-                        doc.setFontSize(10);
-                        doc.setTextColor(100, 100, 100);
-                        doc.text("Status: You skipped this question.", margin + 5, yPos);
-                        yPos += 8;
+                        htmlContent += `<div class="status-skipped">Status: You skipped this question.</div>`;
                     }
-
                 } else {
-                    // Fallback for older test results that didn't save options
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(11);
                     if (item.user === "SKIPPED") {
-                        doc.setTextColor(100, 100, 100); // Gray for skipped
+                        htmlContent += `<div class="status-skipped">Your Answer: SKIPPED</div>`;
                     } else {
-                        doc.setTextColor(220, 38, 38); // Red for wrong
+                        htmlContent += `<div class="opt-wrong" style="display:inline-block; margin-bottom:8px;">Your Answer: ${item.user}</div><br>`;
                     }
-                    doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
-                    yPos += 6;
-
-                    // Render Correct Answer
-                    doc.setTextColor(22, 163, 74); // Green for correct
-                    doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
-                    yPos += 12; 
+                    htmlContent += `<div class="opt-correct" style="display:inline-block;">Correct Answer: ${item.actual}</div>`;
                 }
                 
-                yPos += 8; // Extra padding before the next question
+                htmlContent += `</div>`;
             });
-
-            // Trigger the download
-            doc.save("AgriQ_Missed_Questions.pdf");
+            
+            htmlContent += `
+                </div>
+                
+                <div class="pdf-footer">
+                    <h4>About AgriQ Pro</h4>
+                    <p>AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.</p>
+                    <div class="pdf-footer-links">
+                        <span class="pdf-btn btn-wa">Join WhatsApp Group</span>
+                        <span class="pdf-btn btn-app">Get AgriQ Pro App</span>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = htmlContent;
+            
+            // Mount the container off-screen to render
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            document.body.appendChild(container);
+            
+            const opt = {
+                margin:       10, // mm margins
+                filename:     'AgriQ_Missed_Questions.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(container).save().then(() => {
+                document.body.removeChild(container);
+                btn.innerHTML = originalBtnHTML; 
+                if (window.lucide) { lucide.createIcons(); }
+            }).catch(err => {
+                console.error("PDF generation error: ", err);
+                alert("An error occurred while generating the PDF. Please try again.");
+                document.body.removeChild(container);
+                btn.innerHTML = originalBtnHTML;
+                if (window.lucide) { lucide.createIcons(); }
+            });
         }
     </script>
+    <style>
+        /* Specific spinner animation class */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
 </body>
 </html>
