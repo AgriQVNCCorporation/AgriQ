@@ -182,7 +182,7 @@
             </div>
             <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
                 <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
-                <span class="stat-lbl">Projected Test Rank</span>
+                <span class="stat-lbl">Projected MCAER Rank</span>
                 <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
             </div>
         </div>
@@ -242,6 +242,10 @@
         </div>
     </main>
 
+    <!-- Load dompurify and html2canvas for HTML-to-PDF approach -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
         // Prevent back navigation to the active test
         window.history.pushState(null, null, window.location.href);
@@ -260,16 +264,12 @@
 
         // --- INSTANT OFFLINE LOAD ---
         function loadOfflineResults() {
-            // Instantly load the cached name from prior visits
             const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
             document.getElementById('user-tag').innerText = cachedName.toUpperCase();
             document.getElementById('user-initial').innerText = cachedName[0].toUpperCase();
-
-            // Load analysis immediately from local storage
             loadAnalysis();
         }
 
-        // Trigger instant offline load before Firebase Auth even resolves
         document.addEventListener('DOMContentLoaded', () => {
             loadOfflineResults();
         });
@@ -277,22 +277,18 @@
         // --- BACKGROUND FIREBASE SYNC & AUTO-SAVE FIX ---
         auth.onAuthStateChanged(user => {
             if (!user) {
-                // If there's no user and no cached offline test data, boot them
                 if (!localStorage.getItem('agriq_last_result')) {
                     window.location.href = 'dashboard.html';
                 }
                 return;
             }
             
-            // Sync fresh profile name in the background
             db.ref(`students/${user.uid}`).once('value').then(snap => {
                 const d = snap.val();
                 if(d && d.name) {
                     const freshName = d.name.toUpperCase();
                     document.getElementById('user-tag').innerText = freshName;
                     document.getElementById('user-initial').innerText = freshName[0];
-                    
-                    // Update global caches for next offline load
                     localStorage.setItem('agriq_cached_username', freshName);
                     const cacheKey = `agriq_profile_cache_${user.uid}`;
                     const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
@@ -300,7 +296,6 @@
                 }
             }).catch(e => console.warn("Background fetch skipped. User is offline."));
 
-            // 1. AUTO-SAVE BUG FIX: Persist score reliably to database to avoid missing data
             const testData = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (testData && !testData.savedToCloud) {
                 const displayScore = (testData.isRetake && testData.rawScore !== undefined) ? testData.rawScore : (testData.score || 0);
@@ -316,15 +311,10 @@
                     testDataRef: testData.testId || "unknown_test"
                 };
 
-                // Push securely to the student's result history node
                 db.ref(`students/${user.uid}/results`).push(resultPayload)
                     .then(() => {
-                        // Crucial: Mark it locally as saved so it won't duplicate on reload
                         testData.savedToCloud = true;
                         localStorage.setItem('agriq_last_result', JSON.stringify(testData));
-                        console.log("Result auto-saved successfully.");
-                        
-                        // Update overarching player stats for Leaderboard reference
                         return db.ref(`students/${user.uid}/stats`).once('value');
                     })
                     .then(snap => {
@@ -343,7 +333,7 @@
 
         function loadAnalysis() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (!data) return; // Silent return if nothing to load; auth listener will redirect if needed
+            if (!data) return; 
 
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
             const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
@@ -368,7 +358,7 @@
 
             let cCount = 0, wCount = 0, sCount = 0;
             const container = document.getElementById('review-container');
-            container.innerHTML = ''; // Clear container to avoid duplicate rendering
+            container.innerHTML = ''; 
             
             data.details.forEach((item, i) => {
                 let status = "wrong";
@@ -398,19 +388,24 @@
                 const card = document.createElement('div');
                 card.className = `analysis-card type-${status}`;
                 card.style.animationDelay = `${i * 0.05}s`;
+                // Crucial fix: using textContent for raw display to avoid injecting arbitrary html
+                const qTextSafe = DOMPurify.sanitize(item.question || "");
+                const userTextSafe = DOMPurify.sanitize(item.user || "");
+                const actualTextSafe = DOMPurify.sanitize(item.actual || "");
+
                 card.innerHTML = `
                     <span class="status-badge ${badgeClass}"><i data-lucide="${badgeIcon}" size="10"></i> ${badgeText}</span>
-                    <div class="q-title"><span style="color:var(--text-dim); font-weight:800; font-family:'JetBrains Mono'; margin-right:5px;">Q${i+1}.</span> ${item.question}</div>
+                    <div class="q-title"><span style="color:var(--text-dim); font-weight:800; font-family:'JetBrains Mono'; margin-right:5px;">Q${i+1}.</span> ${qTextSafe}</div>
                     
                     <div class="data-row">
                         <span class="data-label">YOURS</span>
-                        <span style="color:${answerColor}; font-weight:800;">${item.user}</span>
+                        <span style="color:${answerColor}; font-weight:800;">${userTextSafe}</span>
                     </div>
                     
                     ${status !== "correct" ? `
                     <div class="data-row" style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2);">
                         <span class="data-label" style="color:var(--success);">CORRECT</span>
-                        <span style="color:var(--success); font-weight:800;">${item.actual}</span>
+                        <span style="color:var(--success); font-weight:800;">${actualTextSafe}</span>
                     </div>` : ''}
                     
                     <div style="text-align: right;">
@@ -435,7 +430,7 @@
                 chartElement.style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
             }, 100);
             
-            lucide.createIcons();
+            if(window.lucide) lucide.createIcons();
             setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 400);
         }
 
@@ -453,43 +448,13 @@
             });
         }
 
-        // --- HELPER FUNCTION: DRAW PROMO FOOTER LINKS ---
-        function drawPromoFooter(doc, yPos, margin, maxLineWidth, pdfFont) {
-            if (yPos > 210) { doc.addPage(); yPos = 25; }
-            
-            yPos += 10;
-            doc.setDrawColor(226, 232, 240); doc.setFillColor(248, 250, 252);
-            doc.roundedRect(margin, yPos, maxLineWidth, 64, 3, 3, "FD");
-
-            yPos += 9;
-            doc.setFont(pdfFont, "bold"); doc.setFontSize(13); doc.setTextColor(0, 45, 77);
-            doc.text("About AgriQ Pro", margin + 6, yPos);
-            yPos += 6;
-            doc.setFont(pdfFont, "normal"); doc.setFontSize(10); doc.setTextColor(100, 116, 139);
-            const aboutDesc = "AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.";
-            const splitAbout = doc.splitTextToSize(aboutDesc, maxLineWidth - 12);
-            doc.text(splitAbout, margin + 6, yPos);
-            yPos += (splitAbout.length * 5) + 3;
-
-            const btnW = 75; const btnH = 11;
-            doc.setFillColor(37, 211, 102); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
-            doc.setFont(pdfFont, "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
-            doc.text("Join WhatsApp Group", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
-            doc.link(margin + 6, yPos, btnW, btnH, { url: "https://chat.whatsapp.com/D5j1VjZtf4zHea8zd9az9R?mode=gi_t" });
-
-            yPos += btnH + 4; 
-            doc.setFillColor(0, 132, 255); doc.roundedRect(margin + 6, yPos, btnW, btnH, 2, 2, "F");
-            doc.setTextColor(255, 255, 255);
-            doc.text("Get AgriQ Pro App", margin + 6 + (btnW/2), yPos + 7, { align: "center" });
-            doc.link(margin + 6, yPos, btnW, btnH, { url: "https://agriqvnccorporation.github.io/AgriQ/index.html" });
-
-            return yPos + btnH + 10;
-        }
-
-        // --- ENHANCED PDF GENERATION FUNCTION ---
+        // --- NEW HTML2CANVAS BASED PDF GENERATION ---
+        // This method bypasses jsPDF's internal text rendering engine and font loading issues entirely.
+        // It renders the DOM to an image and places the image in the PDF, guaranteeing 100% visual fidelity for complex unicode (Marathi).
+        
         async function downloadMissedQuestionsPDF() {
-            if (!window.jspdf) {
-                alert("The PDF generator is not available offline. Please connect to the internet to download this report.");
+            if (!window.jspdf || !window.html2canvas) {
+                alert("Dependencies missing for PDF generation. Ensure internet connectivity to load jsPDF and html2canvas.");
                 return;
             }
 
@@ -497,252 +462,167 @@
             if (!data || !data.details) return;
 
             const missedQuestions = data.details.filter(item => item.user !== item.actual);
-
             if (missedQuestions.length === 0) {
                 alert("Perfect score! You don't have any missed or skipped questions to download.");
                 return;
             }
 
-            // UI Feedback during async loading
             const dlBtn = document.querySelector('.btn-action.primary');
             const originalBtnHtml = dlBtn ? dlBtn.innerHTML : '';
             if (dlBtn) {
-                dlBtn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING PDF...';
+                dlBtn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING REPORT...';
                 dlBtn.style.pointerEvents = 'none';
                 if (window.lucide) lucide.createIcons();
             }
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Default font variable tracking
-            let pdfFont = "helvetica";
-            
             try {
-                // 2. MARATHI FONT FIX: Switched string builder to non-blocking FileReader base64 mapping
-                // This prevents memory crashes on mobile and guarantees proper Marathi detection by the VFS.
-                const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansdevanagari/NotoSansDevanagari-Regular.ttf';
-                const fontResponse = await fetch(fontUrl);
+                // 1. Create a hidden, printable container in the DOM
+                const printContainer = document.createElement('div');
+                printContainer.style.position = 'absolute';
+                printContainer.style.left = '-9999px';
+                printContainer.style.top = '0';
+                printContainer.style.width = '800px'; // Fixed width for consistent A4 scaling
+                printContainer.style.background = '#ffffff';
+                printContainer.style.color = '#002d4d';
+                printContainer.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
+                printContainer.style.padding = '40px';
                 
-                if (fontResponse.ok) {
-                    const fontBlob = await fontResponse.blob();
-                    
-                    // High-performance conversion to Base64 using Native FileReader API
-                    const fontBase64 = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            // Extract only the base64 part of the data URL payload
-                            resolve(reader.result.split(',')[1]); 
-                        };
-                        reader.onerror = reject;
-                        reader.readAsDataURL(fontBlob);
-                    });
-                    
-                    doc.addFileToVFS("NotoSansDevanagari.ttf", fontBase64);
-                    doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "normal");
-                    
-                    // Explicitly set bold/italic fallbacks mapping to the regular font 
-                    // ensures jsPDF does not revert to standard Latin when text formatting changes
-                    doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "bold");
-                    doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "italic");
-                    
-                    pdfFont = "NotoSansDevanagari";
-                }
-            } catch (error) {
-                console.warn("Failed to load Marathi font. Falling back to default styling.", error);
-            }
-            
-            const margin = 20; 
-            const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
-            const optionLabels = ["A", "B", "C", "D"];
-            
-            let yPos = 25;
-
-            // Date formatting
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-            // --- COVER PAGE HEADER ---
-            doc.setFont(pdfFont, "bold"); doc.setFontSize(22); doc.setTextColor(0, 45, 77);
-            doc.text("AgriQ", margin + 5, yPos);
-            const titleWidth = doc.getTextWidth("AgriQ ");
-            doc.setTextColor(0, 132, 255); doc.text("Pro", margin + 5 + titleWidth, yPos);
-            doc.setFontSize(12); doc.setTextColor(0, 132, 255);
-            doc.text("MCAER PG CET - 2026", margin + maxLineWidth - 5, yPos, { align: "right" });
-            
-            yPos += 15;
-
-            // Top Info Box
-            doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.5);
-            doc.rect(margin, yPos, maxLineWidth, 28);
-            
-            doc.setFont(pdfFont, "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            doc.text(`Date: ${formattedDate}`, margin + 5, yPos + 7);
-            doc.text(`Report Type: Missed Questions Analysis`, margin + (maxLineWidth/2), yPos + 7);
-            
-            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
-            const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
-
-            doc.text(`Original Score: ${displayScore} / ${data.total} (${calcAcc}%)`, margin + 5, yPos + 15);
-            doc.text(`Total Missed/Skipped: ${missedQuestions.length}`, margin + (maxLineWidth/2), yPos + 15);
-            
-            doc.text("Candidate Info:", margin + 5, yPos + 23);
-            doc.setFont(pdfFont, "normal");
-            let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
-            doc.text(userNameText, margin + 5 + doc.getTextWidth("Candidate Info: ") + 2, yPos + 23);
-
-            yPos += 40;
-
-            // Instructions Header
-            doc.setFont(pdfFont, "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
-            doc.text("Performance Review Guidelines:", margin, yPos);
-            yPos += 2;
-            doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2);
-            doc.line(margin, yPos, margin + maxLineWidth, yPos);
-            yPos += 6;
-
-            // Instructions Text (Tailored for active recall workflow)
-            doc.setFont(pdfFont, "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            const instructions = [
-                "1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.",
-                "2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.",
-                "3. Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material."
-            ];
-
-            instructions.forEach(inst => {
-                let splitInst = doc.splitTextToSize(inst, maxLineWidth - 5);
-                doc.text(splitInst, margin + 5, yPos);
-                yPos += (splitInst.length * 5) + 3;
-            });
-
-            doc.addPage();
-            yPos = 25;
-
-            // --- QUESTIONS LOOP ---
-            missedQuestions.forEach((item, index) => {
-                if (yPos > 260) { doc.addPage(); yPos = 25; }
-
-                const qNumber = index + 1;
-                const qText = `Q${qNumber}. ${item.question || "Unknown Question"}`;
+                // --- BUILD THE HTML CONTENT ---
+                const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+                const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
+                let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
                 
-                doc.setFont(pdfFont, "bold"); doc.setFontSize(10.5); doc.setTextColor(0, 30, 50);
-                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
-                doc.text(splitQuestion, margin, yPos);
-                yPos += (splitQuestion.length * 5) + 3;
+                let htmlContent = `
+                    <div style="border: 2px solid #002d4d; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
+                            <h1 style="margin: 0; font-size: 28px; color: #002d4d;">AgriQ <span style="color: #0084ff;">Pro</span></h1>
+                            <span style="font-weight: bold; color: #0084ff;">MCAER PG CET - 2026</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600;">
+                            <div>
+                                <p style="margin: 5px 0;">Date: ${today}</p>
+                                <p style="margin: 5px 0;">Score: ${displayScore} / ${data.total} (${calcAcc}%)</p>
+                                <p style="margin: 5px 0;">Candidate: ${userNameText}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="margin: 5px 0;">Report: Missed Questions Analysis</p>
+                                <p style="margin: 5px 0;">Missed/Skipped: ${missedQuestions.length}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
-                doc.setFont(pdfFont, "normal"); doc.setFontSize(9.5);
-                
-                if (item.options && Array.isArray(item.options)) {
-                    const optionsToPrint = item.options.slice(0, 4); 
-                    const colWidth = (maxLineWidth - 5) / 2; 
+                missedQuestions.forEach((item, index) => {
+                    const qNumber = index + 1;
+                    const qTextSafe = DOMPurify.sanitize(item.question || "Unknown Question");
+                    
+                    htmlContent += `
+                        <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">
+                            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #002d4d; line-height: 1.5;">
+                                <span style="color: #64748b; font-family: monospace; font-size: 14px;">Q${qNumber}.</span> ${qTextSafe}
+                            </h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    `;
 
-                    let optStartY = yPos; let rowMaxY = [0, 0]; 
+                    if (item.options && Array.isArray(item.options)) {
+                        const optionLabels = ["A", "B", "C", "D"];
+                        const optionsToPrint = item.options.slice(0, 4); 
 
-                    optionsToPrint.forEach((opt, optIndex) => {
-                        let row = Math.floor(optIndex / 2); let col = optIndex % 2; 
-                        let xPos = margin + 2 + (col * colWidth);
-                        let yOffset = row === 0 ? 0 : rowMaxY[0];
-                        let currentY = optStartY + yOffset;
+                        optionsToPrint.forEach((opt, optIndex) => {
+                            let isCorrect = (opt === item.actual);
+                            let isUser = (opt === item.user);
+                            const optSafe = DOMPurify.sanitize(opt);
+                            
+                            let color = "#64748b"; // default grey
+                            let weight = "normal";
+                            let suffix = "";
+                            let bg = "transparent";
+                            let border = "1px solid #e2e8f0";
 
-                        let isCorrect = (opt === item.actual);
-                        let isUser = (opt === item.user);
-                        let markerText = `[${optionLabels[optIndex]}]`;
-                        let optString = opt;
-
-                        // Set Marker Color & Draw
-                        if (isCorrect) doc.setTextColor(22, 163, 74);
-                        else if (isUser) doc.setTextColor(220, 38, 38);
-                        else doc.setTextColor(0, 132, 255);
+                            if (isCorrect) {
+                                color = "#16a34a"; weight = "bold"; suffix = " (Correct)"; bg = "rgba(22, 163, 74, 0.05)"; border = "1px solid rgba(22, 163, 74, 0.3)";
+                            } else if (isUser) {
+                                color = "#dc2626"; weight = "bold"; suffix = " (Yours)"; bg = "rgba(220, 38, 38, 0.05)"; border = "1px solid rgba(220, 38, 38, 0.3)";
+                            }
+                            
+                            htmlContent += `
+                                <div style="flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 10px; border-radius: 8px; background: ${bg}; border: ${border}; box-sizing: border-box;">
+                                    <span style="font-weight: bold; color: ${color}; margin-right: 8px;">[${optionLabels[optIndex]}]</span> 
+                                    <span style="color: ${color}; font-weight: ${weight};">${optSafe}${suffix}</span>
+                                </div>
+                            `;
+                        });
                         
-                        doc.setFont(pdfFont, "bold");
-                        doc.text(markerText, xPos, currentY);
-
-                        // Set Suffix and Text Color
-                        if (isCorrect) {
-                            optString += " (Correct)";
-                            doc.setTextColor(22, 163, 74); 
-                            doc.setFont(pdfFont, "bold");
-                        } else if (isUser) {
-                            optString += " (Yours)";
-                            doc.setTextColor(220, 38, 38);
-                            doc.setFont(pdfFont, "bold");
-                        } else {
-                            doc.setTextColor(70, 70, 70);
-                            doc.setFont(pdfFont, "normal");
+                        if (item.user === "SKIPPED") {
+                             htmlContent += `<div style="width: 100%; margin-top: 10px; color: #0084ff; font-weight: bold; font-style: italic;">Status: You skipped this question.</div>`;
                         }
 
-                        // Split option string and align 8 units to the right of the marker
-                        const optText = doc.splitTextToSize(optString, colWidth - 12);
-                        doc.text(optText, xPos + 8, currentY);
-
-                        let optHeight = (optText.length * 4.5) + 2;
-                        if (optHeight > rowMaxY[row]) rowMaxY[row] = optHeight;
-                    });
-                    yPos = optStartY + rowMaxY[0] + rowMaxY[1] + 2; 
-                    
-                    if(item.user === "SKIPPED") {
-                        doc.setFont(pdfFont, "italic"); doc.setTextColor(0, 132, 255);
-                        doc.text("Status: You skipped this question.", margin + 2, yPos);
-                        yPos += 5;
+                    } else {
+                        // Fallback
+                        let userText = item.user === "SKIPPED" ? "SKIPPED" : DOMPurify.sanitize(item.user);
+                        let actualText = DOMPurify.sanitize(item.actual);
+                        htmlContent += `
+                            <div style="width: 100%;">
+                                <div style="color: #dc2626; font-weight: bold; margin-bottom: 5px;">Your Answer: ${userText}</div>
+                                <div style="color: #16a34a; font-weight: bold;">Correct Answer: ${actualText}</div>
+                            </div>
+                        `;
                     }
-                } else {
-                     // Fallback for older test formats
-                     if (item.user === "SKIPPED") {
-                         doc.setTextColor(0, 132, 255); doc.text(`Your Answer: SKIPPED`, margin + 5, yPos);
-                     } else {
-                         doc.setTextColor(220, 38, 38); doc.text(`Your Answer: ${item.user}`, margin + 5, yPos);
-                     }
-                     yPos += 6;
-                     doc.setTextColor(22, 163, 74); doc.text(`Correct Answer: ${item.actual}`, margin + 5, yPos);
-                     yPos += 8; 
+
+                    htmlContent += `</div></div>`; // End options flex and question div
+                });
+
+                printContainer.innerHTML = htmlContent;
+                document.body.appendChild(printContainer);
+
+                // 2. Render to Canvas
+                const canvas = await html2canvas(printContainer, {
+                    scale: 2, // High resolution
+                    useCORS: true,
+                    logging: false,
+                    windowWidth: 800
+                });
+
+                document.body.removeChild(printContainer); // cleanup
+
+                // 3. Convert Canvas to PDF
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // A4 dimensions in mm: 210 x 297
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                // Calculate dimensions
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pdfHeight;
                 }
+                
+                pdf.save("AgriQ_Missed_Questions.pdf");
 
-                yPos += 4;
-                doc.setDrawColor(240, 244, 248); doc.setLineWidth(0.5);
-                doc.line(margin, yPos, doc.internal.pageSize.width - margin, yPos);
-                yPos += 6;
-            });
-
-            // --- PROMO FOOTER ---
-            yPos = drawPromoFooter(doc, yPos, margin, maxLineWidth, pdfFont);
-
-            // --- APPLY GLOBAL BORDERS & WATERMARK ---
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                const pageWidth = doc.internal.pageSize.width;
-                const pageHeight = doc.internal.pageSize.height;
-
-                // Double Border
-                doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.8);
-                doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
-                doc.setDrawColor(0, 132, 255); doc.setLineWidth(0.2);
-                doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
-
-                // Watermark
-                doc.setGState(new doc.GState({opacity: 0.05})); 
-                doc.setFont(pdfFont, "bold"); doc.setFontSize(70);
-                const text1 = "AgriQ "; const text2 = "Pro";
-                const totalW = doc.getTextWidth(text1) + doc.getTextWidth(text2);
-                const rad = 45 * Math.PI / 180;
-                const startX = (pageWidth / 2) - (totalW / 2) * Math.cos(rad);
-                const startY = (pageHeight / 2) + (totalW / 2) * Math.sin(rad);
-                doc.setTextColor(0, 45, 77); doc.text(text1, startX, startY, { angle: 45 });
-                doc.setTextColor(0, 132, 255); doc.text(text2, startX + doc.getTextWidth(text1) * Math.cos(rad), startY - doc.getTextWidth(text1) * Math.sin(rad), { angle: 45 });
-                doc.setGState(new doc.GState({opacity: 1.0})); 
-
-                // Pagination
-                doc.setFontSize(8); doc.setFont(pdfFont, "bold"); doc.setTextColor(150, 150, 150);
-                doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 14, { align: "center" });
-            }
-
-            doc.save("AgriQ_Missed_Questions.pdf");
-            
-            // Restore UI state
-            if (dlBtn) {
-                dlBtn.innerHTML = originalBtnHtml;
-                dlBtn.style.pointerEvents = 'auto';
-                if (window.lucide) lucide.createIcons();
+            } catch (error) {
+                console.error("PDF Generation Error: ", error);
+                alert("An error occurred while generating the PDF. Please try again.");
+            } finally {
+                if (dlBtn) {
+                    dlBtn.innerHTML = originalBtnHtml;
+                    dlBtn.style.pointerEvents = 'auto';
+                    if (window.lucide) lucide.createIcons();
+                }
             }
         }
     </script>
