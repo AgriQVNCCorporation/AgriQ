@@ -447,7 +447,7 @@
             });
         }
 
-        // --- ENHANCED PDF GENERATION: PERFECT LAYOUT + MARATHI SUPPORT ---
+        // --- ENHANCED PDF GENERATION: PERFECT LAYOUT + MARATHI SUPPORT + RENDERING FIX ---
         // This merges the exact structural design of the original jsPDF output (borders, watermark, multi-column options)
         // with the robust text-rendering capabilities of HTML DOM (via html2canvas) to guarantee Marathi formatting.
         
@@ -483,11 +483,16 @@
 
                 // Master invisible container
                 const masterContainer = document.createElement('div');
+                // FIX 1: Make sure the master container is appended to body AND visibly rendered, but just off-screen
+                // html2canvas sometimes fails silently if the parent container is display: none or position: absolute without explicit sizing in DOM flow
                 masterContainer.style.position = 'absolute';
                 masterContainer.style.left = '-9999px';
                 masterContainer.style.top = '0';
                 masterContainer.style.width = `${PDF_WIDTH}px`;
-                masterContainer.style.backgroundColor = '#f1f5f9'; // off-white background just in case
+                masterContainer.style.backgroundColor = '#ffffff'; 
+                // CRITICAL FIX: Ensure the container is part of the layout flow and explicitly visible to the rendering engine
+                masterContainer.style.visibility = 'visible';
+                masterContainer.style.display = 'block';
                 document.body.appendChild(masterContainer);
 
                 // CSS styles applied to generated pages
@@ -697,6 +702,9 @@
                     page.querySelector('.total-pg').innerText = pages.length;
                 });
 
+                // FIX 2: Wait a tiny bit for the DOM to fully render and calculate font sizes before capturing
+                await new Promise(resolve => setTimeout(resolve, 300));
+
                 // --- 5. RENDER TO PDF (html2canvas to jsPDF) ---
                 const { jsPDF } = window.jspdf;
                 // Init PDF A4 dimensions (pixel scale)
@@ -705,14 +713,18 @@
                 for (let i = 0; i < pages.length; i++) {
                     if (i > 0) pdf.addPage();
                     // Take high res snapshot of the correctly formatted DOM page
+                    // FIX 3: Added windowWidth and windowHeight to html2canvas to ensure it captures exactly the size of the container regardless of mobile viewport
                     const canvas = await html2canvas(pages[i], {
                         scale: 2, 
                         useCORS: true, 
-                        logging: false,
-                        backgroundColor: '#ffffff'
+                        logging: true, // Enable logging temporarily to catch issues
+                        backgroundColor: '#ffffff',
+                        windowWidth: PDF_WIDTH,
+                        windowHeight: PDF_HEIGHT
                     });
-                    const imgData = canvas.toDataURL('image/png');
-                    pdf.addImage(imgData, 'PNG', 0, 0, PDF_WIDTH, PDF_HEIGHT);
+                    
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG for better performance and smaller size
+                    pdf.addImage(imgData, 'JPEG', 0, 0, PDF_WIDTH, PDF_HEIGHT);
                 }
 
                 pdf.save("AgriQ_Missed_Questions.pdf");
@@ -722,7 +734,10 @@
 
             } catch (error) {
                 console.error("PDF Generation Error: ", error);
-                alert("An error occurred while generating the PDF. Please try again.");
+                alert("An error occurred while generating the PDF. Please try again or check your console for details.");
+                // Ensure container is cleaned up even if error occurs
+                const masterContainer = document.querySelector('div[style*="left: -9999px"]');
+                if (masterContainer) document.body.removeChild(masterContainer);
             } finally {
                 if (dlBtn) {
                     dlBtn.innerHTML = originalBtnHtml;
