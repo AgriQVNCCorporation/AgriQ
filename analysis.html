@@ -16,10 +16,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
-    <!-- Load dompurify, html2canvas, and jsPDF for precise layout rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -57,38 +56,32 @@
         .profile-container { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
         .user-tag-badge { font-size: 10px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono'; background: var(--primary-glow); padding: 8px 14px; border-radius: 12px; }
 
+        /* Exam Toggle Tabs */
+        .exam-toggle-container { margin: 20px 24px 0; background: #fff; border-radius: 16px; padding: 4px; display: flex; border: 1.5px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .exam-toggle-btn { flex: 1; padding: 12px; border: none; background: transparent; font-weight: 800; font-size: 13px; color: var(--text-dim); border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .exam-toggle-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px var(--primary-glow); }
+
         main { padding: 24px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; }
 
-        /* Performance Summary Banner */
         .feedback-title { font-size: 20px; font-weight: 900; margin-bottom: 5px; color: var(--text-main); }
         .feedback-sub { font-size: 13px; color: var(--text-dim); font-weight: 600; margin-bottom: 25px; }
 
         .stat-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .stat-card { 
-            background: #fff; border: 1.5px solid var(--border); 
-            padding: 22px; border-radius: 24px; text-align: center; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02); position: relative; overflow: hidden;
-        }
+        .stat-card { background: #fff; border: 1.5px solid var(--border); padding: 22px; border-radius: 24px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.02); position: relative; overflow: hidden; }
         .stat-val { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; display: block; color: var(--primary); line-height: 1.1; }
         .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; display: block; }
+        
+        /* MPSC Graph styles */
+        .mpsc-graph-container { margin-top: 15px; text-align: left; }
+        .mpsc-track { height: 12px; background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; margin-top: 8px; }
+        .mpsc-fill { height: 100%; border-radius: 8px; transition: width 0.5s ease; }
+        .mpsc-marker { position: absolute; top: -2px; bottom: -2px; width: 3px; background: var(--text-main); z-index: 2; border-radius: 2px; }
+        .mpsc-labels { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; margin-top: 6px; color: var(--text-dim); }
 
-        /* Detailed Metrics - Circular Chart */
         .metrics-container { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 25px 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; }
         .chart-title { font-size: 14px; font-weight: 900; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .donut-chart { 
-            width: 150px; height: 150px; border-radius: 50%; 
-            background: #e2e8f0; /* Default */
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-        .donut-inner {
-            width: 110px; height: 110px; border-radius: 50%; background: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main);
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
-        }
+        .donut-chart { width: 150px; height: 150px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .donut-inner { width: 110px; height: 110px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); }
 
         .metric-grid { display: flex; justify-content: space-between; text-align: center; width: 100%; padding: 0 10px; }
         .metric-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -96,20 +89,12 @@
         .m-val { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 18px; color: var(--text-main); }
         .m-lbl { font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
 
-        /* Filter Pills */
         .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 10px; scrollbar-width: none; }
         .filter-scroll::-webkit-scrollbar { display: none; }
-        .filter-pill { 
-            padding: 10px 16px; border-radius: 14px; background: #fff; border: 1.5px solid var(--border);
-            font-size: 12px; font-weight: 800; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: 0.2s;
-        }
+        .filter-pill { padding: 10px 16px; border-radius: 14px; background: #fff; border: 1.5px solid var(--border); font-size: 12px; font-weight: 800; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .filter-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px var(--primary-glow); }
 
-        /* Analysis Cards */
-        .analysis-card {
-            background: #fff; border: 1.5px solid var(--border); border-radius: 24px; padding: 22px; margin-bottom: 16px;
-            position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02); animation: slideUp 0.5s ease backwards; transition: 0.3s;
-        }
+        .analysis-card { background: #fff; border: 1.5px solid var(--border); border-radius: 24px; padding: 22px; margin-bottom: 16px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.02); animation: slideUp 0.5s ease backwards; transition: 0.3s; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .status-badge { position: absolute; top: 18px; right: 18px; font-size: 9px; font-weight: 900; padding: 6px 12px; border-radius: 50px; display: flex; align-items: center; gap: 4px; }
@@ -122,32 +107,15 @@
         .data-row { display: flex; align-items: center; gap: 12px; font-size: 13px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; }
         .data-label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
 
-        .view-options-btn {
-            margin-top: 15px; display: inline-flex; align-items: center; gap: 6px;
-            font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none;
-            background: var(--primary-glow); padding: 8px 14px; border-radius: 10px;
-            transition: 0.2s; font-family: 'JetBrains Mono';
-        }
+        .view-options-btn { margin-top: 15px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none; background: var(--primary-glow); padding: 8px 14px; border-radius: 10px; transition: 0.2s; font-family: 'JetBrains Mono'; }
         .view-options-btn:active { transform: scale(0.95); }
 
-        /* WhatsApp Admin Notice & Buttons */
-        .whatsapp-notice {
-            background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3);
-            border-radius: 20px; padding: 18px 20px; margin-bottom: 20px;
-            display: flex; align-items: center; gap: 16px; margin-top: 25px;
-        }
-        .w-icon {
-            background: #25D366; color: white; width: 44px; height: 44px;
-            border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
+        .whatsapp-notice { background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3); border-radius: 20px; padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; margin-top: 25px; }
+        .w-icon { background: #25D366; color: white; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .whatsapp-notice p { margin: 0; font-size: 13px; font-weight: 800; color: #166534; line-height: 1.5; }
 
         .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
-        .btn-action { 
-            padding: 20px; border-radius: 20px; border: none; font-weight: 900; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            gap: 10px; transition: 0.2s; font-size: 15px;
-        }
+        .btn-action { padding: 20px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; font-size: 15px; }
         .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
         .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
         .btn-action:active { transform: scale(0.97); }
@@ -156,7 +124,7 @@
 <body>
 
     <div id="analysis-loader">
-        <div style="color:var(--primary);"><i data-lucide="bar-chart-3" class="lucide lucide-bar-chart-3" size="64"></i></div>
+        <div style="color:var(--primary);"><i data-lucide="bar-chart-3" size="64"></i></div>
         <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">DECODING RESULTS...</p>
     </div>
 
@@ -167,6 +135,11 @@
         </div>
         <div id="user-tag" class="user-tag-badge">STUDENT</div>
     </header>
+
+    <div class="exam-toggle-container">
+        <button id="tab-mcaer" class="exam-toggle-btn active" onclick="setExamMode('MCAER')">MCAER Mode</button>
+        <button id="tab-mpsc" class="exam-toggle-btn" onclick="setExamMode('MPSC')">MPSC Mode</button>
+    </div>
 
     <main>
         <div>
@@ -183,10 +156,30 @@
                 <span class="stat-val" id="score-val" style="color: var(--text-main);">0<span style="font-size:18px; color:var(--text-dim)">/0</span></span>
                 <span class="stat-lbl">Final Score</span>
             </div>
-            <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
+            
+            <!-- MCAER RANK CARD -->
+            <div id="card-mcaer" class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
                 <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
                 <span class="stat-lbl">Projected MCAER Rank</span>
                 <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
+            </div>
+
+            <!-- MPSC GRAPH CARD -->
+            <div id="card-mpsc" class="stat-card" style="grid-column: span 2; display: none; background: #fff;">
+                <span class="stat-val" id="mpsc-status" style="font-size:24px;">--</span>
+                <span class="stat-lbl">MPSC Pre-Exam Status</span>
+                <div class="mpsc-graph-container">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Score vs Cut-off (45%)</div>
+                    <div class="mpsc-track">
+                        <div id="mpsc-cutoff-marker" class="mpsc-marker" style="left: 45%;"></div>
+                        <div id="mpsc-progress-fill" class="mpsc-fill" style="width: 0%; background: var(--text-dim);"></div>
+                    </div>
+                    <div class="mpsc-labels">
+                        <span>0%</span>
+                        <span style="margin-left: 20px;">Cut-off</span>
+                        <span>100%</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -233,7 +226,7 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn-action primary" onclick="downloadMissedQuestionsPDF()">
+            <button class="btn-action primary" onclick="generatePerfectPDF()">
                 <i data-lucide="download" size="20"></i> DOWNLOAD MISSED Qs
             </button>
             <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
@@ -246,22 +239,11 @@
     </main>
 
     <script>
-        // Prevent back navigation to the active test
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function () { window.location.href = "dashboard.html"; };
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBFYdQZI4NXaqtWd4rEz3yL-0nw6PJqG6I",
-            authDomain: "agri-mcar.firebaseapp.com",
-            databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
-            projectId: "agri-mcar"
-        };
+        let currentExamMode = 'MCAER'; // Default mode
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-
-        // --- INSTANT OFFLINE LOAD ---
         function loadOfflineResults() {
             const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
             document.getElementById('user-tag').innerText = cachedName.toUpperCase();
@@ -271,89 +253,66 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadOfflineResults();
+            if(window.lucide) lucide.createIcons();
         });
 
-        // --- BACKGROUND FIREBASE SYNC & AUTO-SAVE FIX ---
-        auth.onAuthStateChanged(user => {
-            if (!user) {
-                if (!localStorage.getItem('agriq_last_result')) {
-                    window.location.href = 'dashboard.html';
-                }
-                return;
-            }
-            
-            db.ref(`students/${user.uid}`).once('value').then(snap => {
-                const d = snap.val();
-                if(d && d.name) {
-                    const freshName = d.name.toUpperCase();
-                    document.getElementById('user-tag').innerText = freshName;
-                    document.getElementById('user-initial').innerText = freshName[0];
-                    localStorage.setItem('agriq_cached_username', freshName);
-                    const cacheKey = `agriq_profile_cache_${user.uid}`;
-                    const existing = JSON.parse(localStorage.getItem(cacheKey)) || {};
-                    localStorage.setItem(cacheKey, JSON.stringify({ ...existing, name: d.name }));
-                }
-            }).catch(e => console.warn("Background fetch skipped. User is offline."));
-
-            const testData = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (testData && !testData.savedToCloud) {
-                const displayScore = (testData.isRetake && testData.rawScore !== undefined) ? testData.rawScore : (testData.score || 0);
-                const totalQuestions = testData.total || 1;
-                const accuracy = Math.round((displayScore / totalQuestions) * 100);
-
-                const resultPayload = {
-                    score: displayScore,
-                    total: totalQuestions,
-                    accuracy: accuracy,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    date: new Date().toISOString(),
-                    testDataRef: testData.testId || "unknown_test"
-                };
-
-                db.ref(`students/${user.uid}/results`).push(resultPayload)
-                    .then(() => {
-                        testData.savedToCloud = true;
-                        localStorage.setItem('agriq_last_result', JSON.stringify(testData));
-                        return db.ref(`students/${user.uid}/stats`).once('value');
-                    })
-                    .then(snap => {
-                        if (snap) {
-                            const stats = snap.val() || { totalTests: 0, highestScore: 0 };
-                            db.ref(`students/${user.uid}/stats`).update({
-                                totalTests: (stats.totalTests || 0) + 1,
-                                highestScore: Math.max(stats.highestScore || 0, displayScore),
-                                lastActive: firebase.database.ServerValue.TIMESTAMP
-                            });
-                        }
-                    })
-                    .catch(e => console.error("Auto-save failed:", e));
-            }
-        });
+        function setExamMode(mode) {
+            currentExamMode = mode;
+            document.getElementById('tab-mcaer').classList.remove('active');
+            document.getElementById('tab-mpsc').classList.remove('active');
+            document.getElementById('tab-' + mode.toLowerCase()).classList.add('active');
+            loadAnalysis(); 
+        }
 
         function loadAnalysis() {
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data) return; 
 
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
-            const calculatedAccuracy = Math.round((displayScore / data.total) * 100) || 0;
+            const totalQ = data.total || 1;
+            const calculatedAccuracy = Math.round((displayScore / totalQ) * 100) || 0;
 
             document.getElementById('acc-val').innerText = `${calculatedAccuracy}%`;
-            document.getElementById('score-val').innerHTML = `${displayScore}<span style="font-size:18px; color:var(--text-dim)">/${data.total}</span>`;
+            document.getElementById('score-val').innerHTML = `${displayScore}<span style="font-size:18px; color:var(--text-dim)">/${totalQ}</span>`;
             document.getElementById('chart-acc-text').innerText = `${calculatedAccuracy}%`;
+
+            // Toggle logic for MCAER/MPSC stats
+            const mcaerCard = document.getElementById('card-mcaer');
+            const mpscCard = document.getElementById('card-mpsc');
+            
+            if(currentExamMode === 'MCAER') {
+                mcaerCard.style.display = 'block';
+                mpscCard.style.display = 'none';
+                
+                let predictedRank = "1500+";
+                if (calculatedAccuracy >= 95) predictedRank = "1 - 50";
+                else if (calculatedAccuracy >= 88) predictedRank = "51 - 150";
+                else if (calculatedAccuracy >= 80) predictedRank = "151 - 400";
+                else if (calculatedAccuracy >= 70) predictedRank = "401 - 800";
+                else if (calculatedAccuracy >= 55) predictedRank = "801 - 1500";
+                document.getElementById('mcaer-rank').innerText = predictedRank;
+            } else {
+                mcaerCard.style.display = 'none';
+                mpscCard.style.display = 'block';
+                
+                const cutoffPercentage = 45; // 45% standard cutoff logic
+                const isCleared = calculatedAccuracy >= cutoffPercentage;
+                
+                const statusEl = document.getElementById('mpsc-status');
+                statusEl.innerText = isCleared ? "CLEARED" : "NOT CLEARED";
+                statusEl.style.color = isCleared ? "var(--success)" : "var(--danger)";
+                mpscCard.style.borderColor = isCleared ? "var(--success)" : "var(--danger)";
+                
+                const barFill = document.getElementById('mpsc-progress-fill');
+                barFill.style.width = `${calculatedAccuracy}%`;
+                barFill.style.background = isCleared ? "var(--success)" : "var(--danger)";
+            }
 
             let msg = "Keep Practicing!";
             if (calculatedAccuracy >= 90) msg = "Elite Performance! 🏆";
             else if (calculatedAccuracy >= 75) msg = "Outstanding Work! 🚀";
             else if (calculatedAccuracy >= 50) msg = "Good Job! 👍";
             document.getElementById('feedback-msg').innerText = msg;
-
-            let predictedRank = "1500+";
-            if (calculatedAccuracy >= 95) predictedRank = "1 - 50";
-            else if (calculatedAccuracy >= 88) predictedRank = "51 - 150";
-            else if (calculatedAccuracy >= 80) predictedRank = "151 - 400";
-            else if (calculatedAccuracy >= 70) predictedRank = "401 - 800";
-            else if (calculatedAccuracy >= 55) predictedRank = "801 - 1500";
-            document.getElementById('mcaer-rank').innerText = predictedRank;
 
             let cCount = 0, wCount = 0, sCount = 0;
             const container = document.getElementById('review-container');
@@ -406,12 +365,6 @@
                         <span class="data-label" style="color:var(--success);">CORRECT</span>
                         <span style="color:var(--success); font-weight:800;">${actualTextSafe}</span>
                     </div>` : ''}
-                    
-                    <div style="text-align: right;">
-                        <a href="test.html?reviewIndex=${i}" class="view-options-btn">
-                            VIEW OPTIONS <i data-lucide="external-link" size="12"></i>
-                        </a>
-                    </div>
                 `;
                 container.appendChild(card);
             });
@@ -421,12 +374,9 @@
             document.getElementById('count-s').innerText = sCount;
 
             setTimeout(() => {
-                const totalQ = data.total || 1;
                 const cDeg = (cCount / totalQ) * 360;
                 const wDeg = cDeg + ((wCount / totalQ) * 360);
-                
-                const chartElement = document.getElementById('result-chart');
-                chartElement.style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
+                document.getElementById('result-chart').style.background = `conic-gradient(var(--success) 0deg ${cDeg}deg, var(--danger) ${cDeg}deg ${wDeg}deg, var(--primary) ${wDeg}deg 360deg)`;
             }, 100);
             
             if(window.lucide) lucide.createIcons();
@@ -436,301 +386,190 @@
         function filterCards(type, btn) {
             document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
-
             const cards = document.querySelectorAll('.analysis-card');
             cards.forEach(card => {
-                if (type === 'all' || card.classList.contains(`type-${type}`)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                if (type === 'all' || card.classList.contains(`type-${type}`)) card.style.display = 'block';
+                else card.style.display = 'none';
             });
         }
 
-        // --- MOBILE-OPTIMIZED PDF GENERATION ---
-        // Completely refactored to prevent mobile browsers (Android WebViews / Termux) from freezing
-        // It relies on rendering one layer at a time in the *actual viewport* with reduced pixel scale.
-        
-        async function downloadMissedQuestionsPDF() {
+        // =========================================================================
+        // PERFECT PAGINATION HTML-TO-PDF GENERATOR 
+        // Bug Fix: Solves the chunking issue that cuts questions in half.
+        // matches styling from references 1000591136.jpg and 1000591135.jpg precisely.
+        // =========================================================================
+        async function generatePerfectPDF() {
             if (!window.jspdf || !window.html2canvas) {
-                alert("Dependencies missing for PDF generation. Ensure internet connectivity.");
-                return;
+                alert("Missing dependencies. Ensure internet connectivity."); return;
             }
 
             const data = JSON.parse(localStorage.getItem('agriq_last_result'));
             if (!data || !data.details) return;
-
-            const missedQuestions = data.details.filter(item => item.user !== item.actual);
-            if (missedQuestions.length === 0) {
-                alert("Perfect score! You don't have any missed or skipped questions to download.");
-                return;
+            const missedQs = data.details.filter(item => item.user !== item.actual);
+            if (missedQs.length === 0) {
+                alert("Perfect score! No missed questions."); return;
             }
 
-            const dlBtn = document.querySelector('.btn-action.primary');
-            const originalBtnHtml = dlBtn ? dlBtn.innerHTML : '';
-            if (dlBtn) {
-                dlBtn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING REPORT...';
-                dlBtn.style.pointerEvents = 'none';
-            }
+            const btn = document.querySelector('.btn-action.primary');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING REPORT...';
+            btn.style.pointerEvents = 'none';
 
             try {
-                // Constants for A4 size mapping
-                const PDF_WIDTH = 800; 
-                const PDF_HEIGHT = 1131; 
-                const PADDING = 40; 
-                const MAX_CONTENT_HEIGHT = PDF_HEIGHT - (PADDING * 2) - 40; 
-
-                // CRITICAL MOBILE FIX: Container MUST be fixed in the top-left of the viewport.
-                // Mobile browsers will refuse to paint elements set to `left: -9999px`.
-                const masterContainer = document.createElement('div');
-                masterContainer.style.position = 'fixed'; 
-                masterContainer.style.top = '0';
-                masterContainer.style.left = '0';
-                masterContainer.style.width = `${PDF_WIDTH}px`;
-                masterContainer.style.height = `${PDF_HEIGHT}px`;
-                masterContainer.style.backgroundColor = '#ffffff'; 
-                masterContainer.style.overflow = 'hidden'; 
-                masterContainer.style.pointerEvents = 'none'; 
-                masterContainer.style.opacity = '0.01'; // Almost invisible, but layout engine MUST render it
-                masterContainer.style.zIndex = '-9999'; // Hide behind app UI
-                document.body.appendChild(masterContainer);
-
-                // CSS styles applied to generated pages (absolute stacking)
-                const pageStyles = `
-                    <style>
-                        .pdf-page-container {
-                            position: absolute; top: 0; left: 0;
-                            width: ${PDF_WIDTH}px; height: ${PDF_HEIGHT}px;
-                            background: #ffffff; font-family: 'Plus Jakarta Sans', 'Helvetica', sans-serif;
-                            box-sizing: border-box; padding: ${PADDING}px;
-                        }
-                        .pdf-outer-border {
-                            position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
-                            border: 2px solid #002d4d; pointer-events: none; z-index: 10;
-                        }
-                        .pdf-inner-border {
-                            position: absolute; top: 18px; left: 18px; right: 18px; bottom: 18px;
-                            border: 1px solid #0084ff; pointer-events: none; z-index: 10;
-                        }
-                        .pdf-watermark {
-                            position: absolute; top: 50%; left: 50%;
-                            transform: translate(-50%, -50%) rotate(-45deg);
-                            font-size: 130px; font-weight: 900; opacity: 0.04;
-                            white-space: nowrap; pointer-events: none; z-index: 1;
-                        }
-                        .pdf-watermark-q { color: #002d4d; }
-                        .pdf-watermark-pro { color: #0084ff; }
-                        .pdf-footer {
-                            position: absolute; bottom: 25px; left: 0; right: 0;
-                            text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8; z-index: 10;
-                        }
-                        .pdf-content-area {
-                            position: relative; z-index: 5; height: 100%;
-                            display: flex; flex-direction: column;
-                        }
-                    </style>
-                `;
-                masterContainer.innerHTML += pageStyles;
+                const A4_WIDTH = 794; 
+                const A4_HEIGHT = 1123;
+                const USABLE_HEIGHT = 960; 
+                
+                const container = document.createElement('div');
+                container.style.position = 'absolute'; container.style.left = '-9999px'; container.style.top = '0';
+                document.body.appendChild(container);
 
                 const pages = [];
-                let currentPageDOM = null;
-                let currentContentArea = null;
+                let currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT);
+                let contentArea = currentPdfPage.querySelector('.page-content');
+                container.appendChild(currentPdfPage);
 
-                function createNewPage() {
-                    const pageDiv = document.createElement('div');
-                    pageDiv.className = 'pdf-page-container';
-                    pageDiv.innerHTML = `
-                        <div class="pdf-outer-border"></div>
-                        <div class="pdf-inner-border"></div>
-                        <div class="pdf-watermark"><span class="pdf-watermark-q">AgriQ</span> <span class="pdf-watermark-pro">Pro</span></div>
-                        <div class="pdf-content-area"></div>
-                        <div class="pdf-footer">Page <span class="current-pg"></span> of <span class="total-pg"></span></div>
-                    `;
-                    // Append immediately so it gets layout dimensions
-                    masterContainer.appendChild(pageDiv);
-                    pages.push(pageDiv);
-                    return { pageDiv, contentArea: pageDiv.querySelector('.pdf-content-area') };
-                }
-
-                // Initialize Page 1
-                let { pageDiv, contentArea } = createNewPage();
-                currentPageDOM = pageDiv; currentContentArea = contentArea;
-
-                // --- BUILD HEADER ---
-                const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
-                const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
-                let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
+                // Build Page 1 Header & Info (Matching 1000591136.jpg)
+                contentArea.innerHTML += generateHeaderHTML(data, missedQs.length);
                 
-                const headerHTML = `
-                    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; padding: 0 5px;">
-                        <h1 style="margin:0; font-size:36px; font-weight:bold; color:#002d4d; letter-spacing: -1px;">AgriQ <span style="color:#0084ff">Pro</span></h1>
-                        <div style="font-size:16px; font-weight:bold; color:#0084ff;">MCAER PG CET - 2026</div>
-                    </div>
-                    <div style="border: 1.5px solid #002d4d; padding: 18px 25px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; margin-bottom: 35px;">
-                        <div style="line-height: 2;">
-                            <div>Date: ${today}</div>
-                            <div>Original Score: ${displayScore} / ${data.total} (${calcAcc}%)</div>
-                            <div>Candidate Info: ${userNameText}</div>
-                        </div>
-                        <div style="line-height: 2;">
-                            <div>Report Type: Missed Questions Analysis</div>
-                            <div>Total Missed/Skipped: ${missedQuestions.length}</div>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 25px;">
-                        <div style="font-size: 17px; font-weight: bold; color: #005096; margin-bottom: 8px;">Performance Review Guidelines:</div>
-                        <div style="border-bottom: 1.5px solid #e2e8f0; margin-bottom: 12px;"></div>
-                        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
-                            1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.<br><br>
-                            2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.<br><br>
-                            3. Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material.
-                        </div>
-                    </div>
-                `;
-                const headerContainer = document.createElement('div');
-                headerContainer.innerHTML = headerHTML;
-                currentContentArea.appendChild(headerContainer);
-
-                // --- BUILD QUESTIONS ---
-                const optionLabels = ["A", "B", "C", "D"];
-                
-                for (let i = 0; i < missedQuestions.length; i++) {
-                    const item = missedQuestions[i];
-                    const qNumber = i + 1;
-                    const qTextSafe = DOMPurify.sanitize(item.question || "Unknown Question");
-                    
+                for (let i = 0; i < missedQs.length; i++) {
                     const qDiv = document.createElement('div');
-                    qDiv.style.marginBottom = "20px";
-                    qDiv.style.paddingBottom = "15px";
-                    qDiv.style.borderBottom = "1px solid #f1f5f9";
-                    
-                    let qHTML = `
-                        <div style="font-size: 14px; font-weight: bold; color: #001e32; margin-bottom: 12px; line-height: 1.5;">
-                            Q${qNumber}. ${qTextSafe}
-                        </div>
-                        <div style="display: flex; flex-wrap: wrap; row-gap: 12px;">
-                    `;
+                    qDiv.innerHTML = generateQuestionHTML(missedQs[i], i + 1);
+                    contentArea.appendChild(qDiv);
 
-                    if (item.options && Array.isArray(item.options)) {
-                        const optionsToPrint = item.options.slice(0, 4); 
-                        optionsToPrint.forEach((opt, optIndex) => {
-                            let isCorrect = (opt === item.actual);
-                            let isUser = (opt === item.user);
-                            const optSafe = DOMPurify.sanitize(opt);
-                            
-                            let markerColor = "#0084ff"; 
-                            let textColor = "#475569";   
-                            let textWeight = "normal";
-                            let suffix = "";
-
-                            if (isCorrect) {
-                                markerColor = "#16a34a"; textColor = "#16a34a"; textWeight = "bold"; suffix = " (Correct)";
-                            } else if (isUser) {
-                                markerColor = "#dc2626"; textColor = "#dc2626"; textWeight = "bold"; suffix = " (Yours)";
-                            }
-
-                            qHTML += `
-                                <div style="flex: 0 0 50%; box-sizing: border-box; padding-right: 15px; display: flex; font-size: 13px; line-height: 1.4;">
-                                    <span style="color: ${markerColor}; font-weight: bold; margin-right: 8px;">[${optionLabels[optIndex]}]</span>
-                                    <span style="color: ${textColor}; font-weight: ${textWeight};">${optSafe}${suffix}</span>
-                                </div>
-                            `;
-                        });
-                        qHTML += `</div>`; 
+                    // Check if question pushes page beyond usable height
+                    if (contentArea.scrollHeight > USABLE_HEIGHT) {
+                        contentArea.removeChild(qDiv); // Remove overflow
+                        pages.push(currentPdfPage); // Save finished page
                         
-                        if (item.user === "SKIPPED") {
-                             qHTML += `<div style="margin-top: 12px; font-size: 13px; color: #0084ff; font-style: italic;">Status: You skipped this question.</div>`;
-                        }
-                    } else {
-                        let userText = item.user === "SKIPPED" ? "SKIPPED" : DOMPurify.sanitize(item.user);
-                        let actualText = DOMPurify.sanitize(item.actual);
-                        qHTML += `
-                            </div>
-                            <div style="font-size: 13px;">
-                                <div style="color: #dc2626; font-weight: bold; margin-bottom: 5px;">Your Answer: ${userText}</div>
-                                <div style="color: #16a34a; font-weight: bold;">Correct Answer: ${actualText}</div>
-                            </div>
-                        `;
-                    }
-
-                    qDiv.innerHTML = qHTML;
-                    currentContentArea.appendChild(qDiv);
-                    
-                    if (currentContentArea.scrollHeight > MAX_CONTENT_HEIGHT) {
-                        currentContentArea.removeChild(qDiv);
-                        const newPageObj = createNewPage();
-                        currentContentArea = newPageObj.contentArea;
-                        currentContentArea.appendChild(qDiv);
+                        // Create New Page
+                        currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT);
+                        contentArea = currentPdfPage.querySelector('.page-content');
+                        container.appendChild(currentPdfPage);
+                        contentArea.appendChild(qDiv); // Add to new page
                     }
                 }
+                pages.push(currentPdfPage); 
 
-                // --- BUILD PROMO FOOTER ---
-                const promoDiv = document.createElement('div');
-                promoDiv.innerHTML = `
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-top: 15px;">
-                        <div style="font-size: 18px; font-weight: bold; color: #002d4d; margin-bottom: 8px;">About AgriQ Pro</div>
-                        <div style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 18px;">
-                            AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.
-                        </div>
-                        <div style="display: flex; gap: 12px;">
-                            <div style="background: #25d366; color: white; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 13px;">Join WhatsApp Group</div>
-                            <div style="background: #0084ff; color: white; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 13px;">Get AgriQ Pro App</div>
-                        </div>
-                    </div>
-                `;
-                currentContentArea.appendChild(promoDiv);
-                if (currentContentArea.scrollHeight > MAX_CONTENT_HEIGHT) {
-                    currentContentArea.removeChild(promoDiv);
-                    const newPageObj = createNewPage();
-                    currentContentArea = newPageObj.contentArea;
-                    currentContentArea.appendChild(promoDiv);
-                }
-
-                // --- UPDATE PAGE NUMBERS ---
-                pages.forEach((page, index) => {
-                    page.querySelector('.current-pg').innerText = index + 1;
-                    page.querySelector('.total-pg').innerText = pages.length;
+                // Add pagination footers
+                pages.forEach((p, idx) => {
+                    const footer = document.createElement('div');
+                    footer.style.cssText = "position:absolute; bottom:25px; left:0; width:100%; text-align:center; font-size:11px; color:#64748b; font-family:sans-serif;";
+                    footer.innerText = `Page ${idx + 1} of ${pages.length}`;
+                    p.appendChild(footer);
                 });
 
-                // Let the browser definitively draw all elements 
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // --- RENDER TO PDF (Optimized for Mobile) ---
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [PDF_WIDTH, PDF_HEIGHT] });
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
                 for (let i = 0; i < pages.length; i++) {
+                    const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true, logging: false, width: A4_WIDTH, height: A4_HEIGHT });
+                    const imgData = canvas.toDataURL('image/png');
                     if (i > 0) pdf.addPage();
-                    
-                    // Hide all pages except the one we are capturing right now
-                    pages.forEach((p, idx) => { p.style.opacity = (idx === i) ? '1' : '0'; });
-
-                    const canvas = await html2canvas(pages[i], {
-                        scale: 1.2, // Drastically lowers RAM usage for mobile rendering
-                        useCORS: true, 
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/jpeg', 0.85); // Compress heavily to JPEG
-                    pdf.addImage(imgData, 'JPEG', 0, 0, PDF_WIDTH, PDF_HEIGHT);
+                    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
                 }
 
-                pdf.save("AgriQ_Missed_Questions.pdf");
-                document.body.removeChild(masterContainer);
+                pdf.save(`AgriQ_${currentExamMode}_Missed_Report.pdf`);
+                document.body.removeChild(container);
 
             } catch (error) {
-                console.error("PDF Generation Error: ", error);
-                alert("Generation failed (likely out of memory). Try closing background apps on your phone and try again.");
-                const mc = document.querySelector('div[style*="opacity: 0.01"]');
-                if (mc) document.body.removeChild(mc);
+                console.error("PDF Error: ", error);
+                alert("Failed to generate PDF.");
             } finally {
-                if (dlBtn) {
-                    dlBtn.innerHTML = originalBtnHtml;
-                    dlBtn.style.pointerEvents = 'auto';
-                }
+                btn.innerHTML = origHtml; btn.style.pointerEvents = 'auto';
+                if (window.lucide) lucide.createIcons();
             }
+        }
+
+        function createBlankA4Page(width, height) {
+            const page = document.createElement('div');
+            page.style.cssText = `width:${width}px; height:${height}px; background:#fff; position:relative; box-sizing:border-box; overflow:hidden;`;
+            // Outer double border matching the image
+            page.innerHTML = `
+                <div style="position:absolute; top:20px; bottom:20px; left:20px; right:20px; border:2px solid #004b87;"></div>
+                <div style="position:absolute; top:24px; bottom:24px; left:24px; right:24px; border:1px solid #004b87;"></div>
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-45deg); font-size:120px; color:rgba(0,132,255,0.04); font-weight:900; font-family:sans-serif; z-index:0; white-space:nowrap; pointer-events:none;">AgriQ Pro</div>
+                <div class="page-content" style="position:relative; z-index:1; padding:45px; box-sizing:border-box; width:100%; height:100%; font-family:sans-serif;"></div>
+            `;
+            return page;
+        }
+
+        function generateHeaderHTML(data, missedCount) {
+            const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const titleRight = currentExamMode === 'MCAER' ? 'MCAER PG CET - 2026' : 'MPSC PRELIMS - 2026';
+            const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
+            const acc = Math.round((displayScore / data.total) * 100);
+            const userText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
+
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid #004b87; padding-bottom:15px; margin-bottom:15px;">
+                    <div style="font-size:26px; font-weight:800; color:#004b87;">AgriQ <span style="color:#0084ff;">Pro</span></div>
+                    <div style="font-size:14px; font-weight:700; color:#0084ff;">${titleRight}</div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; color:#000; font-weight:600; line-height:2; border-bottom:1px solid #004b87; padding-bottom:15px; margin-bottom:25px;">
+                    <div>
+                        <div>Date: ${date}</div>
+                        <div>Original Score: ${displayScore} / ${data.total} (${acc}%)</div>
+                        <div>Candidate Info: ${userText}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div>Report Type: Missed Questions Analysis</div>
+                        <div>Total Missed/Skipped: ${missedCount}</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 30px;">
+                    <div style="color:#004b87; font-weight:700; font-size:14px; margin-bottom:10px;">Performance Review Guidelines:</div>
+                    <div style="font-size:12px; color:#333; line-height:1.6;">
+                        1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.<br><br>
+                        2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.<br><br>
+                        3. Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material.
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateQuestionHTML(item, qNum) {
+            const qText = DOMPurify.sanitize(item.question || "");
+            let html = `
+                <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; font-family:sans-serif;">
+                    <div style="font-size:14px; font-weight:700; color:#000; margin-bottom:15px; line-height:1.4;">
+                        Q${qNum}. ${qText}
+                    </div>
+            `;
+            
+            // Format options exactly like 1000591135.jpg[span_2](start_span)[span_2](end_span) layout (2x2 grid)
+            if (item.options && Array.isArray(item.options)) {
+                const labels = ["A", "B", "C", "D"];
+                html += `<div style="display:flex; flex-wrap:wrap; font-size:13px; font-weight:500;">`;
+                
+                item.options.slice(0, 4).forEach((opt, idx) => {
+                    const isCorrect = opt === item.actual;
+                    const isUser = opt === item.user;
+                    const optSafe = DOMPurify.sanitize(opt);
+                    
+                    let color = "#475569"; let bold = "normal"; let suffix = "";
+                    if(isCorrect) { color = "#16a34a"; bold = "bold"; suffix = " (Correct)"; }
+                    else if(isUser) { color = "#dc2626"; bold = "bold"; suffix = " (Yours)"; }
+
+                    html += `
+                        <div style="width:50%; margin-bottom:10px; padding-right:10px; box-sizing:border-box; color:${color}; font-weight:${bold}; line-height:1.3;">
+                            <span style="color:#0084ff; font-weight:bold; margin-right:4px;">[${labels[idx]}]</span> ${optSafe}${suffix}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+
+                if (item.user === "SKIPPED") {
+                     html += `<div style="margin-top:10px; color:#0084ff; font-style:italic; font-size:12px;">Status: You skipped this question.</div>`;
+                }
+            } else {
+                let u = item.user === "SKIPPED" ? "SKIPPED" : DOMPurify.sanitize(item.user);
+                html += `<div style="color:#dc2626; font-size:13px; margin-bottom:4px;">[Yours] ${u}</div>
+                         <div style="color:#16a34a; font-size:13px; font-weight:bold;">[Correct] ${DOMPurify.sanitize(item.actual)}</div>`;
+            }
+
+            html += `</div>`;
+            return html;
         }
     </script>
 </body>
