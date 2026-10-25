@@ -138,7 +138,7 @@
 
     <div class="exam-toggle-container">
         <button id="tab-mcaer" class="exam-toggle-btn active" onclick="setExamMode('MCAER')">MCAER Mode</button>
-        <button id="tab-mpsc" class="exam-toggle-btn" onclick="setExamMode('MPSC')">MPSC Mode</button>
+        <button id="tab-mpsc" class="exam-toggle-btn" onclick="setExamMode('MPSC')">MPSC </button>
     </div>
 
     <main>
@@ -394,9 +394,7 @@
         }
 
         // =========================================================================
-        // PERFECT PAGINATION HTML-TO-PDF GENERATOR 
-        // Bug Fix: Solves the chunking issue that cuts questions in half.
-        // matches styling from references 1000591136.jpg and 1000591135.jpg precisely.
+        // FIXED PAGINATION LOGIC: Solves browser crashing/hanging issue
         // =========================================================================
         async function generatePerfectPDF() {
             if (!window.jspdf || !window.html2canvas) {
@@ -407,21 +405,25 @@
             if (!data || !data.details) return;
             const missedQs = data.details.filter(item => item.user !== item.actual);
             if (missedQs.length === 0) {
-                alert("Perfect score! No missed questions."); return;
+                alert("Perfect score! No missed questions to download."); return;
             }
 
             const btn = document.querySelector('.btn-action.primary');
             const origHtml = btn.innerHTML;
             btn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING REPORT...';
             btn.style.pointerEvents = 'none';
+            if (window.lucide) lucide.createIcons();
 
             try {
                 const A4_WIDTH = 794; 
                 const A4_HEIGHT = 1123;
-                const USABLE_HEIGHT = 960; 
+                const USABLE_HEIGHT = 1020; // Maximum safe height before starting a new page
                 
+                // Keep the container physically out of view but visually intact for rendering
                 const container = document.createElement('div');
-                container.style.position = 'absolute'; container.style.left = '-9999px'; container.style.top = '0';
+                container.style.position = 'absolute'; 
+                container.style.left = '-9999px'; 
+                container.style.top = '0';
                 document.body.appendChild(container);
 
                 const pages = [];
@@ -429,7 +431,6 @@
                 let contentArea = currentPdfPage.querySelector('.page-content');
                 container.appendChild(currentPdfPage);
 
-                // Build Page 1 Header & Info (Matching 1000591136.jpg)
                 contentArea.innerHTML += generateHeaderHTML(data, missedQs.length);
                 
                 for (let i = 0; i < missedQs.length; i++) {
@@ -437,27 +438,30 @@
                     qDiv.innerHTML = generateQuestionHTML(missedQs[i], i + 1);
                     contentArea.appendChild(qDiv);
 
-                    // Check if question pushes page beyond usable height
+                    // Check if appending this question pushes height past the limit
                     if (contentArea.scrollHeight > USABLE_HEIGHT) {
-                        contentArea.removeChild(qDiv); // Remove overflow
+                        contentArea.removeChild(qDiv); // Remove the overflowed question
                         pages.push(currentPdfPage); // Save finished page
                         
-                        // Create New Page
+                        // Setup New Page
                         currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT);
                         contentArea = currentPdfPage.querySelector('.page-content');
                         container.appendChild(currentPdfPage);
-                        contentArea.appendChild(qDiv); // Add to new page
+                        contentArea.appendChild(qDiv); // Append question safely to new page
                     }
                 }
                 pages.push(currentPdfPage); 
 
-                // Add pagination footers
+                // Add simple pagination text to the bottom of all pages
                 pages.forEach((p, idx) => {
                     const footer = document.createElement('div');
                     footer.style.cssText = "position:absolute; bottom:25px; left:0; width:100%; text-align:center; font-size:11px; color:#64748b; font-family:sans-serif;";
                     footer.innerText = `Page ${idx + 1} of ${pages.length}`;
                     p.appendChild(footer);
                 });
+
+                // Let the browser DOM paint the new elements before rendering to avoid blank canvases
+                await new Promise(r => setTimeout(r, 200));
 
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -467,6 +471,9 @@
                     const imgData = canvas.toDataURL('image/png');
                     if (i > 0) pdf.addPage();
                     pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+                    
+                    // Give the UI thread a small break to avoid completely locking up the browser
+                    await new Promise(r => setTimeout(r, 20)); 
                 }
 
                 pdf.save(`AgriQ_${currentExamMode}_Missed_Report.pdf`);
@@ -474,22 +481,23 @@
 
             } catch (error) {
                 console.error("PDF Error: ", error);
-                alert("Failed to generate PDF.");
+                alert("Failed to generate PDF. Error: " + error.message);
             } finally {
-                btn.innerHTML = origHtml; btn.style.pointerEvents = 'auto';
+                btn.innerHTML = origHtml; 
+                btn.style.pointerEvents = 'auto';
                 if (window.lucide) lucide.createIcons();
             }
         }
 
         function createBlankA4Page(width, height) {
             const page = document.createElement('div');
+            // Crucial Fix: `.page-content` inside MUST NOT have `height: 100%` so scrollHeight can grow naturally.
             page.style.cssText = `width:${width}px; height:${height}px; background:#fff; position:relative; box-sizing:border-box; overflow:hidden;`;
-            // Outer double border matching the image
             page.innerHTML = `
                 <div style="position:absolute; top:20px; bottom:20px; left:20px; right:20px; border:2px solid #004b87;"></div>
                 <div style="position:absolute; top:24px; bottom:24px; left:24px; right:24px; border:1px solid #004b87;"></div>
                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-45deg); font-size:120px; color:rgba(0,132,255,0.04); font-weight:900; font-family:sans-serif; z-index:0; white-space:nowrap; pointer-events:none;">AgriQ Pro</div>
-                <div class="page-content" style="position:relative; z-index:1; padding:45px; box-sizing:border-box; width:100%; height:100%; font-family:sans-serif;"></div>
+                <div class="page-content" style="position:relative; z-index:1; padding:45px; box-sizing:border-box; width:100%; font-family:sans-serif;"></div>
             `;
             return page;
         }
@@ -537,7 +545,6 @@
                     </div>
             `;
             
-            // Format options exactly like 1000591135.jpg[span_2](start_span)[span_2](end_span) layout (2x2 grid)
             if (item.options && Array.isArray(item.options)) {
                 const labels = ["A", "B", "C", "D"];
                 html += `<div style="display:flex; flex-wrap:wrap; font-size:13px; font-weight:500;">`;
