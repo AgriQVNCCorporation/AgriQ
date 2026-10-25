@@ -16,6 +16,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
+    <!-- Load dompurify, html2canvas, and jsPDF for precise layout rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
@@ -182,7 +185,7 @@
             </div>
             <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
                 <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
-                <span class="stat-lbl">Projected MCAER Rank</span>
+                <span class="stat-lbl">Projected Test Rank</span>
                 <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
             </div>
         </div>
@@ -241,10 +244,6 @@
             </button>
         </div>
     </main>
-
-    <!-- Load dompurify and html2canvas for HTML-to-PDF approach -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
         // Prevent back navigation to the active test
@@ -388,7 +387,7 @@
                 const card = document.createElement('div');
                 card.className = `analysis-card type-${status}`;
                 card.style.animationDelay = `${i * 0.05}s`;
-                // Crucial fix: using textContent for raw display to avoid injecting arbitrary html
+                
                 const qTextSafe = DOMPurify.sanitize(item.question || "");
                 const userTextSafe = DOMPurify.sanitize(item.user || "");
                 const actualTextSafe = DOMPurify.sanitize(item.actual || "");
@@ -448,9 +447,9 @@
             });
         }
 
-        // --- NEW HTML2CANVAS BASED PDF GENERATION ---
-        // This method bypasses jsPDF's internal text rendering engine and font loading issues entirely.
-        // It renders the DOM to an image and places the image in the PDF, guaranteeing 100% visual fidelity for complex unicode (Marathi).
+        // --- ENHANCED PDF GENERATION: PERFECT LAYOUT + MARATHI SUPPORT ---
+        // This merges the exact structural design of the original jsPDF output (borders, watermark, multi-column options)
+        // with the robust text-rendering capabilities of HTML DOM (via html2canvas) to guarantee Marathi formatting.
         
         async function downloadMissedQuestionsPDF() {
             if (!window.jspdf || !window.html2canvas) {
@@ -472,147 +471,254 @@
             if (dlBtn) {
                 dlBtn.innerHTML = '<i data-lucide="loader" size="20"></i> GENERATING REPORT...';
                 dlBtn.style.pointerEvents = 'none';
-                if (window.lucide) lucide.createIcons();
             }
 
             try {
-                // 1. Create a hidden, printable container in the DOM
-                const printContainer = document.createElement('div');
-                printContainer.style.position = 'absolute';
-                printContainer.style.left = '-9999px';
-                printContainer.style.top = '0';
-                printContainer.style.width = '800px'; // Fixed width for consistent A4 scaling
-                printContainer.style.background = '#ffffff';
-                printContainer.style.color = '#002d4d';
-                printContainer.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
-                printContainer.style.padding = '40px';
-                
-                // --- BUILD THE HTML CONTENT ---
+                // Constants for A4 size mapping
+                const PDF_WIDTH = 800; 
+                const PDF_HEIGHT = 1131; 
+                const PADDING = 40; 
+                // Available height for content inside the page (subtracting top/bottom padding and footer space)
+                const MAX_CONTENT_HEIGHT = PDF_HEIGHT - (PADDING * 2) - 40; 
+
+                // Master invisible container
+                const masterContainer = document.createElement('div');
+                masterContainer.style.position = 'absolute';
+                masterContainer.style.left = '-9999px';
+                masterContainer.style.top = '0';
+                masterContainer.style.width = `${PDF_WIDTH}px`;
+                masterContainer.style.backgroundColor = '#f1f5f9'; // off-white background just in case
+                document.body.appendChild(masterContainer);
+
+                // CSS styles applied to generated pages
+                const pageStyles = `
+                    <style>
+                        .pdf-page-container {
+                            width: ${PDF_WIDTH}px; height: ${PDF_HEIGHT}px;
+                            background: #ffffff; position: relative;
+                            font-family: 'Helvetica', 'Arial', sans-serif;
+                            box-sizing: border-box; padding: ${PADDING}px;
+                            overflow: hidden; margin-bottom: 10px;
+                        }
+                        .pdf-outer-border {
+                            position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
+                            border: 2px solid #002d4d; pointer-events: none; z-index: 10;
+                        }
+                        .pdf-inner-border {
+                            position: absolute; top: 18px; left: 18px; right: 18px; bottom: 18px;
+                            border: 1px solid #0084ff; pointer-events: none; z-index: 10;
+                        }
+                        .pdf-watermark {
+                            position: absolute; top: 50%; left: 50%;
+                            transform: translate(-50%, -50%) rotate(-45deg);
+                            font-size: 130px; font-weight: 900; opacity: 0.04;
+                            white-space: nowrap; pointer-events: none; z-index: 1;
+                        }
+                        .pdf-watermark-q { color: #002d4d; }
+                        .pdf-watermark-pro { color: #0084ff; }
+                        .pdf-footer {
+                            position: absolute; bottom: 25px; left: 0; right: 0;
+                            text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8; z-index: 10;
+                        }
+                        .pdf-content-area {
+                            position: relative; z-index: 5; height: 100%;
+                            display: flex; flex-direction: column;
+                        }
+                    </style>
+                `;
+                masterContainer.innerHTML += pageStyles;
+
+                const pages = [];
+                let currentPageDOM = null;
+                let currentContentArea = null;
+
+                // Helper to spin up a new perfectly formatted page
+                function createNewPage() {
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'pdf-page-container';
+                    pageDiv.innerHTML = `
+                        <div class="pdf-outer-border"></div>
+                        <div class="pdf-inner-border"></div>
+                        <div class="pdf-watermark">
+                            <span class="pdf-watermark-q">AgriQ</span> <span class="pdf-watermark-pro">Pro</span>
+                        </div>
+                        <div class="pdf-content-area"></div>
+                        <div class="pdf-footer">Page <span class="current-pg"></span> of <span class="total-pg"></span></div>
+                    `;
+                    masterContainer.appendChild(pageDiv);
+                    pages.push(pageDiv);
+                    return { pageDiv, contentArea: pageDiv.querySelector('.pdf-content-area') };
+                }
+
+                // Initialize Page 1
+                let { pageDiv, contentArea } = createNewPage();
+                currentPageDOM = pageDiv; currentContentArea = contentArea;
+
+                // --- 1. BUILD HEADER (Page 1) ---
                 const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                 const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
                 const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
                 let userNameText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
                 
-                let htmlContent = `
-                    <div style="border: 2px solid #002d4d; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
-                            <h1 style="margin: 0; font-size: 28px; color: #002d4d;">AgriQ <span style="color: #0084ff;">Pro</span></h1>
-                            <span style="font-weight: bold; color: #0084ff;">MCAER PG CET - 2026</span>
+                const headerHTML = `
+                    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; padding: 0 5px;">
+                        <h1 style="margin:0; font-size:36px; font-weight:bold; color:#002d4d; letter-spacing: -1px;">AgriQ <span style="color:#0084ff">Pro</span></h1>
+                        <div style="font-size:16px; font-weight:bold; color:#0084ff;">MCAER PG CET - 2026</div>
+                    </div>
+                    <div style="border: 1.5px solid #002d4d; padding: 18px 25px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; margin-bottom: 35px;">
+                        <div style="line-height: 2;">
+                            <div>Date: ${today}</div>
+                            <div>Original Score: ${displayScore} / ${data.total} (${calcAcc}%)</div>
+                            <div>Candidate Info: ${userNameText}</div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600;">
-                            <div>
-                                <p style="margin: 5px 0;">Date: ${today}</p>
-                                <p style="margin: 5px 0;">Score: ${displayScore} / ${data.total} (${calcAcc}%)</p>
-                                <p style="margin: 5px 0;">Candidate: ${userNameText}</p>
-                            </div>
-                            <div style="text-align: right;">
-                                <p style="margin: 5px 0;">Report: Missed Questions Analysis</p>
-                                <p style="margin: 5px 0;">Missed/Skipped: ${missedQuestions.length}</p>
-                            </div>
+                        <div style="line-height: 2;">
+                            <div>Report Type: Missed Questions Analysis</div>
+                            <div>Total Missed/Skipped: ${missedQuestions.length}</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 25px;">
+                        <div style="font-size: 17px; font-weight: bold; color: #005096; margin-bottom: 8px;">Performance Review Guidelines:</div>
+                        <div style="border-bottom: 1.5px solid #e2e8f0; margin-bottom: 12px;"></div>
+                        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
+                            1. This document isolates only the questions you answered incorrectly or chose to skip during your recent mock simulation.<br><br>
+                            2. During your review, the correct answer is explicitly marked in green, while your incorrect selection is flagged in red.<br><br>
+                            3. Use this targeted report to identify your weak areas, review the underlying concepts, and apply active recall methods to master this material.
                         </div>
                     </div>
                 `;
+                const headerContainer = document.createElement('div');
+                headerContainer.innerHTML = headerHTML;
+                currentContentArea.appendChild(headerContainer);
 
-                missedQuestions.forEach((item, index) => {
-                    const qNumber = index + 1;
+                // --- 2. BUILD QUESTIONS ---
+                const optionLabels = ["A", "B", "C", "D"];
+                
+                for (let i = 0; i < missedQuestions.length; i++) {
+                    const item = missedQuestions[i];
+                    const qNumber = i + 1;
                     const qTextSafe = DOMPurify.sanitize(item.question || "Unknown Question");
                     
-                    htmlContent += `
-                        <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">
-                            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #002d4d; line-height: 1.5;">
-                                <span style="color: #64748b; font-family: monospace; font-size: 14px;">Q${qNumber}.</span> ${qTextSafe}
-                            </h3>
-                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    const qDiv = document.createElement('div');
+                    qDiv.style.marginBottom = "20px";
+                    qDiv.style.paddingBottom = "15px";
+                    qDiv.style.borderBottom = "1px solid #f1f5f9";
+                    
+                    let qHTML = `
+                        <div style="font-size: 14px; font-weight: bold; color: #001e32; margin-bottom: 12px; line-height: 1.5;">
+                            Q${qNumber}. ${qTextSafe}
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; row-gap: 12px;">
                     `;
 
                     if (item.options && Array.isArray(item.options)) {
-                        const optionLabels = ["A", "B", "C", "D"];
                         const optionsToPrint = item.options.slice(0, 4); 
-
                         optionsToPrint.forEach((opt, optIndex) => {
                             let isCorrect = (opt === item.actual);
                             let isUser = (opt === item.user);
                             const optSafe = DOMPurify.sanitize(opt);
                             
-                            let color = "#64748b"; // default grey
-                            let weight = "normal";
+                            let markerColor = "#0084ff"; // Blue default
+                            let textColor = "#475569";   // Grey default
+                            let textWeight = "normal";
                             let suffix = "";
-                            let bg = "transparent";
-                            let border = "1px solid #e2e8f0";
 
                             if (isCorrect) {
-                                color = "#16a34a"; weight = "bold"; suffix = " (Correct)"; bg = "rgba(22, 163, 74, 0.05)"; border = "1px solid rgba(22, 163, 74, 0.3)";
+                                markerColor = "#16a34a"; textColor = "#16a34a"; textWeight = "bold"; suffix = " (Correct)";
                             } else if (isUser) {
-                                color = "#dc2626"; weight = "bold"; suffix = " (Yours)"; bg = "rgba(220, 38, 38, 0.05)"; border = "1px solid rgba(220, 38, 38, 0.3)";
+                                markerColor = "#dc2626"; textColor = "#dc2626"; textWeight = "bold"; suffix = " (Yours)";
                             }
-                            
-                            htmlContent += `
-                                <div style="flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 10px; border-radius: 8px; background: ${bg}; border: ${border}; box-sizing: border-box;">
-                                    <span style="font-weight: bold; color: ${color}; margin-right: 8px;">[${optionLabels[optIndex]}]</span> 
-                                    <span style="color: ${color}; font-weight: ${weight};">${optSafe}${suffix}</span>
+
+                            qHTML += `
+                                <div style="flex: 0 0 50%; box-sizing: border-box; padding-right: 15px; display: flex; font-size: 13px; line-height: 1.4;">
+                                    <span style="color: ${markerColor}; font-weight: bold; margin-right: 8px;">[${optionLabels[optIndex]}]</span>
+                                    <span style="color: ${textColor}; font-weight: ${textWeight};">${optSafe}${suffix}</span>
                                 </div>
                             `;
                         });
+                        qHTML += `</div>`; // Close grid
                         
                         if (item.user === "SKIPPED") {
-                             htmlContent += `<div style="width: 100%; margin-top: 10px; color: #0084ff; font-weight: bold; font-style: italic;">Status: You skipped this question.</div>`;
+                             qHTML += `<div style="margin-top: 12px; font-size: 13px; color: #0084ff; font-style: italic;">Status: You skipped this question.</div>`;
                         }
-
                     } else {
-                        // Fallback
+                        // Fallback block
                         let userText = item.user === "SKIPPED" ? "SKIPPED" : DOMPurify.sanitize(item.user);
                         let actualText = DOMPurify.sanitize(item.actual);
-                        htmlContent += `
-                            <div style="width: 100%;">
+                        qHTML += `
+                            </div>
+                            <div style="font-size: 13px;">
                                 <div style="color: #dc2626; font-weight: bold; margin-bottom: 5px;">Your Answer: ${userText}</div>
                                 <div style="color: #16a34a; font-weight: bold;">Correct Answer: ${actualText}</div>
                             </div>
                         `;
                     }
 
-                    htmlContent += `</div></div>`; // End options flex and question div
-                });
-
-                printContainer.innerHTML = htmlContent;
-                document.body.appendChild(printContainer);
-
-                // 2. Render to Canvas
-                const canvas = await html2canvas(printContainer, {
-                    scale: 2, // High resolution
-                    useCORS: true,
-                    logging: false,
-                    windowWidth: 800
-                });
-
-                document.body.removeChild(printContainer); // cleanup
-
-                // 3. Convert Canvas to PDF
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                
-                // A4 dimensions in mm: 210 x 297
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                
-                // Calculate dimensions
-                const imgWidth = pdfWidth;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pdfHeight;
-
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pdfHeight;
+                    qDiv.innerHTML = qHTML;
+                    
+                    // Trial append to check height
+                    currentContentArea.appendChild(qDiv);
+                    
+                    if (currentContentArea.scrollHeight > MAX_CONTENT_HEIGHT) {
+                        // Overflow! Remove it from this page...
+                        currentContentArea.removeChild(qDiv);
+                        // Create a new page...
+                        const newPageObj = createNewPage();
+                        currentContentArea = newPageObj.contentArea;
+                        // Append to the new page.
+                        currentContentArea.appendChild(qDiv);
+                    }
                 }
-                
+
+                // --- 3. BUILD PROMO FOOTER ---
+                const promoDiv = document.createElement('div');
+                promoDiv.innerHTML = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-top: 15px;">
+                        <div style="font-size: 18px; font-weight: bold; color: #002d4d; margin-bottom: 8px;">About AgriQ Pro</div>
+                        <div style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 18px;">
+                            AgriQ Pro is your ultimate companion for agriculture competitive exams. Practice smarter, analyze your performance, and achieve top ranks with our specialized test series and tools.
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="background: #25d366; color: white; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 13px;">Join WhatsApp Group</div>
+                            <div style="background: #0084ff; color: white; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 13px;">Get AgriQ Pro App</div>
+                        </div>
+                    </div>
+                `;
+                currentContentArea.appendChild(promoDiv);
+                if (currentContentArea.scrollHeight > MAX_CONTENT_HEIGHT) {
+                    currentContentArea.removeChild(promoDiv);
+                    const newPageObj = createNewPage();
+                    currentContentArea = newPageObj.contentArea;
+                    currentContentArea.appendChild(promoDiv);
+                }
+
+                // --- 4. UPDATE PAGE NUMBERS ---
+                pages.forEach((page, index) => {
+                    page.querySelector('.current-pg').innerText = index + 1;
+                    page.querySelector('.total-pg').innerText = pages.length;
+                });
+
+                // --- 5. RENDER TO PDF (html2canvas to jsPDF) ---
+                const { jsPDF } = window.jspdf;
+                // Init PDF A4 dimensions (pixel scale)
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [PDF_WIDTH, PDF_HEIGHT] });
+
+                for (let i = 0; i < pages.length; i++) {
+                    if (i > 0) pdf.addPage();
+                    // Take high res snapshot of the correctly formatted DOM page
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    });
+                    const imgData = canvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, 0, PDF_WIDTH, PDF_HEIGHT);
+                }
+
                 pdf.save("AgriQ_Missed_Questions.pdf");
+                
+                // Cleanup DOM
+                document.body.removeChild(masterContainer);
 
             } catch (error) {
                 console.error("PDF Generation Error: ", error);
@@ -621,7 +727,6 @@
                 if (dlBtn) {
                     dlBtn.innerHTML = originalBtnHtml;
                     dlBtn.style.pointerEvents = 'auto';
-                    if (window.lucide) lucide.createIcons();
                 }
             }
         }
