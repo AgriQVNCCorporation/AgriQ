@@ -235,11 +235,10 @@
             </button>
             <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
                 <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
-            
             </button>
             <button class="btn-action outline" onclick="window.location.href='leaderboard.html'">
-                <i data-lucide="layout-grid" size="20"></i> leaderboard 
-                </button>
+                <i data-lucide="award" size="20"></i> LEADERBOARD
+            </button>
         </div>
     </main>
 
@@ -275,7 +274,7 @@
             loadOfflineResults();
         });
 
-        // --- BACKGROUND FIREBASE SYNC ---
+        // --- BACKGROUND FIREBASE SYNC & AUTO-SAVE FIX ---
         auth.onAuthStateChanged(user => {
             if (!user) {
                 // If there's no user and no cached offline test data, boot them
@@ -300,6 +299,46 @@
                     localStorage.setItem(cacheKey, JSON.stringify({ ...existing, name: d.name }));
                 }
             }).catch(e => console.warn("Background fetch skipped. User is offline."));
+
+            // 1. AUTO-SAVE BUG FIX: Persist score reliably to database to avoid missing data
+            const testData = JSON.parse(localStorage.getItem('agriq_last_result'));
+            if (testData && !testData.savedToCloud) {
+                const displayScore = (testData.isRetake && testData.rawScore !== undefined) ? testData.rawScore : (testData.score || 0);
+                const totalQuestions = testData.total || 1;
+                const accuracy = Math.round((displayScore / totalQuestions) * 100);
+
+                const resultPayload = {
+                    score: displayScore,
+                    total: totalQuestions,
+                    accuracy: accuracy,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    date: new Date().toISOString(),
+                    testDataRef: testData.testId || "unknown_test"
+                };
+
+                // Push securely to the student's result history node
+                db.ref(`students/${user.uid}/results`).push(resultPayload)
+                    .then(() => {
+                        // Crucial: Mark it locally as saved so it won't duplicate on reload
+                        testData.savedToCloud = true;
+                        localStorage.setItem('agriq_last_result', JSON.stringify(testData));
+                        console.log("Result auto-saved successfully.");
+                        
+                        // Update overarching player stats for Leaderboard reference
+                        return db.ref(`students/${user.uid}/stats`).once('value');
+                    })
+                    .then(snap => {
+                        if (snap) {
+                            const stats = snap.val() || { totalTests: 0, highestScore: 0 };
+                            db.ref(`students/${user.uid}/stats`).update({
+                                totalTests: (stats.totalTests || 0) + 1,
+                                highestScore: Math.max(stats.highestScore || 0, displayScore),
+                                lastActive: firebase.database.ServerValue.TIMESTAMP
+                            });
+                        }
+                    })
+                    .catch(e => console.error("Auto-save failed:", e));
+            }
         });
 
         function loadAnalysis() {
@@ -480,23 +519,30 @@
             let pdfFont = "helvetica";
             
             try {
-                // Asynchronously fetch Marathi (Devanagari) Support Font - Noto Sans Devanagari 
+                // 2. MARATHI FONT FIX: Switched string builder to non-blocking FileReader base64 mapping
+                // This prevents memory crashes on mobile and guarantees proper Marathi detection by the VFS.
                 const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansdevanagari/NotoSansDevanagari-Regular.ttf';
                 const fontResponse = await fetch(fontUrl);
                 
                 if (fontResponse.ok) {
-                    const fontBuffer = await fontResponse.arrayBuffer();
-                    const fontBytes = new Uint8Array(fontBuffer);
-                    let fontBinary = '';
-                    for (let i = 0; i < fontBytes.byteLength; i++) {
-                        fontBinary += String.fromCharCode(fontBytes[i]);
-                    }
-                    const fontBase64 = window.btoa(fontBinary);
+                    const fontBlob = await fontResponse.blob();
+                    
+                    // High-performance conversion to Base64 using Native FileReader API
+                    const fontBase64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            // Extract only the base64 part of the data URL payload
+                            resolve(reader.result.split(',')[1]); 
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(fontBlob);
+                    });
                     
                     doc.addFileToVFS("NotoSansDevanagari.ttf", fontBase64);
                     doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "normal");
                     
-                    // Registering fallback weights mapping to the loaded regular font to avoid throwing errors
+                    // Explicitly set bold/italic fallbacks mapping to the regular font 
+                    // ensures jsPDF does not revert to standard Latin when text formatting changes
                     doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "bold");
                     doc.addFont("NotoSansDevanagari.ttf", "NotoSansDevanagari", "italic");
                     
