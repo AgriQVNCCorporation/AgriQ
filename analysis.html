@@ -185,7 +185,7 @@
             </div>
             <div class="stat-card" style="grid-column: span 2; border-color: #8b5cf6; background: #f5f3ff;">
                 <span class="stat-val" id="mcaer-rank" style="color: #8b5cf6;">--</span>
-                <span class="stat-lbl">Projected Test Rank 2.0 </span>
+                <span class="stat-lbl">Projected MCAER Rank</span>
                 <div style="font-size: 9px; font-weight: 700; color: #a78bfa; margin-top: 6px; letter-spacing: 0.5px;">BASED ON CURRENT ACCURACY</div>
             </div>
         </div>
@@ -447,13 +447,13 @@
             });
         }
 
-        // --- ENHANCED PDF GENERATION: PERFECT LAYOUT + MARATHI SUPPORT + RENDERING FIX ---
-        // This merges the exact structural design of the original jsPDF output (borders, watermark, multi-column options)
-        // with the robust text-rendering capabilities of HTML DOM (via html2canvas) to guarantee Marathi formatting.
+        // --- MOBILE-OPTIMIZED PDF GENERATION ---
+        // Completely refactored to prevent mobile browsers (Android WebViews / Termux) from freezing
+        // It relies on rendering one layer at a time in the *actual viewport* with reduced pixel scale.
         
         async function downloadMissedQuestionsPDF() {
             if (!window.jspdf || !window.html2canvas) {
-                alert("Dependencies missing for PDF generation. Ensure internet connectivity to load jsPDF and html2canvas.");
+                alert("Dependencies missing for PDF generation. Ensure internet connectivity.");
                 return;
             }
 
@@ -478,32 +478,31 @@
                 const PDF_WIDTH = 800; 
                 const PDF_HEIGHT = 1131; 
                 const PADDING = 40; 
-                // Available height for content inside the page (subtracting top/bottom padding and footer space)
                 const MAX_CONTENT_HEIGHT = PDF_HEIGHT - (PADDING * 2) - 40; 
 
-                // Master invisible container
+                // CRITICAL MOBILE FIX: Container MUST be fixed in the top-left of the viewport.
+                // Mobile browsers will refuse to paint elements set to `left: -9999px`.
                 const masterContainer = document.createElement('div');
-                // FIX 1: Make sure the master container is appended to body AND visibly rendered, but just off-screen
-                // html2canvas sometimes fails silently if the parent container is display: none or position: absolute without explicit sizing in DOM flow
-                masterContainer.style.position = 'absolute';
-                masterContainer.style.left = '-9999px';
+                masterContainer.style.position = 'fixed'; 
                 masterContainer.style.top = '0';
+                masterContainer.style.left = '0';
                 masterContainer.style.width = `${PDF_WIDTH}px`;
+                masterContainer.style.height = `${PDF_HEIGHT}px`;
                 masterContainer.style.backgroundColor = '#ffffff'; 
-                // CRITICAL FIX: Ensure the container is part of the layout flow and explicitly visible to the rendering engine
-                masterContainer.style.visibility = 'visible';
-                masterContainer.style.display = 'block';
+                masterContainer.style.overflow = 'hidden'; 
+                masterContainer.style.pointerEvents = 'none'; 
+                masterContainer.style.opacity = '0.01'; // Almost invisible, but layout engine MUST render it
+                masterContainer.style.zIndex = '-9999'; // Hide behind app UI
                 document.body.appendChild(masterContainer);
 
-                // CSS styles applied to generated pages
+                // CSS styles applied to generated pages (absolute stacking)
                 const pageStyles = `
                     <style>
                         .pdf-page-container {
+                            position: absolute; top: 0; left: 0;
                             width: ${PDF_WIDTH}px; height: ${PDF_HEIGHT}px;
-                            background: #ffffff; position: relative;
-                            font-family: 'Helvetica', 'Arial', sans-serif;
+                            background: #ffffff; font-family: 'Plus Jakarta Sans', 'Helvetica', sans-serif;
                             box-sizing: border-box; padding: ${PADDING}px;
-                            overflow: hidden; margin-bottom: 10px;
                         }
                         .pdf-outer-border {
                             position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
@@ -537,19 +536,17 @@
                 let currentPageDOM = null;
                 let currentContentArea = null;
 
-                // Helper to spin up a new perfectly formatted page
                 function createNewPage() {
                     const pageDiv = document.createElement('div');
                     pageDiv.className = 'pdf-page-container';
                     pageDiv.innerHTML = `
                         <div class="pdf-outer-border"></div>
                         <div class="pdf-inner-border"></div>
-                        <div class="pdf-watermark">
-                            <span class="pdf-watermark-q">AgriQ</span> <span class="pdf-watermark-pro">Pro</span>
-                        </div>
+                        <div class="pdf-watermark"><span class="pdf-watermark-q">AgriQ</span> <span class="pdf-watermark-pro">Pro</span></div>
                         <div class="pdf-content-area"></div>
                         <div class="pdf-footer">Page <span class="current-pg"></span> of <span class="total-pg"></span></div>
                     `;
+                    // Append immediately so it gets layout dimensions
                     masterContainer.appendChild(pageDiv);
                     pages.push(pageDiv);
                     return { pageDiv, contentArea: pageDiv.querySelector('.pdf-content-area') };
@@ -559,7 +556,7 @@
                 let { pageDiv, contentArea } = createNewPage();
                 currentPageDOM = pageDiv; currentContentArea = contentArea;
 
-                // --- 1. BUILD HEADER (Page 1) ---
+                // --- BUILD HEADER ---
                 const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                 const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
                 const calcAcc = Math.round((displayScore / data.total) * 100) || 0;
@@ -595,7 +592,7 @@
                 headerContainer.innerHTML = headerHTML;
                 currentContentArea.appendChild(headerContainer);
 
-                // --- 2. BUILD QUESTIONS ---
+                // --- BUILD QUESTIONS ---
                 const optionLabels = ["A", "B", "C", "D"];
                 
                 for (let i = 0; i < missedQuestions.length; i++) {
@@ -622,8 +619,8 @@
                             let isUser = (opt === item.user);
                             const optSafe = DOMPurify.sanitize(opt);
                             
-                            let markerColor = "#0084ff"; // Blue default
-                            let textColor = "#475569";   // Grey default
+                            let markerColor = "#0084ff"; 
+                            let textColor = "#475569";   
                             let textWeight = "normal";
                             let suffix = "";
 
@@ -640,13 +637,12 @@
                                 </div>
                             `;
                         });
-                        qHTML += `</div>`; // Close grid
+                        qHTML += `</div>`; 
                         
                         if (item.user === "SKIPPED") {
                              qHTML += `<div style="margin-top: 12px; font-size: 13px; color: #0084ff; font-style: italic;">Status: You skipped this question.</div>`;
                         }
                     } else {
-                        // Fallback block
                         let userText = item.user === "SKIPPED" ? "SKIPPED" : DOMPurify.sanitize(item.user);
                         let actualText = DOMPurify.sanitize(item.actual);
                         qHTML += `
@@ -659,22 +655,17 @@
                     }
 
                     qDiv.innerHTML = qHTML;
-                    
-                    // Trial append to check height
                     currentContentArea.appendChild(qDiv);
                     
                     if (currentContentArea.scrollHeight > MAX_CONTENT_HEIGHT) {
-                        // Overflow! Remove it from this page...
                         currentContentArea.removeChild(qDiv);
-                        // Create a new page...
                         const newPageObj = createNewPage();
                         currentContentArea = newPageObj.contentArea;
-                        // Append to the new page.
                         currentContentArea.appendChild(qDiv);
                     }
                 }
 
-                // --- 3. BUILD PROMO FOOTER ---
+                // --- BUILD PROMO FOOTER ---
                 const promoDiv = document.createElement('div');
                 promoDiv.innerHTML = `
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-top: 15px;">
@@ -696,48 +687,44 @@
                     currentContentArea.appendChild(promoDiv);
                 }
 
-                // --- 4. UPDATE PAGE NUMBERS ---
+                // --- UPDATE PAGE NUMBERS ---
                 pages.forEach((page, index) => {
                     page.querySelector('.current-pg').innerText = index + 1;
                     page.querySelector('.total-pg').innerText = pages.length;
                 });
 
-                // FIX 2: Wait a tiny bit for the DOM to fully render and calculate font sizes before capturing
-                await new Promise(resolve => setTimeout(resolve, 300));
+                // Let the browser definitively draw all elements 
+                await new Promise(resolve => setTimeout(resolve, 500));
 
-                // --- 5. RENDER TO PDF (html2canvas to jsPDF) ---
+                // --- RENDER TO PDF (Optimized for Mobile) ---
                 const { jsPDF } = window.jspdf;
-                // Init PDF A4 dimensions (pixel scale)
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [PDF_WIDTH, PDF_HEIGHT] });
 
                 for (let i = 0; i < pages.length; i++) {
                     if (i > 0) pdf.addPage();
-                    // Take high res snapshot of the correctly formatted DOM page
-                    // FIX 3: Added windowWidth and windowHeight to html2canvas to ensure it captures exactly the size of the container regardless of mobile viewport
+                    
+                    // Hide all pages except the one we are capturing right now
+                    pages.forEach((p, idx) => { p.style.opacity = (idx === i) ? '1' : '0'; });
+
                     const canvas = await html2canvas(pages[i], {
-                        scale: 2, 
+                        scale: 1.2, // Drastically lowers RAM usage for mobile rendering
                         useCORS: true, 
-                        logging: true, // Enable logging temporarily to catch issues
-                        backgroundColor: '#ffffff',
-                        windowWidth: PDF_WIDTH,
-                        windowHeight: PDF_HEIGHT
+                        logging: false,
+                        backgroundColor: '#ffffff'
                     });
                     
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG for better performance and smaller size
+                    const imgData = canvas.toDataURL('image/jpeg', 0.85); // Compress heavily to JPEG
                     pdf.addImage(imgData, 'JPEG', 0, 0, PDF_WIDTH, PDF_HEIGHT);
                 }
 
                 pdf.save("AgriQ_Missed_Questions.pdf");
-                
-                // Cleanup DOM
                 document.body.removeChild(masterContainer);
 
             } catch (error) {
                 console.error("PDF Generation Error: ", error);
-                alert("An error occurred while generating the PDF. Please try again or check your console for details.");
-                // Ensure container is cleaned up even if error occurs
-                const masterContainer = document.querySelector('div[style*="left: -9999px"]');
-                if (masterContainer) document.body.removeChild(masterContainer);
+                alert("Generation failed (likely out of memory). Try closing background apps on your phone and try again.");
+                const mc = document.querySelector('div[style*="opacity: 0.01"]');
+                if (mc) document.body.removeChild(mc);
             } finally {
                 if (dlBtn) {
                     dlBtn.innerHTML = originalBtnHtml;
