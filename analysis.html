@@ -108,14 +108,14 @@
         .view-options-btn { margin-top: 15px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none; background: var(--primary-glow); padding: 8px 14px; border-radius: 10px; transition: 0.2s; font-family: 'JetBrains Mono'; }
         .view-options-btn:active { transform: scale(0.95); }
 
-        .whatsapp-notice { background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3); border-radius: 20px; padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; margin-top: 25px; }
-        .w-icon { background: #25D366; color: white; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .whatsapp-notice p { margin: 0; font-size: 13px; font-weight: 800; color: #166534; line-height: 1.5; }
-
-        .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+        .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; margin-top: 25px; }
         .btn-action { padding: 20px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; font-size: 15px; }
         .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
         .btn-action.outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-main); }
+        
+        .btn-action.retest-btn { background: #fff; border: 1.5px solid var(--warning); color: var(--warning); }
+        .btn-action.retest-btn:hover { background: rgba(245, 158, 11, 0.05); }
+
         .btn-action:active { transform: scale(0.97); }
     </style>
 </head>
@@ -216,15 +216,15 @@
 
         <div id="review-container"></div>
 
-        <div class="whatsapp-notice">
-            <div class="w-icon"><i data-lucide="bell-ring" size="22"></i></div>
-            <p>Your result will be declared as soon as possible by the Admin on the WhatsApp group. Thank you!</p>
-        </div>
-
         <div class="btn-group">
             <button class="btn-action primary" onclick="generateFastPDF()">
                 <i data-lucide="download" size="20"></i> DOWNLOAD REPORT
             </button>
+            
+            <button class="btn-action retest-btn" onclick="retestMissedQuestions()">
+                <i data-lucide="refresh-cw" size="20"></i> PRACTICE MISSED QUESTIONS
+            </button>
+
             <button class="btn-action outline" onclick="window.location.href='dashboard.html'">
                 <i data-lucide="layout-grid" size="20"></i> BACK TO DASHBOARD
             </button>
@@ -238,7 +238,7 @@
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function () { window.location.href = "dashboard.html"; };
 
-        let currentExamMode = 'MCAER'; // Default mode
+        let currentExamMode = 'MCAER'; 
 
         function loadOfflineResults() {
             const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
@@ -258,7 +258,6 @@
             document.getElementById('tab-mpsc').classList.remove('active');
             document.getElementById('tab-' + mode.toLowerCase()).classList.add('active');
             
-            // Adjust Primary Button Color for coherence
             const dlBtn = document.querySelector('.btn-action.primary');
             if (mode === 'MPSC') {
                 dlBtn.style.background = '#0f172a';
@@ -272,8 +271,17 @@
         }
 
         function loadAnalysis() {
-            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
-            if (!data) return; 
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session');
+            const storageKey = sessionId ? `analysis_${sessionId}` : 'agriq_last_result';
+            const data = JSON.parse(localStorage.getItem(storageKey));
+            
+            if (!data) {
+                document.getElementById('feedback-msg').innerText = "Data Unavailable";
+                document.getElementById('feedback-msg').nextElementSibling.innerText = "Please retake this test to generate a new analysis report.";
+                setTimeout(() => document.getElementById('analysis-loader').classList.add('fade-out'), 400);
+                return; 
+            }
 
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
             const totalQ = data.total || 1;
@@ -399,20 +407,58 @@
             });
         }
 
-        // =========================================================================
-        // HIGH SPEED & INTELLIGENT THEMED PDF GENERATOR
-        // =========================================================================
+        function retestMissedQuestions() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session');
+            const storageKey = sessionId ? `analysis_${sessionId}` : 'agriq_last_result';
+            const data = JSON.parse(localStorage.getItem(storageKey));
+            
+            if (!data || !data.details) return;
+
+            const missedQs = data.details.filter(item => item.user !== item.actual);
+
+            if (missedQs.length === 0) {
+                alert("Excellent! You got everything right. No questions to retest.");
+                return;
+            }
+
+            const retestData = {
+                title: "Missed Questions Review",
+                total: missedQs.length,
+                questions: missedQs.map(q => ({
+                    question: q.question,
+                    options: q.options || [], 
+                    answer: q.actual
+                }))
+            };
+
+            localStorage.setItem('agriq_retest_data', JSON.stringify(retestData));
+            window.location.href = 'retest.html'; 
+        }
+
         async function generateFastPDF() {
             if (!window.jspdf || !window.html2canvas) {
                 alert("Missing dependencies. Ensure internet connectivity."); return;
             }
 
-            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session');
+            const storageKey = sessionId ? `analysis_${sessionId}` : 'agriq_last_result';
+            const data = JSON.parse(localStorage.getItem(storageKey));
+            
             if (!data || !data.details) return;
             const missedQs = data.details.filter(item => item.user !== item.actual);
+            
             if (missedQs.length === 0) {
                 alert("Perfect score! No missed questions to download."); return;
             }
+
+            let correctCount = 0, wrongCount = 0, skipCount = 0;
+            data.details.forEach(item => {
+                if (item.user === item.actual) correctCount++;
+                else if (item.user === "SKIPPED") skipCount++;
+                else wrongCount++;
+            });
 
             const btn = document.querySelector('.btn-action.primary');
             const origHtml = btn.innerHTML;
@@ -421,36 +467,32 @@
             if (window.lucide) lucide.createIcons();
 
             try {
-                // Dimensions & Theme configuration
                 const A4_WIDTH = 794; 
                 const A4_HEIGHT = 1123;
-                const USABLE_HEIGHT = 1050; // Increased to fix blank space issues
+                const USABLE_HEIGHT = 920; 
                 
                 const isMPSC = currentExamMode === 'MPSC';
-                const themeColor = isMPSC ? '#0f172a' : '#004b87'; // Black for MPSC, Blue for MCAER
-                const pdfTitle = isMPSC ? 'MPSC PRELIMS - 2026' : 'MCAER PG CET - 2026';
+                const themeColor = isMPSC ? '#0f172a' : '#0052cc'; 
+                const pdfTitle = isMPSC ? 'MPSC Prelims - Diagnostic Report' : 'MCAER PG CET - Diagnostic Report';
 
                 const container = document.createElement('div');
                 container.style.position = 'absolute'; 
                 container.style.left = '-9999px'; 
                 container.style.top = '0';
+                container.style.backgroundColor = '#ffffff';
                 document.body.appendChild(container);
 
                 const pages = [];
 
-                // --- PAGE 1: COVER & INSTRUCTIONS ONLY ---
-                let coverPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT, themeColor);
+                let coverPage = createA4Template(A4_WIDTH, A4_HEIGHT, themeColor, pdfTitle, 1);
                 let coverContent = coverPage.querySelector('.page-content');
-                coverContent.innerHTML = generateCoverHTML(data, missedQs.length, themeColor, pdfTitle);
+                coverContent.innerHTML = generateCoverHTML(data, correctCount, wrongCount, skipCount, themeColor);
                 pages.push(coverPage);
                 container.appendChild(coverPage);
 
-                // --- PAGE 2+ : MCQs ONLY ---
-                let currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT, themeColor);
+                let pageNum = 2;
+                let currentPdfPage = createA4Template(A4_WIDTH, A4_HEIGHT, themeColor, pdfTitle, pageNum);
                 let contentArea = currentPdfPage.querySelector('.page-content');
-                
-                // Add a small header for continuity on MCQ pages
-                contentArea.innerHTML = `<div style="font-size:12px; font-weight:bold; color:${themeColor}; border-bottom:1px solid ${themeColor}; padding-bottom:8px; margin-bottom:15px; text-align:right;">AgriQ Pro | ${pdfTitle}</div>`;
                 container.appendChild(currentPdfPage);
 
                 for (let i = 0; i < missedQs.length; i++) {
@@ -458,45 +500,38 @@
                     qDiv.innerHTML = generateQuestionHTML(missedQs[i], i + 1, themeColor);
                     contentArea.appendChild(qDiv);
 
-                    // Check if question breaks layout
                     if (contentArea.scrollHeight > USABLE_HEIGHT) {
-                        contentArea.removeChild(qDiv); // Overflow detected, remove from current
-                        pages.push(currentPdfPage); // Save current page
+                        contentArea.removeChild(qDiv); 
+                        pages.push(currentPdfPage); 
                         
-                        // Setup new page
-                        currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT, themeColor);
+                        pageNum++;
+                        currentPdfPage = createA4Template(A4_WIDTH, A4_HEIGHT, themeColor, pdfTitle, pageNum);
                         contentArea = currentPdfPage.querySelector('.page-content');
-                        contentArea.innerHTML = `<div style="font-size:12px; font-weight:bold; color:${themeColor}; border-bottom:1px solid ${themeColor}; padding-bottom:8px; margin-bottom:15px; text-align:right;">AgriQ Pro | ${pdfTitle}</div>`;
                         container.appendChild(currentPdfPage);
-                        contentArea.appendChild(qDiv); // Add overflowed question here safely
+                        contentArea.appendChild(qDiv); 
                     }
                 }
                 pages.push(currentPdfPage); 
 
-                // Add footer pagination tags
-                pages.forEach((p, idx) => {
-                    const footer = document.createElement('div');
-                    footer.style.cssText = `position:absolute; bottom:28px; left:0; width:100%; text-align:center; font-size:11px; font-weight:bold; color:${themeColor}; font-family:sans-serif;`;
-                    footer.innerText = `Page ${idx + 1} of ${pages.length}`;
-                    p.appendChild(footer);
+                pages.forEach(p => {
+                    const totalSpan = p.querySelector('.total-pages');
+                    if(totalSpan) totalSpan.innerText = pages.length;
                 });
 
-                // Init jsPDF
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-                // Loop Pages - Render High Speed (JPEG + scale 1.5)
                 for (let i = 0; i < pages.length; i++) {
                     const canvas = await html2canvas(pages[i], { 
-                        scale: 1.5, // 1.5 is visually perfect for A4 but vastly faster than 2.0
+                        scale: 1.5, 
                         useCORS: true, 
                         logging: false, 
                         width: A4_WIDTH, 
-                        height: A4_HEIGHT 
+                        height: A4_HEIGHT,
+                        backgroundColor: '#ffffff'
                     });
                     
-                    // JPEG encoding is substantially faster and uses far less memory than PNG
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95); 
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98); 
                     
                     if (i > 0) pdf.addPage();
                     pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
@@ -515,100 +550,154 @@
             }
         }
 
-        // Helper: Skeleton A4 Page Engine
-        function createBlankA4Page(width, height, themeColor) {
+        function createA4Template(width, height, themeColor, title, pageNum) {
             const page = document.createElement('div');
-            page.style.cssText = `width:${width}px; height:${height}px; background:#fff; position:relative; box-sizing:border-box; overflow:hidden;`;
+            page.style.cssText = `width:${width}px; height:${height}px; background:#ffffff; position:relative; box-sizing:border-box; overflow:hidden; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; display:flex; flex-direction:column;`;
+            
             page.innerHTML = `
-                <div style="position:absolute; top:18px; bottom:18px; left:18px; right:18px; border:2px solid ${themeColor};"></div>
-                <div style="position:absolute; top:22px; bottom:22px; left:22px; right:22px; border:1px solid ${themeColor};"></div>
-                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-45deg); font-size:110px; color:rgba(0,0,0,0.03); font-weight:900; font-family:sans-serif; z-index:0; white-space:nowrap; pointer-events:none;">AgriQ Pro</div>
-                <div class="page-content" style="position:relative; z-index:1; padding:38px 42px; box-sizing:border-box; width:100%; font-family:sans-serif;"></div>
+                <!-- Header -->
+                <div style="padding: 40px 50px 20px 50px; display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid ${themeColor};">
+                    <div style="font-size:26px; font-weight:900; color:${themeColor}; letter-spacing:-0.5px;">
+                        AgriQ <span style="color:#0084ff;">Pro</span>
+                    </div>
+                    <div style="font-size:12px; font-weight:bold; color:#64748b; text-transform:uppercase; letter-spacing:1px;">
+                        ${title}
+                    </div>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="page-content" style="flex:1; padding: 30px 50px; box-sizing:border-box; width:100%;"></div>
+                
+                <!-- Footer -->
+                <div style="padding: 20px 50px 30px 50px; display:flex; justify-content:space-between; font-size:10px; font-weight:bold; color:#94a3b8; border-top: 1px solid #e2e8f0; margin-top:auto;">
+                    <span>Generated by AgriQ AI Analytics System</span>
+                    <span>Page ${pageNum} of <span class="total-pages"></span></span>
+                </div>
             `;
             return page;
         }
 
-        // Helper: Full Page 1 HTML
-        function generateCoverHTML(data, missedCount, themeColor, titleRight) {
+        function generateCoverHTML(data, correct, wrong, skip, themeColor) {
             const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
             const acc = Math.round((displayScore / data.total) * 100);
             const userText = document.getElementById('user-tag') ? document.getElementById('user-tag').innerText : "STUDENT";
 
             return `
-                <div style="display:flex; flex-direction:column; justify-content:center; padding-top: 40px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid ${themeColor}; padding-bottom:15px; margin-bottom:25px;">
-                        <div style="font-size:32px; font-weight:900; color:${themeColor};">AgriQ <span style="color:#0084ff;">Pro</span></div>
-                        <div style="font-size:16px; font-weight:800; color:${themeColor};">${titleRight}</div>
-                    </div>
+                <div style="padding-top: 20px;">
+                    <h2 style="font-size: 22px; color: #0f172a; margin-bottom: 5px; font-weight: 800;">Candidate Performance Summary</h2>
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 30px; font-weight: 500;">Comprehensive breakdown of mock examination results.</p>
                     
-                    <div style="background: rgba(0,0,0,0.02); border-radius: 12px; padding: 25px; margin-bottom: 40px; border: 1px solid rgba(0,0,0,0.05);">
-                        <div style="display:flex; justify-content:space-between; font-size:15px; color:#1e293b; font-weight:600; line-height:2.2;">
-                            <div>
-                                <div><span style="color:${themeColor}; font-weight:800;">Date:</span> ${date}</div>
-                                <div><span style="color:${themeColor}; font-weight:800;">Candidate:</span> ${userText}</div>
-                                <div><span style="color:${themeColor}; font-weight:800;">Original Score:</span> ${displayScore} / ${data.total} (${acc}%)</div>
+                    <div style="display:flex; gap: 40px; margin-bottom: 40px;">
+                        <div>
+                            <div style="font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase; margin-bottom:4px;">Candidate Name</div>
+                            <div style="font-size:16px; color:#0f172a; font-weight:bold;">${userText}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase; margin-bottom:4px;">Date of Exam</div>
+                            <div style="font-size:16px; color:#0f172a; font-weight:bold;">${date}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase; margin-bottom:4px;">Report Scope</div>
+                            <div style="font-size:16px; color:#0f172a; font-weight:bold;">Missed Questions Review</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap: 15px; margin-bottom: 40px;">
+                        <div style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; text-align:center;">
+                            <div style="font-size:32px; font-weight:900; color:${themeColor};">${acc}%</div>
+                            <div style="font-size:10px; font-weight:bold; color:#64748b; text-transform:uppercase; margin-top:5px;">Accuracy</div>
+                        </div>
+                        <div style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; text-align:center;">
+                            <div style="font-size:32px; font-weight:900; color:#0f172a;">${displayScore}<span style="font-size:18px; color:#94a3b8">/${data.total}</span></div>
+                            <div style="font-size:10px; font-weight:bold; color:#64748b; text-transform:uppercase; margin-top:5px;">Final Score</div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow:hidden; margin-bottom: 40px;">
+                        <div style="background: #f8fafc; padding: 12px 20px; font-size: 12px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">QUESTION BREAKDOWN</div>
+                        <div style="display:flex; padding: 20px;">
+                            <div style="flex:1; text-align:center; border-right: 1px solid #e2e8f0;">
+                                <div style="font-size:24px; font-weight:bold; color:#16a34a;">${correct}</div>
+                                <div style="font-size:11px; font-weight:bold; color:#64748b; margin-top:4px;">Correct</div>
                             </div>
-                            <div style="text-align:right;">
-                                <div><span style="color:${themeColor}; font-weight:800;">Report Type:</span> Missed Questions</div>
-                                <div><span style="color:${themeColor}; font-weight:800;">Questions Missed/Skipped:</span> ${missedCount}</div>
+                            <div style="flex:1; text-align:center; border-right: 1px solid #e2e8f0;">
+                                <div style="font-size:24px; font-weight:bold; color:#dc2626;">${wrong}</div>
+                                <div style="font-size:11px; font-weight:bold; color:#64748b; margin-top:4px;">Incorrect</div>
+                            </div>
+                            <div style="flex:1; text-align:center;">
+                                <div style="font-size:24px; font-weight:bold; color:#0084ff;">${skip}</div>
+                                <div style="font-size:11px; font-weight:bold; color:#64748b; margin-top:4px;">Skipped</div>
                             </div>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 30px;">
-                        <div style="color:${themeColor}; font-weight:800; font-size:18px; margin-bottom:15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Performance Review Guidelines</div>
-                        <div style="font-size:14px; color:#334155; line-height:1.8; font-weight: 500;">
-                            <p style="margin-bottom: 15px;"><strong>1. Targeted Focus:</strong> This document exclusively isolates the questions you answered incorrectly or chose to skip during your recent mock simulation.</p>
-                            <p style="margin-bottom: 15px;"><strong>2. Color Code Mapping:</strong> During your review, the correct answer is explicitly marked in <span style="color:#16a34a; font-weight:bold;">Green</span>, while your incorrect selection is flagged in <span style="color:#dc2626; font-weight:bold;">Red</span>.</p>
-                            <p style="margin-bottom: 15px;"><strong>3. Action Plan:</strong> Use this targeted report to identify your weak areas, review the underlying concepts in your study material, and apply active recall methods to master these specific topics.</p>
+                    <div>
+                        <div style="font-size:14px; font-weight:bold; color:#0f172a; margin-bottom:12px;">Diagnostic Review Instructions</div>
+                        <div style="font-size:12px; color:#475569; line-height:1.6; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+                            <p style="margin: 0 0 10px 0;">This report exclusively isolates questions answered incorrectly or skipped.</p>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 6px;">Your selected answer is highlighted in <b style="color:#dc2626;">Light Red</b>.</li>
+                                <li style="margin-bottom: 6px;">The correct answer is highlighted in <b style="color:#16a34a;">Light Green</b>.</li>
+                                <li>Use this diagnostic to identify weak concepts and target your revision effectively.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // Helper: Tightly Packed MCQ HTML
         function generateQuestionHTML(item, qNum, themeColor) {
             const qText = DOMPurify.sanitize(item.question || "");
+            
             let html = `
-                <div style="margin-bottom: 18px; padding-bottom: 15px; border-bottom: 1px dashed #cbd5e1; font-family:sans-serif;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:10px; line-height:1.4;">
-                        <span style="color:${themeColor}; margin-right:4px;">Q${qNum}.</span> ${qText}
+                <div style="margin-bottom: 25px; page-break-inside: avoid;">
+                    <div style="font-size:13px; font-weight:bold; color:#0f172a; margin-bottom:12px; line-height:1.5;">
+                        <span style="color:${themeColor};">Q${qNum}.</span> ${qText}
                     </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
             `;
             
             if (item.options && Array.isArray(item.options)) {
-                const labels = ["A", "B", "C", "D"];
-                html += `<div style="display:flex; flex-wrap:wrap; font-size:13px; font-weight:500;">`;
+                const labels = ["A", "B", "C", "D", "E"];
                 
-                item.options.slice(0, 4).forEach((opt, idx) => {
+                item.options.forEach((opt, idx) => {
                     const isCorrect = opt === item.actual;
                     const isUser = opt === item.user;
                     const optSafe = DOMPurify.sanitize(opt);
                     
-                    let color = "#475569"; let bold = "normal"; let suffix = "";
-                    if(isCorrect) { color = "#16a34a"; bold = "bold"; suffix = " (Correct)"; }
-                    else if(isUser) { color = "#dc2626"; bold = "bold"; suffix = " (Yours)"; }
+                    let bg = "#ffffff"; let border = "#e2e8f0"; let color = "#475569"; let bold = "normal"; let labelColor = "#94a3b8";
+                    
+                    if (isCorrect) { 
+                        bg = "#f0fdf4"; border = "#bbf7d0"; color = "#166534"; bold = "bold"; labelColor = "#22c55e";
+                    } else if (isUser) { 
+                        bg = "#fef2f2"; border = "#fecaca"; color = "#991b1b"; bold = "bold"; labelColor = "#ef4444";
+                    }
 
                     html += `
-                        <div style="width:50%; margin-bottom:8px; padding-right:10px; box-sizing:border-box; color:${color}; font-weight:${bold}; line-height:1.3;">
-                            <span style="color:${themeColor}; font-weight:bold; margin-right:4px;">[${labels[idx]}]</span> ${optSafe}${suffix}
+                        <div style="background:${bg}; border:1px solid ${border}; padding:8px 12px; border-radius:6px; font-size:12px; color:${color}; font-weight:${bold}; line-height:1.4;">
+                            <span style="color:${labelColor}; font-weight:bold; margin-right:6px; display:inline-block; width:15px;">${labels[idx]}</span>
+                            ${optSafe}
                         </div>
                     `;
                 });
-                html += `</div>`;
 
                 if (item.user === "SKIPPED") {
-                     html += `<div style="margin-top:6px; color:#0084ff; font-style:italic; font-size:12px; font-weight:600;">Status: You skipped this question.</div>`;
+                     html += `<div style="margin-top:6px; color:#0084ff; font-size:11px; font-weight:bold; padding-left:28px;">[ Note: Question was Skipped ]</div>`;
                 }
             } else {
                 let u = item.user === "SKIPPED" ? "SKIPPED" : DOMPurify.sanitize(item.user);
-                html += `<div style="color:#dc2626; font-size:13px; margin-bottom:4px; font-weight:600;">[Yours] ${u}</div>
-                         <div style="color:#16a34a; font-size:13px; font-weight:bold;">[Correct] ${DOMPurify.sanitize(item.actual)}</div>`;
+                html += `
+                    <div style="background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:6px; font-size:12px; color:#991b1b; font-weight:bold; margin-bottom:4px;">
+                        <span style="color:#ef4444; margin-right:6px;">[Yours]</span> ${u}
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:8px 12px; border-radius:6px; font-size:12px; color:#166534; font-weight:bold;">
+                        <span style="color:#22c55e; margin-right:6px;">[Correct]</span> ${DOMPurify.sanitize(item.actual)}
+                    </div>
+                `;
             }
 
-            html += `</div>`;
+            html += `</div></div>`;
             return html;
         }
     </script>
