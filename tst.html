@@ -8,14 +8,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#f0f9ff">
     <title>AgriQ Pro | Active Sky Test</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -31,7 +29,6 @@
             --success-glow: rgba(34, 197, 94, 0.15);
             --warning: #eab308;
             --glass: rgba(255, 255, 255, 0.8);
-            --transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -39,54 +36,34 @@
         body { 
             background-color: var(--bg); 
             background-image: radial-gradient(circle at top right, #e0f2fe, transparent);
-            margin: 0; color: var(--text-main); min-height: 100vh;
-            display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto;
+            margin: 0; 
+            color: var(--text-main); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
-        /* --- SCREENS --- */
-        .screen { display: none; flex-direction: column; flex: 1; animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; width: 100%;}
-        .screen.active { display: flex; }
-        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- LOADER & MODALS --- */
         #app-loader {
             position: fixed; inset: 0; background: var(--bg); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         #app-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; transition: 0.6s; }
         
+        /* PAUSE OVERLAY STYLES */
         #pause-overlay {
             position: fixed; inset: 0; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(15px);
             z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
 
-        #custom-modal { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.4); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(8px); }
-        .modal-content { background: #fff; width: 100%; max-width: 350px; border-radius: 28px; padding: 30px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .modal-actions { display:flex; gap:12px; }
-        .hidden { display: none !important; }
-
-        /* --- MODE SELECTION SCREEN --- */
-        .select-container { max-width: 600px; margin: 40px auto; padding: 20px; width: 100%; text-align: center; }
-        .select-title { font-size: 24px; font-weight: 900; margin-bottom: 10px; color: var(--text-main); }
-        .select-subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 30px; font-weight: 500; }
-        
-        .mode-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        @media(min-width: 500px) { .mode-grid { grid-template-columns: 1fr 1fr; } }
-        
-        .mode-card {
-            background: #fff; border: 2px solid var(--border); border-radius: 24px; padding: 30px 20px;
-            display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; transition: var(--transition);
-        }
-        .mode-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 30px var(--primary-glow); }
-        .mode-card h4 { margin: 0; font-size: 18px; font-weight: 800; color: var(--text-main); }
-        .mode-card p { margin: 0; font-size: 13px; color: var(--text-dim); font-weight: 600; line-height: 1.5;}
-
-        /* --- ONLINE TEST ENGINE UI --- */
-        header.online-header {
+        header {
             padding: calc(env(safe-area-inset-top) + 15px) 24px 15px; 
-            background: var(--glass); backdrop-filter: blur(20px);
+            background: var(--glass); 
+            backdrop-filter: blur(20px);
             display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid var(--border); 
+            position: sticky; top: 0; z-index: 1000;
         }
 
         .timer-badge { 
@@ -97,8 +74,13 @@
 
         .profile-container { width: 42px; height: 42px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
 
-        main.online-main { 
-            padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; flex: 1; padding-bottom: 200px;
+        main { 
+            padding: 20px; 
+            max-width: 500px; 
+            margin: 0 auto; 
+            width: 100%; 
+            flex: 1; 
+            padding-bottom: 200px;
         }
 
         .marker-scroll { 
@@ -119,9 +101,26 @@
 
         .q-card { background: #fff; border-radius: 28px; padding: 26px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
         
-        .q-number-label { font-size: 12px; font-weight: 800; color: var(--primary); letter-spacing: 1px; margin-bottom: 10px; display: block; }
+        .q-number-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+        }
 
-        .retake-badge { display: none; background: #f1f5f9; color: var(--text-dim); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; margin-left: 10px; vertical-align: middle; }
+        .retake-badge {
+            display: none;
+            background: #f1f5f9;
+            color: var(--text-dim);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
 
         .opt-box { 
             background: #fff; border: 1.5px solid var(--border); padding: 18px; 
@@ -134,34 +133,24 @@
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
             width: 92%; max-width: 460px; padding: 16px; background: var(--glass);
             backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 30px;
-            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); z-index: 1001;
+            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            z-index: 1001;
         }
 
         .btn-row { display: flex; gap: 10px; }
         .btn-primary { flex: 1.5; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: #fff; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
         .btn-sec { flex: 1; padding: 16px; border-radius: 18px; background: #fff; color: var(--text-main); border: 1.5px solid var(--border); font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
 
-        .back-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--text-main); cursor: pointer; transition: var(--transition); text-decoration: none;}
-        .back-btn:hover { background: #fff; border-color: var(--primary); color: var(--primary); }
-
-        /* --- OFFLINE PDF VIEWER UI --- */
-        .pdf-container { 
-            width: 100%; max-width: 800px; height: 85vh; margin: 20px auto; 
-            border-radius: 20px; overflow: hidden; border: 2px solid var(--border); 
-            background: #e2e8f0; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        .pdf-container iframe { width: 100%; height: 100%; border: none; }
-        .pdf-overlay-loader { position: absolute; inset: 0; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; z-index: 5;}
-        
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #custom-modal { position: fixed; inset: 0; background: rgba(0, 45, 77, 0.3); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px; backdrop-filter: blur(8px); }
+        .modal-content { background: #fff; width: 100%; max-width: 350px; border-radius: 28px; padding: 30px; text-align: center; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="app-loader">
         <div id="loader-icon" style="color:var(--primary);"><i data-lucide="cloud-lightning" size="64" fill="currentColor"></i></div>
-        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">SYNCING SCALES...</p>
+        <p style="font-family:'JetBrains Mono'; font-size: 10px; color: var(--primary); margin-top: 15px; letter-spacing: 2px; font-weight: 800;">Loading...</p>
     </div>
 
     <div id="pause-overlay">
@@ -174,102 +163,57 @@
     <div id="custom-modal">
         <div class="modal-content">
             <div id="modal-title" style="font-weight:900; margin-bottom:10px; text-transform:uppercase; color:var(--primary);">Alert</div>
-            <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:25px; line-height: 1.5;">Message</div>
-            <div class="modal-actions">
+            <div id="modal-text" style="font-size:13px; color:var(--text-dim); margin-bottom:25px;">Message</div>
+            <div class="modal-actions" style="display:flex; gap:12px;">
                 <button class="btn-sec" id="modal-cancel-btn">CANCEL</button>
                 <button class="btn-primary" id="modal-confirm-btn">CONFIRM</button>
             </div>
         </div>
     </div>
 
-    <div id="screen-select" class="screen">
-        <header class="online-header">
-            <div class="back-btn" onclick="requestExit()"><i data-lucide="chevron-left" size="20"></i></div>
-            <div class="brand" style="font-weight: 900; font-size: 20px;"><i data-lucide="shield-check" size="24" color="var(--primary)"></i> AgriQ <span style="color: var(--primary);">Test</span></div>
-            <div style="width: 40px;"></div>
-        </header>
-
-        <div class="select-container">
-            <h2 class="select-title">Select Attempt Mode</h2>
-            <p class="select-subtitle">Choose how you would like to take this examination.</p>
-            
-            <div class="mode-grid">
-                <div class="mode-card" onclick="startOnlineMode()">
-                    <i data-lucide="laptop" size="48" color="var(--primary)"></i>
-                    <h4>Online Attempt</h4>
-                    <p>Interactive quiz format with live scoring and a countdown timer.</p>
-                </div>
-                <div class="mode-card" onclick="startOfflineMode()">
-                    <i data-lucide="file-text" size="48" color="var(--warning)"></i>
-                    <h4>Offline View</h4>
-                    <p>View the question paper strictly as a secure PDF document. No downloads.</p>
-                </div>
+    <header>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="profile-container" id="user-initial">U</div>
+            <div>
+                <div id="assessment-type-label" style="font-weight: 900; font-size: 9px; letter-spacing: 1px; color: var(--primary);">LIVE ASSESSMENT</div>
+                <span id="user-display-name" style="font-weight:800; font-size:14px; color:var(--text-main);">STUDENT</span>
             </div>
         </div>
-    </div>
-
-    <div id="screen-online" class="screen">
-        <header class="online-header">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div class="back-btn" onclick="requestExit()"><i data-lucide="chevron-left" size="20"></i></div>
-                <div class="profile-container" id="user-initial">U</div>
-                <div>
-                    <div id="assessment-type-label" style="font-weight: 900; font-size: 9px; letter-spacing: 1px; color: var(--primary);">LIVE ASSESSMENT</div>
-                    <span id="user-display-name" style="font-weight:800; font-size:14px; color:var(--text-main);">STUDENT</span>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div id="q-timer" class="timer-badge">02:00:00</div>
-                <button onclick="togglePause()" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:5px; display:flex;">
-                    <i data-lucide="pause-circle" size="24"></i>
-                </button>
-            </div>
-        </header>
-
-        <main class="online-main">
-            <div id="marker-grid" class="marker-scroll"></div>
-            
-            <div class="q-card">
-                <span id="q-number" class="q-number-label">
-                    QUESTION <span id="q-current-count">--</span> OF <span id="q-total-count">--</span>
-                    <span id="retake-badge" class="retake-badge">RETAKE</span>
-                </span>
-                <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6; color: var(--text-main);">Preparing your assessment...</div>
-            </div>
-
-            <div id="opts-display"></div>
-        </main>
-
-        <div class="controls">
-            <div class="btn-row">
-                <button class="btn-sec" style="flex: 1;" onclick="changeQ(-1)"><i data-lucide="chevron-left" size="20"></i></button>
-                <button class="btn-sec" id="mark-btn" style="flex: 2; border-color: var(--warning); color: var(--warning);" onclick="toggleMark()">
-                    MARK <i data-lucide="bookmark" size="18"></i>
-                </button>
-                <button class="btn-primary" style="flex: 1.5;" onclick="changeQ(1)">NEXT <i data-lucide="chevron-right" size="20"></i></button>
-            </div>
-            <button class="btn-primary" style="background:var(--danger); width: 100%;" onclick="submitTest()">
-                FINISH ASSESSMENT <i data-lucide="check-circle" size="18"></i>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="q-timer" class="timer-badge">00:00</div>
+            <button id="pause-btn" onclick="togglePause()" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:5px; display:flex;">
+                <i data-lucide="pause-circle" size="24"></i>
             </button>
         </div>
-    </div>
+    </header>
 
-    <div id="screen-offline" class="screen" style="padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="back-btn" onclick="requestExit()"><i data-lucide="chevron-left" size="20"></i></div>
-                <h3 style="margin:0; font-weight: 900; font-size: 18px;">Secure Viewer</h3>
-            </div>
-            <div style="font-size: 10px; font-weight: 800; background: rgba(245, 158, 11, 0.1); color: var(--warning); padding: 6px 12px; border-radius: 8px; letter-spacing: 1px;">READ ONLY</div>
-        </div>
+    <main id="main-content">
+        <div id="marker-grid" class="marker-scroll"></div>
         
-        <div class="pdf-container">
-            <div class="pdf-overlay-loader" id="pdf-loader">
-                <i data-lucide="loader-2" class="spin" size="40" color="var(--primary)"></i>
-                <span style="font-weight: 800; color: var(--text-dim);">Rendering Secure Document...</span>
-            </div>
-            <iframe id="pdf-viewer"></iframe>
+        <div class="q-card">
+            <span id="q-number" class="q-number-label">
+                QUESTION <span id="q-current-count">--</span> OF <span id="q-total-count">--</span>
+                <span id="retake-badge" class="retake-badge">RETAKE</span>
+            </span>
+            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6; color: var(--text-main);">Preparing your assessment...</div>
         </div>
+
+        <div id="opts-display"></div>
+    </main>
+
+    <div class="controls" id="bottom-controls">
+        <div class="btn-row">
+            <button class="btn-sec" style="flex: 1;" onclick="changeQ(-1)"><i data-lucide="chevron-left" size="20"></i></button>
+            
+            <button class="btn-sec" id="mark-btn" style="flex: 2; border-color: var(--warning); color: var(--warning);" onclick="toggleMark()">
+                MARK <i data-lucide="bookmark" size="18"></i>
+            </button>
+            
+            <button class="btn-primary" style="flex: 1.5;" onclick="changeQ(1)">NEXT <i data-lucide="chevron-right" size="20"></i></button>
+        </div>
+        <button class="btn-primary" style="background:var(--danger); width: 100%;" onclick="submitTest()">
+            FINISH ASSESSMENT <i data-lucide="check-circle" size="18"></i>
+        </button>
     </div>
 
     <script>
@@ -279,245 +223,249 @@
             databaseURL: "https://agri-mcar-default-rtdb.firebaseio.com",
             projectId: "agri-mcar"
         };
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        lucide.createIcons();
 
-        // --- GLOBAL VARIABLES ---
         let questions = [], currentIdx = 0, userChoices = {}, markedQuestions = {}, timer;
-        let totalSecondsRemaining = 7200; // DEFAULT 2 HOURS
+        let totalSecondsRemaining = 3600; 
         
         const params = new URLSearchParams(window.location.search);
-        const testType = params.get('type');
         const moduleKey = params.get('mod');
-        const folderKey = params.get('folder') || 'Unknown';
-        const sourceParam = params.get('source'); // Can be course_content or nested_subjects
+        const folderKey = params.get('folder'); 
+        const reviewIndexParam = params.get('reviewIndex');
+        const isReviewMode = reviewIndexParam !== null;
+        
+        // Grab the version and random parameters from the URL
         const dbVersion = params.get('v');
         const isRandomMode = params.get('random') === 'true';
         
-        let activeSessionId = `${folderKey}_${moduleKey}`; 
-        if (dbVersion === '2') activeSessionId += '_v2';
+        // Initialize Active Session ID
+        let activeSessionId = folderKey ? `${folderKey}_${moduleKey}` : moduleKey; 
+        // ----------------------------------------------------
+        // FIX: Append '_v2' to prevent session collision
+        // ----------------------------------------------------
+        if (dbVersion === '2') {
+            activeSessionId += '_v2';
+        }
         
         const retakeParam = params.get('retake');
         const isRetake = retakeParam === 'true' || retakeParam === 'half';
+        const isHalfXP = retakeParam === 'half';
         
         let isSubmitting = false;
         let isPaused = false;
 
-        // --- HARDWARE BACK-BUTTON TRAP ---
-        window.history.pushState({ noBackExitsApp: true }, '');
-        window.addEventListener('popstate', function(event) {
-            const isOnlineActive = document.getElementById('screen-online').classList.contains('active');
-            if (isOnlineActive) {
-                window.history.pushState({ noBackExitsApp: true }, ''); 
-                requestExit();
-            } else {
-                returnToPrevious();
-            }
-        });
-
-        function returnToPrevious() {
-            let returnUrl = 'dashboard.html';
-            if (folderKey && folderKey !== 'Unknown') {
-                returnUrl = (sourceParam === 'course_content') ? `pfolder.html?folder=${folderKey}` : `folder_view.html?folder=${folderKey}`;
-                if (dbVersion === '2') returnUrl += `&v=2`;
-            }
-            window.location.href = returnUrl;
+        // Auto-save function to persist test progress
+        function saveProgress() {
+            if (isReviewMode || isSubmitting) return;
+            const progress = {
+                questions, // Saves the completely generated/shuffled array so it isn't lost
+                userChoices,
+                markedQuestions,
+                currentIdx,
+                totalSecondsRemaining,
+                isPaused,
+                isRandomMode // Reference just in case
+            };
+            localStorage.setItem(`test_progress_${activeSessionId}`, JSON.stringify(progress));
         }
 
-        // Auto-pause on tab change
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden && !isSubmitting && !isPaused && document.getElementById('screen-online').classList.contains('active')) {
+        function clearProgress() {
+            localStorage.removeItem(`test_progress_${activeSessionId}`);
+        }
+
+        // Comprehensive background event handling
+        function handleBackgroundChange() {
+            if (!isSubmitting && !isPaused && !isReviewMode) {
                 togglePause();
+                saveProgress();
+            }
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) handleBackgroundChange();
+        });
+        window.addEventListener("blur", handleBackgroundChange);
+        window.addEventListener("pagehide", handleBackgroundChange);
+
+        if (isRetake && !isReviewMode) {
+            document.getElementById('retake-badge').style.display = 'inline-block';
+        }
+
+        // --- BACK BUTTON INTERCEPTION --- //
+        window.history.pushState({ page: 'test' }, null, window.location.href);
+
+        window.addEventListener('popstate', function(event) {
+            if (!isSubmitting && !isReviewMode) {
+                saveProgress(); 
+                
+                let returnUrl = 'folder_view.html';
+                if (folderKey) {
+                    returnUrl += `?folder=${folderKey}`;
+                    if (dbVersion === '2') {
+                        returnUrl += `&v=2`;
+                    }
+                }
+                
+                window.location.replace(returnUrl);
+            } else if (isReviewMode) {
+                window.location.replace('analysis.html');
             }
         });
+        // -------------------------------- //
 
-        // --- INITIALIZATION ---
         auth.onAuthStateChanged(user => {
-            if (!user) return window.location.href = 'login.html';
+            if (!user) return window.location.href = 'dashboard.html';
             db.ref(`students/${user.uid}`).once('value', snap => {
                 const userData = snap.val();
                 if (userData) {
-                    document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
+                    if(!isReviewMode) document.getElementById('user-display-name').innerText = userData.name.toUpperCase();
                     document.getElementById('user-initial').innerText = userData.name[0];
                 }
             });
-            loadQuestions();
+
+            if (isReviewMode) {
+                setupReviewMode(parseInt(reviewIndexParam));
+            } else {
+                loadQuestions();
+            }
         });
 
-        async function loadQuestions() {
-            try {
-                const user = auth.currentUser;
-                const isOfflineFlag = params.get('offline') === 'true' || !navigator.onLine;
-                let rawQuestions = [];
+        // ---------------- REVIEW MODE LOGIC ---------------- //
+        function setupReviewMode(index) {
+            document.getElementById('app-loader').classList.add('fade-out');
+            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            
+            if (!data || !data.details || !data.details[index]) {
+                return window.location.href = 'analysis.html';
+            }
 
-                // 1. Check Special Modes (Sunday Test or Revision)
-                if(testType === 'sunday') {
-                    activeSessionId = "SUNDAY_GRAND_TEST";
-                    const snap = await db.ref('sunday_test').once('value');
-                    if(snap.exists() && snap.val().status === 'active') {
-                        rawQuestions = snap.val().questions || [];
-                        totalSecondsRemaining = 7200; 
-                    } else {
-                        return showModal("ACCESS DENIED", "The Sunday Grand Test is currently inactive or locked.", "alert", () => returnToPrevious());
+            const qData = data.details[index];
+            const opts = qData.options || [];
+
+            document.getElementById('bottom-controls').style.display = 'none';
+            document.getElementById('marker-grid').style.display = 'none';
+            document.getElementById('pause-btn').style.display = 'none';
+            document.getElementById('main-content').style.paddingBottom = '40px'; 
+            
+            const timerBadge = document.getElementById('q-timer');
+            timerBadge.innerText = "REVIEW";
+            timerBadge.style.background = "var(--primary-glow)";
+            timerBadge.style.borderColor = "var(--primary)";
+            
+            document.getElementById('assessment-type-label').innerText = "REVIEW MODE";
+            document.getElementById('assessment-type-label').style.color = "var(--primary)";
+            document.getElementById('user-display-name').innerText = `Q${index + 1} OVERVIEW`;
+
+            document.getElementById('q-number').innerHTML = `QUESTION <span style="color:var(--text-main);">${index + 1}</span>`;
+            document.getElementById('q-display').innerHTML = qData.question;
+
+            const optBox = document.getElementById('opts-display');
+            optBox.innerHTML = '';
+            
+            if (opts.length === 0) {
+                optBox.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-dim); font-size:14px; font-weight:700;">Option details are not available.<br>Please take a new test to see them.</div>';
+            } else {
+                opts.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'opt-box';
+                    div.style.cursor = 'default';
+                    div.innerText = opt;
+                    
+                    if (opt === qData.actual) {
+                        div.style.borderColor = 'var(--success)';
+                        div.style.background = 'var(--success-glow)';
+                        div.style.color = 'var(--success)';
+                        div.innerHTML += ' <i data-lucide="check-circle" size="18" style="float:right;"></i>';
+                    } 
+                    else if (opt === qData.user && qData.user !== qData.actual) {
+                        div.style.borderColor = 'var(--danger)';
+                        div.style.background = 'rgba(239, 68, 68, 0.05)';
+                        div.style.color = 'var(--danger)';
+                        div.innerHTML += ' <i data-lucide="x-circle" size="18" style="float:right;"></i>';
                     }
-                } 
-                else if (moduleKey === 'revision' || localStorage.getItem('isRevision') === 'true') {
+                    
+                    optBox.appendChild(div);
+                });
+            }
+
+            const backBtn = document.createElement('button');
+            backBtn.className = 'btn-primary';
+            backBtn.style.marginTop = '25px';
+            backBtn.style.width = '100%';
+            backBtn.innerHTML = '<i data-lucide="arrow-left" size="18"></i> BACK TO ANALYSIS';
+            backBtn.onclick = () => window.location.href = 'analysis.html';
+            document.getElementById('main-content').appendChild(backBtn);
+            
+            lucide.createIcons();
+        }
+
+        // ---------------- NORMAL TEST LOGIC ---------------- //
+        async function loadQuestions() {
+            if (!moduleKey) return window.location.href = 'courses.html';
+
+            if (moduleKey === 'revision' || localStorage.getItem('isRevision') === 'true') {
+                try {
                     const storedQs = localStorage.getItem('revisionQuestions');
                     if (storedQs) {
                         document.getElementById('assessment-type-label').innerText = "🔥 QUICK REVISION";
                         document.getElementById('assessment-type-label').style.color = "var(--warning)";
-                        rawQuestions = JSON.parse(storedQs);
+                        
+                        const parsedQs = JSON.parse(storedQs);
+                        
                         localStorage.removeItem('isRevision');
                         localStorage.removeItem('revisionQuestions');
-                        totalSecondsRemaining = rawQuestions.length * 60;
+
+                        totalSecondsRemaining = parsedQs.length * 60;
+                        
+                        setupQuestions(parsedQs);
+                        return; 
                     } else {
-                        return showModal("ERROR", "Revision data expired. Please restart from the folder.", "alert", () => returnToPrevious());
+                        return showModal("ERROR", "Revision data expired. Please restart from the folder.", "alert", () => window.location.href='courses.html');
                     }
+                } catch(e) {
+                    console.error("Revision Load Error:", e);
                 }
-                // 2. UNIFIED LOCAL STORAGE / OFFLINE CACHE CHECK
-                else if (folderKey && folderKey !== 'Unknown') {
-                    // Inspect caches created by folder_view.html, pfolder.html, and pcourses.html
-                    const cachedData = localStorage.getItem(`agriq_folder_data_${folderKey}`) || 
-                                       localStorage.getItem(`agriq_pfolder_data_${folderKey}`) ||
-                                       localStorage.getItem(`offline_bank_${activeSessionId}`);
-                    
-                    if (cachedData) {
-                        try {
-                            const parsedCache = JSON.parse(cachedData);
-                            // Can be an array of modules (folder view cache) or direct questions array (legacy offline bank)
-                            if (Array.isArray(parsedCache)) {
-                                const targetModule = parsedCache.find(m => m.key === moduleKey || m.id === moduleKey);
-                                if (targetModule && targetModule.questions) {
-                                    if (targetModule.current_session_id) {
-                                        activeSessionId = dbVersion === '2' ? targetModule.current_session_id + '_v2' : targetModule.current_session_id;
-                                    }
-                                    rawQuestions = targetModule.questions?.data || targetModule.questions || [];
-                                    if (targetModule.config && targetModule.config.timeLimit) {
-                                        totalSecondsRemaining = parseInt(targetModule.config.timeLimit, 10);
-                                    }
-                                    document.getElementById('assessment-type-label').innerText = !navigator.onLine ? "⚡ OFFLINE ASSESSMENT" : "⚡ INSTANT CACHED TEST";
-                                    document.getElementById('assessment-type-label').style.color = "#10b981";
-                                }
-                            } else if (parsedCache.questions || Array.isArray(parsedCache)) {
-                                rawQuestions = parsedCache.questions || parsedCache;
-                                totalSecondsRemaining = 7200;
-                            }
-                        } catch(err) {
-                            console.warn("Local storage cache parse failed, falling back to Firebase cloud:", err);
-                        }
-                    }
-                }
+            }
 
-                // 3. Fallback to Firebase Cloud Fetch (if not loaded from local storage)
-                if (rawQuestions.length === 0) {
-                    if (!navigator.onLine) {
-                        return showModal("OFFLINE ERROR", "This test has not been downloaded for offline access yet. Please connect to the internet.", "alert", () => returnToPrevious());
-                    }
-
-                    let dbPath = `subjects/${moduleKey}`;
-                    let snap = null;
-
-                    if (folderKey && folderKey !== 'Unknown') {
-                        if (dbVersion === '2') {
-                            dbPath = `nested_subjects_v2/${folderKey}/${moduleKey}`;
-                            snap = await db.ref(dbPath).once('value');
-                            if (snap.exists()) document.getElementById('assessment-type-label').innerText = "LIVE ASSESSMENT V2";
-                        } else if (sourceParam === 'course_content') {
-                            dbPath = `course_content/${folderKey}/${moduleKey}`;
-                            snap = await db.ref(dbPath).once('value');
-                            if (snap.exists()) document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
-                        } else if (sourceParam === 'nested_subjects') {
-                            dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
-                            snap = await db.ref(dbPath).once('value');
-                        } else {
-                            dbPath = `course_content/${folderKey}/${moduleKey}`;
-                            snap = await db.ref(dbPath).once('value');
-                            if (snap.exists()) {
-                                document.getElementById('assessment-type-label').innerText = "PREMIUM COURSE TEST";
-                            } else {
-                                dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
-                                snap = await db.ref(dbPath).once('value');
-                            }
-                        }
+            try {
+                let dbPath = `subjects/${moduleKey}`;
+                if (folderKey) {
+                    if (dbVersion === '2') {
+                        dbPath = `nested_subjects_v2/${folderKey}/${moduleKey}`;
+                        document.getElementById('assessment-type-label').innerText = "LIVE ASSESSMENT V2";
                     } else {
-                        snap = await db.ref(dbPath).once('value');
-                    }
-
-                    if (snap && snap.exists()) {
-                        const data = snap.val();
-                        if (data.current_session_id) activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
-                        rawQuestions = data.questions?.data || data.questions || [];
-                        if (data.config && data.config.timeLimit) {
-                            totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
-                        }
+                        dbPath = `nested_subjects/${folderKey}/${moduleKey}`;
                     }
                 }
 
-                if(rawQuestions.length === 0) {
-                    return showModal("ERROR", "No questions found in this module.", "alert", () => returnToPrevious());
-                }
-
-                // 4. ANTI-REATTEMPT GATEKEEPER (Checks Local Storage FIRST, then Cloud)
-                if (!isRetake) {
-                    const cacheKeyScores = `agriq_user_scores_${user.uid}`;
-                    const localScoresStr = localStorage.getItem(cacheKeyScores);
-                    const localScores = localScoresStr ? JSON.parse(localScoresStr) : {};
-                    
-                    if (localScores[activeSessionId]) {
-                        return showModal("ATTEMPT EXHAUSTED", "You have already completed this test. Re-attempts are not permitted.", "alert", () => returnToPrevious());
-                    }
-
-                    if (navigator.onLine) {
-                        const attemptSnap = await db.ref(`students/${user.uid}/results/${activeSessionId}`).once('value');
-                        if (attemptSnap.exists()) {
-                            return showModal("ATTEMPT EXHAUSTED", "You have already completed this test. Re-attempts are not permitted.", "alert", () => returnToPrevious());
-                        }
-                    }
-                } else {
-                    document.getElementById('retake-badge').style.display = 'inline-block';
-                }
-
-                // 5. CHECK FOR SAVED PROGRESS (Resume Engine)
-                const savedProgress = localStorage.getItem(`test_progress_${activeSessionId}`);
+                const snap = await db.ref(dbPath).once('value');
                 
-                if (savedProgress) {
-                    const state = JSON.parse(savedProgress);
-                    questions = state.questions;
-                    userChoices = state.userChoices || {};
-                    markedQuestions = state.markedQuestions || {};
-                    currentIdx = state.currentIdx || 0;
-                    totalSecondsRemaining = state.timeLeft;
-
-                    document.getElementById('app-loader').classList.add('fade-out');
-                    document.getElementById('screen-select').classList.remove('active');
-                    document.getElementById('screen-online').classList.add('active');
+                if (snap.exists()) {
+                    const data = snap.val();
                     
-                    initUI();
-                    startGlobalTimer();
-                    return;
+                    if (data.current_session_id) {
+                        // ----------------------------------------------------
+                        // FIX: Ensure db-provided session ID gets _v2 appended
+                        // ----------------------------------------------------
+                        activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
+                    }
+
+                    const rawQuestions = data.questions?.data || data.questions || [];
+                    
+                    if (data.config && data.config.timeLimit) {
+                        totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
+                    }
+                    
+                    setupQuestions(rawQuestions);
+                } else {
+                    showModal("ERROR", "Module not found or not available.", "alert", () => window.location.href='courses.html');
                 }
-
-                // 6. New Test Setup
-                const processedQuestions = isRandomMode ? shuffleArray([...rawQuestions]) : [...rawQuestions];
-                questions = processedQuestions.map(q => {
-                    const opts = q.options || [];
-                    const finalOptions = isRandomMode ? shuffleArray([...opts]) : [...opts];
-                    return {
-                        ...q,
-                        displayQ: q.question || q.q,
-                        correct: q.answer || q.ans,
-                        shuffledOpts: finalOptions
-                    };
-                });
-
-                document.getElementById('app-loader').classList.add('fade-out');
-                document.getElementById('screen-select').classList.add('active');
-
             } catch (e) { 
-                console.error(e); 
-                showModal("ERROR", "Failed to load test. Please check your connection.", "alert", () => returnToPrevious());
+                console.error(e);
+                showModal("ERROR", "Failed to load test. Please check connection.", "alert", () => window.location.href='courses.html');
             }
         }
 
@@ -531,51 +479,57 @@
             return array;
         }
 
-        // --- BACK BUTTON / EXIT LOGIC ---
-        function requestExit() {
-            const isOnlineActive = document.getElementById('screen-online').classList.contains('active');
-            
-            if (isOnlineActive) {
-                isPaused = true; 
-                showModal(
-                    "PAUSE & EXIT", 
-                    "Do you want to save your progress and exit? You can resume this exact session later.", 
-                    "confirm", 
-                    saveAndExit,
-                    "SAVE & EXIT"
-                );
-            } else {
-                returnToPrevious();
+        function setupQuestions(dataArray) {
+            if (!dataArray || dataArray.length === 0) {
+                return showModal("EMPTY TEST", "There are no questions in this module.", "alert", () => window.location.href='courses.html');
             }
-        }
 
-        function saveAndExit() {
-            const progress = {
-                questions: questions,
-                userChoices: userChoices,
-                markedQuestions: markedQuestions,
-                currentIdx: currentIdx,
-                timeLeft: totalSecondsRemaining
-            };
-            localStorage.setItem(`test_progress_${activeSessionId}`, JSON.stringify(progress));
-            returnToPrevious();
-        }
+            // Check for saved progress FIRST
+            const savedProgress = localStorage.getItem(`test_progress_${activeSessionId}`);
+            let restoredQuestions = null;
 
-        // --- MODE HANDLERS ---
-        function startOnlineMode() {
-            document.getElementById('screen-select').classList.remove('active');
-            document.getElementById('screen-online').classList.add('active');
+            if (savedProgress) {
+                try {
+                    const parsed = JSON.parse(savedProgress);
+                    userChoices = parsed.userChoices || {};
+                    markedQuestions = parsed.markedQuestions || {};
+                    currentIdx = parsed.currentIdx || 0;
+                    if (parsed.totalSecondsRemaining && parsed.totalSecondsRemaining > 0) {
+                        totalSecondsRemaining = parsed.totalSecondsRemaining;
+                    }
+                    if (parsed.questions && parsed.questions.length > 0) {
+                        restoredQuestions = parsed.questions; // Grab exact previous question configuration
+                    }
+                } catch(e) {
+                    console.error("Could not restore saved progress.");
+                }
+            }
+
+            if (restoredQuestions) {
+                // Restore exact layout to prevent reshuffling on resume
+                questions = restoredQuestions;
+            } else {
+                // Brand new test: Process and shuffle based on switch
+                const processedQuestions = isRandomMode ? shuffleArray([...dataArray]) : [...dataArray];
+
+                questions = processedQuestions.map(q => {
+                    const opts = q.options || [];
+                    const finalOptions = isRandomMode ? shuffleArray([...opts]) : [...opts];
+                    
+                    return {
+                        ...q,
+                        displayQ: q.question || q.q,
+                        correct: q.answer || q.ans,
+                        shuffledOpts: finalOptions
+                    };
+                });
+            }
+
             initUI();
+            document.getElementById('app-loader').classList.add('fade-out');
             startGlobalTimer();
         }
 
-        function startOfflineMode() {
-            document.getElementById('screen-select').classList.remove('active');
-            document.getElementById('screen-offline').classList.add('active');
-            setTimeout(() => generateSecurePDF(), 400); 
-        }
-
-        // --- ONLINE ENGINE LOGIC ---
         function initUI() {
             const grid = document.getElementById('marker-grid');
             grid.innerHTML = '';
@@ -592,32 +546,52 @@
             showQ();
         }
 
-        function toggleMark() { markedQuestions[currentIdx] = !markedQuestions[currentIdx]; showQ(); }
+        function toggleMark() {
+            markedQuestions[currentIdx] = !markedQuestions[currentIdx];
+            saveProgress();
+            showQ();
+        }
 
         function togglePause() {
+            if (isReviewMode) return;
             isPaused = !isPaused;
             const overlay = document.getElementById('pause-overlay');
-            overlay.style.display = isPaused ? 'flex' : 'none';
+            if (isPaused) {
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+            saveProgress();
         }
 
         function showQ() {
             const q = questions[currentIdx];
+            
             document.getElementById('q-current-count').innerText = currentIdx + 1;
             document.getElementById('q-display').innerHTML = `<span style="color: var(--primary); font-weight: 800;">Q.${currentIdx + 1}</span> ${q.displayQ}`;
             
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active', 'done', 'marked');
-                if (markedQuestions[i]) p.classList.add('marked');
-                else if (userChoices[i] !== undefined && userChoices[i] !== null) p.classList.add('done');
-                if (i === currentIdx) p.classList.add('active');
+                
+                if (markedQuestions[i]) {
+                    p.classList.add('marked');
+                } else if (userChoices[i] !== undefined && userChoices[i] !== null) {
+                    p.classList.add('done');
+                }
+                
+                if (i === currentIdx) {
+                    p.classList.add('active');
+                }
             });
 
             const markBtn = document.getElementById('mark-btn');
             if (markedQuestions[currentIdx]) {
-                markBtn.style.background = 'var(--warning)'; markBtn.style.color = '#fff';
+                markBtn.style.background = 'var(--warning)';
+                markBtn.style.color = '#fff';
                 markBtn.innerHTML = 'MARKED <i data-lucide="bookmark-check" size="18"></i>';
             } else {
-                markBtn.style.background = '#fff'; markBtn.style.color = 'var(--warning)';
+                markBtn.style.background = '#fff';
+                markBtn.style.color = 'var(--warning)';
                 markBtn.innerHTML = 'MARK <i data-lucide="bookmark" size="18"></i>';
             }
 
@@ -627,8 +601,14 @@
                 const div = document.createElement('div');
                 div.className = `opt-box ${userChoices[currentIdx] === opt ? 'selected' : ''}`;
                 div.innerText = opt;
+                
                 div.onclick = () => { 
-                    userChoices[currentIdx] = (userChoices[currentIdx] === opt) ? null : opt;
+                    if (userChoices[currentIdx] === opt) {
+                        userChoices[currentIdx] = null; 
+                    } else {
+                        userChoices[currentIdx] = opt; 
+                    }
+                    saveProgress();
                     showQ(); 
                 };
                 optBox.appendChild(div);
@@ -639,255 +619,124 @@
         }
 
         function updateTimerUI() {
-            let h = Math.floor(totalSecondsRemaining / 3600).toString().padStart(2, '0');
-            let m = Math.floor((totalSecondsRemaining % 3600) / 60).toString().padStart(2, '0');
+            let m = Math.floor(totalSecondsRemaining / 60).toString().padStart(2, '0');
             let s = (totalSecondsRemaining % 60).toString().padStart(2, '0');
-            document.getElementById('q-timer').innerText = `${h}:${m}:${s}`;
+            document.getElementById('q-timer').innerText = `${m}:${s}`;
         }
 
         function startGlobalTimer() {
             updateTimerUI(); 
+            
             timer = setInterval(() => {
                 if (isPaused) return; 
-                if (totalSecondsRemaining <= 0) { clearInterval(timer); processFinalResults(); } 
-                else { totalSecondsRemaining--; updateTimerUI(); }
+
+                if (totalSecondsRemaining <= 0) { 
+                    clearInterval(timer); 
+                    processFinalResults(); 
+                } else {
+                    totalSecondsRemaining--;
+                    updateTimerUI();
+                    if (totalSecondsRemaining % 5 === 0) saveProgress();
+                }
             }, 1000);
         }
 
         function changeQ(dir) {
             let next = currentIdx + dir;
-            if (next >= 0 && next < questions.length) { currentIdx = next; showQ(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+            if (next >= 0 && next < questions.length) { 
+                currentIdx = next; 
+                saveProgress();
+                showQ(); 
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         function submitTest() { 
-            showModal("SUBMIT TEST", "Do you want to finalize and end this session? Once submitted, you cannot re-attempt this test.", "confirm", processFinalResults, "FINISH TEST"); 
+            let msg = "Do you want to end this session?";
+            if (isRetake) {
+                msg += "<br><br><span style='color:var(--text-dim); font-size:12px;'>You will earn full XP for this retake.</span>";
+            }
+            showModal("SUBMIT", msg, "confirm", processFinalResults); 
         }
 
         async function processFinalResults() {
             if(isSubmitting) return;
-            isSubmitting = true; clearInterval(timer);
+            isSubmitting = true;
+            clearInterval(timer);
+            clearProgress(); // Clear saved progress upon successful submission
 
             let correctCount = 0;
             const details = questions.map((q, i) => {
                 const userAns = (userChoices[i] === null || userChoices[i] === undefined) ? "SKIPPED" : userChoices[i];
-                if(userAns === q.correct) correctCount++;
-                return { question: q.displayQ, user: userAns, actual: q.correct, options: q.shuffledOpts };
+                const isCorrect = userAns === q.correct;
+                if(isCorrect) correctCount++;
+                
+                return { 
+                    question: q.displayQ, 
+                    user: userAns, 
+                    actual: q.correct,
+                    options: q.shuffledOpts 
+                };
             });
+
+            // Award full normal marks regardless of retake status
+            let earnedXP = correctCount;
 
             const resultData = { 
                 uid: auth.currentUser.uid,
-                score: correctCount, rawScore: correctCount, total: questions.length, 
+                score: earnedXP, 
+                rawScore: correctCount, 
+                total: questions.length, 
                 accuracy: Math.round((correctCount / (questions.length || 1)) * 100),
-                module: moduleKey, session_id: activeSessionId, timestamp: Date.now(), isRetake: isRetake
+                module: moduleKey, 
+                session_id: activeSessionId, 
+                timestamp: Date.now(),
+                isRetake: isRetake
             };
-
-            // 1. Clear saved resume progress
-            localStorage.removeItem(`test_progress_${activeSessionId}`);
-
-            // 2. Save locally for analysis.html
-            localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
-
-            // 3. INSTANT SCORE CACHE SYNC: Update local score cache immediately
-            const cacheKeyScores = `agriq_user_scores_${auth.currentUser.uid}`;
-            try {
-                const cachedScoresStr = localStorage.getItem(cacheKeyScores);
-                const cachedScores = cachedScoresStr ? JSON.parse(cachedScoresStr) : {};
-                cachedScores[activeSessionId] = { score: correctCount, timestamp: Date.now() };
-                localStorage.setItem(cacheKeyScores, JSON.stringify(cachedScores));
-            } catch(err) {
-                console.warn("Could not update local score cache:", err);
-            }
-
-            // 4. If Offline: Skip network calls and redirect instantly
-            if (!navigator.onLine) {
-                db.ref('leaderboard').push(resultData);
-                const userRef = db.ref(`students/${auth.currentUser.uid}`);
-                userRef.child(`results/${activeSessionId}`).set({ score: correctCount, timestamp: Date.now() });
-                window.location.replace('analysis.html');
-                return;
-            }
 
             try {
                 await db.ref('leaderboard').push(resultData);
+                
                 const userRef = db.ref(`students/${auth.currentUser.uid}`);
                 const snap = await userRef.once('value');
                 const d = snap.val() || {};
+                
                 const newTests = (d.testsTaken || 0) + 1;
                 
                 await userRef.update({
-                    totalScore: (d.totalScore || 0) + correctCount, testsTaken: newTests,
+                    totalScore: (d.totalScore || 0) + earnedXP,
+                    testsTaken: newTests,
                     avgAccuracy: Math.round(((d.avgAccuracy || 0) * (newTests - 1) + resultData.accuracy) / newTests)
                 });
+
+                await userRef.child(`results/${activeSessionId}`).set({
+                    score: earnedXP,
+                    timestamp: Date.now()
+                });
+
+                // NEW: Save details specifically for the analysis page using the session ID
+                localStorage.setItem(`analysis_${activeSessionId}`, JSON.stringify({ ...resultData, details }));
                 
-                await userRef.child(`results/${activeSessionId}`).set({ score: correctCount, timestamp: Date.now() });
+                // Existing local storage line (keep it just in case something else relies on it)
+                localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
+                
                 window.location.replace('analysis.html');
-            } catch (e) { window.location.replace('analysis.html'); }
-        }
-
-        // --- OFFLINE PDF ENGINE LOGIC ---
-        function generateSecurePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const margin = 20; 
-            const maxLineWidth = doc.internal.pageSize.width - (margin * 2);
-            const optionLabels = ["A", "B", "C", "D"];
-            let yPos = 25; 
-
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const formattedDay = today.toLocaleDateString('en-GB', { weekday: 'long' });
-
-            // --- COVER PAGE / INSTRUCTIONS ---
-            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(0, 45, 77);
-            doc.text("AgriQ", margin + 5, yPos);
-            const titleWidth = doc.getTextWidth("AgriQ ");
-            doc.setTextColor(0, 132, 255); doc.text("Pro", margin + 5 + titleWidth, yPos);
-            doc.setFontSize(12); doc.setTextColor(0, 132, 255);
-            doc.text(testType === 'sunday' ? "SUNDAY GRAND TEST" : "SECURE QUESTION PAPER", margin + maxLineWidth - 5, yPos, { align: "right" });
-            
-            yPos += 15;
-
-            // Top Info Box
-            doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.5);
-            doc.rect(margin, yPos, maxLineWidth, 28);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            doc.text(`Date: ${formattedDate}`, margin + 5, yPos + 7);
-            doc.text(`Day: ${formattedDay}`, margin + (maxLineWidth/2), yPos + 7);
-            doc.text(`Total Items: ${questions.length}`, margin + 5, yPos + 15);
-            doc.text(`Maximum Score: ${questions.length}`, margin + (maxLineWidth/2), yPos + 15);
-            doc.text("Candidate Code:", margin + 5, yPos + 23);
-            let boxX = margin + 5 + doc.getTextWidth("Candidate Code: ") + 2;
-            doc.setLineWidth(0.3);
-            for(let i=0; i<7; i++) { doc.rect(boxX + (i*6), yPos + 18, 6, 6); }
-            yPos += 40;
-
-            // Instructions Header
-            doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
-            doc.text("Essential Candidate Guidelines:", margin, yPos);
-            yPos += 2; doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2); doc.line(margin, yPos, margin + maxLineWidth, yPos); yPos += 6;
-
-            // Instructions Text
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            const instructions = [
-                "1. Every single question provided must be attempted. Prior to commencing, please inspect your test booklet thoroughly.",
-                "2. Ensure that your designated roll or examination number is accurately filled into the corresponding boxes.",
-                "3. For every item, you will find four possible choices. You are required to identify the single best option.",
-                "4. An identical weightage applies to all questions. There is absolutely no negative marking."
-            ];
-            instructions.forEach(inst => {
-                let splitInst = doc.splitTextToSize(inst, maxLineWidth - 5);
-                doc.text(splitInst, margin + 5, yPos);
-                yPos += (splitInst.length * 5) + 3;
-            });
-            yPos += 10;
-
-            // Notice Header
-            doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 80, 150);
-            doc.text("Legal Disclaimer & Notice:", margin, yPos);
-            yPos += 2; doc.setDrawColor(200, 200, 200); doc.line(margin, yPos, margin + maxLineWidth, yPos); yPos += 6;
-
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
-            const notices = [
-                "1. This examination material remains the exclusive intellectual property of AgriQ Pro, specifically curated for rigorous competitive exam simulations.",
-                "2. Capturing images, duplicating, or disseminating any portion of this document without explicit permission is a serious violation."
-            ];
-            notices.forEach(notice => {
-                let splitNotice = doc.splitTextToSize(notice, maxLineWidth - 5);
-                doc.text(splitNotice, margin + 5, yPos);
-                yPos += (splitNotice.length * 5) + 3;
-            });
-
-            doc.addPage();
-            yPos = 25;
-
-            // --- QUESTIONS LOOP ---
-            questions.forEach((item, index) => {
-                if (yPos > 260) { doc.addPage(); yPos = 25; }
-
-                const qText = `Q${index + 1}. ${item.displayQ || "Unknown Question"}`;
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); doc.setTextColor(0, 30, 50);
-                const splitQuestion = doc.splitTextToSize(qText, maxLineWidth);
-                doc.text(splitQuestion, margin, yPos);
-                yPos += (splitQuestion.length * 5) + 3;
-
-                doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-                
-                if (item.shuffledOpts && Array.isArray(item.shuffledOpts)) {
-                    const optionsToPrint = item.shuffledOpts.slice(0, 4); 
-                    const colWidth = (maxLineWidth - 5) / 2; 
-                    let optStartY = yPos; let rowMaxY = [0, 0]; 
-
-                    optionsToPrint.forEach((opt, optIndex) => {
-                        let row = Math.floor(optIndex / 2); let col = optIndex % 2; 
-                        let xPos = margin + 2 + (col * colWidth);
-                        let yOffset = row === 0 ? 0 : rowMaxY[0];
-                        let currentY = optStartY + yOffset;
-
-                        doc.setFont("helvetica", "bold"); doc.setTextColor(0, 132, 255);
-                        doc.text(`[${optionLabels[optIndex]}]`, xPos, currentY);
-                        
-                        doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 70);
-                        const optText = doc.splitTextToSize(`  ${opt}`, colWidth - 10);
-                        doc.text(optText, xPos + 5, currentY);
-
-                        let optHeight = (optText.length * 4.5) + 2;
-                        if (optHeight > rowMaxY[row]) rowMaxY[row] = optHeight;
-                    });
-                    yPos = optStartY + rowMaxY[0] + rowMaxY[1] + 2; 
-                }
-                yPos += 4;
-                doc.setDrawColor(240, 244, 248); doc.setLineWidth(0.5);
-                doc.line(margin, yPos, doc.internal.pageSize.width - margin, yPos);
-                yPos += 5;
-            });
-
-            // --- BORDERS & WATERMARK ---
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                const pW = doc.internal.pageSize.width;
-                const pH = doc.internal.pageSize.height;
-
-                doc.setDrawColor(0, 45, 77); doc.setLineWidth(0.8);
-                doc.rect(10, 10, pW - 20, pH - 20);
-                
-                doc.setGState(new doc.GState({opacity: 0.05})); 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(70);
-                const text1 = "AgriQ "; const text2 = "Pro";
-                const totalW = doc.getTextWidth(text1) + doc.getTextWidth(text2);
-                const rad = 45 * Math.PI / 180;
-                const startX = (pW / 2) - (totalW / 2) * Math.cos(rad);
-                const startY = (pH / 2) + (totalW / 2) * Math.sin(rad);
-                doc.setTextColor(0, 45, 77); doc.text(text1, startX, startY, { angle: 45 });
-                doc.setTextColor(0, 132, 255); doc.text(text2, startX + doc.getTextWidth(text1) * Math.cos(rad), startY - doc.getTextWidth(text1) * Math.sin(rad), { angle: 45 });
-                doc.setGState(new doc.GState({opacity: 1.0})); 
+            } catch (e) {
+                window.location.replace('analysis.html');
             }
-
-            const pdfBlob = doc.output('blob');
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-            document.getElementById('pdf-viewer').src = pdfUrl;
-            document.getElementById('pdf-loader').style.display = 'none';
         }
 
-        // --- UTILS ---
-        function showModal(title, text, type, onConfirm, confirmText = "CONFIRM") {
+        function showModal(title, text, type, onConfirm) {
             const m = document.getElementById('custom-modal');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-text').innerHTML = text;
-            document.getElementById('modal-confirm-btn').innerText = confirmText;
             m.style.display = 'flex';
-            
             document.getElementById('modal-confirm-btn').onclick = () => { m.style.display='none'; if(onConfirm) onConfirm(); };
-            document.getElementById('modal-cancel-btn').onclick = () => { m.style.display='none'; isPaused = false; };
-            
-            if(type === 'alert') {
-                document.getElementById('modal-cancel-btn').classList.add('hidden');
-                document.getElementById('modal-confirm-btn').style.flex = "1";
-            } else {
-                document.getElementById('modal-cancel-btn').classList.remove('hidden');
-                document.getElementById('modal-confirm-btn').style.flex = "1.5";
-            }
+            document.getElementById('modal-cancel-btn').onclick = () => m.style.display='none';
+            if(type === 'alert') document.getElementById('modal-cancel-btn').classList.add('hidden');
         }
+
+        lucide.createIcons();
     </script>
 </body>
 </html>
