@@ -714,7 +714,12 @@
                     timestamp: Date.now()
                 });
 
+                // NEW: Save details specifically for the analysis page using the session ID
+                localStorage.setItem(`analysis_${activeSessionId}`, JSON.stringify({ ...resultData, details }));
+                
+                // Existing local storage line (keep it just in case something else relies on it)
                 localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
+                
                 window.location.replace('analysis.html');
             } catch (e) {
                 window.location.replace('analysis.html');
