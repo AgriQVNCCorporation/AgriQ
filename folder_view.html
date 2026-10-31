@@ -6,7 +6,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
-    <title>AgriQ Pro | Folder View</title>
+    <!-- STRICT ANTI-CACHING TAGS -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <title>AgriQ Pro | Folder2 </title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -123,6 +128,9 @@
         .module-card:hover .play-btn { background: var(--primary); color: white; transform: scale(1.05); border-color: transparent;}
         
         /* Buttons Styling */
+        .play-btn.analyze-btn { background: rgba(0, 132, 255, 0.1); color: var(--primary); border-color: transparent; }
+        .module-card:hover .play-btn.analyze-btn { background: var(--primary); color: white; }
+
         .play-btn.retake-btn { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: transparent; }
         .module-card:hover .play-btn.retake-btn { background: var(--warning); color: white; }
         
@@ -162,7 +170,7 @@
 
     <header>
         <div class="back-btn" onclick="goBack()"><i data-lucide="chevron-left" size="20"></i></div>
-        <div class="folder-title" id="page-title">FOLDER <span>VIEW</span></div>
+        <div class="folder-title" id="page-title">FOLDER 2 <span>VIEW</span></div>
         <i data-lucide="refresh-cw" size="20" style="color:var(--text-dim); cursor:pointer; margin-right:5px;" onclick="forceRefreshFolder()" title="Force Sync from Cloud"></i>
         <i data-lucide="folder-open" size="22" style="color:var(--primary);"></i>
     </header>
@@ -234,7 +242,7 @@
                 "Are you sure you want to terminate this test?<br><br><span style='color:var(--danger); font-size:12px; font-weight:700;'>All unsubmitted progress will be lost.</span>",
                 () => {
                     localStorage.removeItem(`test_progress_${sessionId}`);
-                    renderModules(); // Re-render UI locally without DB read
+                    renderModules(); 
                     showToast("Test terminated.");
                 }
             );
@@ -242,7 +250,6 @@
 
         // --- START TEST FUNCTION ---
         window.startTest = function(subtopicKey, sourcePath, urlQueryAppend) {
-            // Include &source=sourcePath so test.html knows whether to read from nested_subjects or course_content
             window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&source=${sourcePath}&random=false${urlQueryAppend}`;
         };
 
@@ -264,10 +271,6 @@
             });
         });
 
-        /**
-         * Checks LocalStorage first for instant offline loading.
-         * If expired or missing, triggers a one-time Firebase fetch.
-         */
         function initDataWithCache() {
             const cacheKeyData = `agriq_folder_data_${folderKey}`;
             const cacheKeyScores = `agriq_user_scores_${currentUserUid}`;
@@ -286,7 +289,7 @@
                         userScores = JSON.parse(cachedScores);
                         renderModules();
                         hideLoader();
-                        return; // Exit early! Zero database reads used.
+                        return; 
                     } catch (e) {
                         console.warn("Cache parse failed, querying Firebase...", e);
                     }
@@ -296,11 +299,6 @@
             fetchFromFirebaseAndCache();
         }
 
-        /**
-         * Fetches data via one-time read (.once) from both department paths:
-         * 1) nested_subjects/{folderKey}
-         * 2) course_content/{folderKey}
-         */
         function fetchFromFirebaseAndCache() {
             const pScores = db.ref(`students/${currentUserUid}/results`).once('value');
             const pNested = db.ref(`nested_subjects/${folderKey}`).once('value');
@@ -311,34 +309,22 @@
                 mergedModules = [];
                 const seenKeys = new Set();
 
-                // 1. Process nested_subjects (Department A)
                 if (nestedSnap.exists()) {
                     nestedSnap.forEach(child => {
                         seenKeys.add(child.key);
-                        mergedModules.push({
-                            key: child.key,
-                            source: 'nested_subjects',
-                            ...child.val()
-                        });
+                        mergedModules.push({ key: child.key, source: 'nested_subjects', ...child.val() });
                     });
                 }
 
-                // 2. Process course_content (Department B)
                 if (courseSnap.exists()) {
                     courseSnap.forEach(child => {
-                        // Avoid duplicates if both nodes happen to contain the same module key
                         if (!seenKeys.has(child.key)) {
                             seenKeys.add(child.key);
-                            mergedModules.push({
-                                key: child.key,
-                                source: 'course_content',
-                                ...child.val()
-                            });
+                            mergedModules.push({ key: child.key, source: 'course_content', ...child.val() });
                         }
                     });
                 }
 
-                // Cache results in localStorage
                 localStorage.setItem(`agriq_user_scores_${currentUserUid}`, JSON.stringify(userScores));
                 localStorage.setItem(`agriq_folder_data_${folderKey}`, JSON.stringify(mergedModules));
                 localStorage.setItem(`agriq_folder_time_${currentUserUid}_${folderKey}`, Date.now().toString());
@@ -352,9 +338,6 @@
             });
         }
 
-        /**
-         * Manual Refresh utility for users to force a cloud re-sync
-         */
         function forceRefreshFolder() {
             if (!currentUserUid) return;
             showToast("Syncing latest topics from cloud...");
@@ -363,9 +346,6 @@
             fetchFromFirebaseAndCache();
         }
 
-        /**
-         * Renders the modules into the DOM using local or freshly cached data
-         */
         function renderModules() {
             const container = document.getElementById('modules-container');
             container.innerHTML = "";
@@ -389,7 +369,6 @@
                 
                 const displayName = config.displayName || subtopicKey.replace(/_/g, ' ').toUpperCase();
                 
-                // Support direct arrays, data arrays, or manual config counts
                 let qCount = config.questionCount || 0;
                 if (!qCount && data.questions) {
                     qCount = Array.isArray(data.questions) ? data.questions.length : (data.questions.data ? data.questions.data.length : 0);
@@ -421,7 +400,17 @@
 
                 if (testState === 'completed') {
                     badgesHtml += `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>`;
-                    buttonHtml = `<div class="play-btn retake-btn" title="Retake Test" onclick="startTest('${subtopicKey}', '${sourcePath}', '&retake=true')"><i data-lucide="rotate-ccw" size="20"></i></div>`;
+                    
+                    buttonHtml = `
+                        <div style="display: flex; gap: 8px;">
+                            <div class="play-btn analyze-btn" title="Analyze Test" onclick="event.stopPropagation(); window.location.href='analysis.html?session=${targetSessionId}'">
+                                <i data-lucide="bar-chart-2" size="20"></i>
+                            </div>
+                            <div class="play-btn retake-btn" title="Retake Test" onclick="event.stopPropagation(); startTest('${subtopicKey}', '${sourcePath}', '&retake=true')">
+                                <i data-lucide="rotate-ccw" size="20"></i>
+                            </div>
+                        </div>
+                    `;
                     urlQueryAppend = '&retake=true';
                 } else if (testState === 'in_progress') {
                     badgesHtml += `<div class="stat-badge resume-badge"><i data-lucide="pause-circle" size="12"></i> In Progress</div>`;
