@@ -105,13 +105,6 @@
         .data-row { display: flex; align-items: center; gap: 12px; font-size: 13px; padding: 14px; background: var(--bg); border-radius: 16px; margin-top: 8px; }
         .data-label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); min-width: 60px; font-weight: 800; }
 
-        .view-options-btn { margin-top: 15px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary); text-decoration: none; background: var(--primary-glow); padding: 8px 14px; border-radius: 10px; transition: 0.2s; font-family: 'JetBrains Mono'; }
-        .view-options-btn:active { transform: scale(0.95); }
-
-        .whatsapp-notice { background: rgba(37, 211, 102, 0.1); border: 1.5px solid rgba(37, 211, 102, 0.3); border-radius: 20px; padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; margin-top: 25px; }
-        .w-icon { background: #25D366; color: white; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .whatsapp-notice p { margin: 0; font-size: 13px; font-weight: 800; color: #166534; line-height: 1.5; }
-
         .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
         .btn-action { padding: 20px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; font-size: 15px; }
         .btn-action.primary { background: var(--primary); color: #fff; box-shadow: 0 10px 25px var(--primary-glow); }
@@ -216,8 +209,6 @@
 
         <div id="review-container"></div>
 
-      
-
         <div class="btn-group">
             <button class="btn-action primary" onclick="generateFastPDF()">
                 <i data-lucide="download" size="20"></i> DOWNLOAD REPORT
@@ -237,6 +228,20 @@
 
         let currentExamMode = 'MCAER'; // Default mode
 
+        // NEW: Helper function to get the correct result data based on the attempt ID
+        function getResultData() {
+            const attemptId = localStorage.getItem('current_analysis_attempt_id');
+            if (attemptId) {
+                const specificData = localStorage.getItem(`agriq_result_${attemptId}`);
+                if (specificData) {
+                    return JSON.parse(specificData);
+                }
+            }
+            // Fallback to the legacy last_result if specific attempt is not found
+            const legacyData = localStorage.getItem('agriq_last_result');
+            return legacyData ? JSON.parse(legacyData) : null;
+        }
+
         function loadOfflineResults() {
             const cachedName = localStorage.getItem('agriq_cached_username') || "STUDENT";
             document.getElementById('user-tag').innerText = cachedName.toUpperCase();
@@ -255,7 +260,6 @@
             document.getElementById('tab-mpsc').classList.remove('active');
             document.getElementById('tab-' + mode.toLowerCase()).classList.add('active');
             
-            // Adjust Primary Button Color for coherence
             const dlBtn = document.querySelector('.btn-action.primary');
             if (mode === 'MPSC') {
                 dlBtn.style.background = '#0f172a';
@@ -269,7 +273,8 @@
         }
 
         function loadAnalysis() {
-            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            // NEW: Fetch data using the specific attempt ID helper
+            const data = getResultData();
             if (!data) return; 
 
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
@@ -396,15 +401,13 @@
             });
         }
 
-        // =========================================================================
-        // HIGH SPEED & INTELLIGENT THEMED PDF GENERATOR
-        // =========================================================================
         async function generateFastPDF() {
             if (!window.jspdf || !window.html2canvas) {
                 alert("Missing dependencies. Ensure internet connectivity."); return;
             }
 
-            const data = JSON.parse(localStorage.getItem('agriq_last_result'));
+            // NEW: Fetch data using the specific attempt ID helper
+            const data = getResultData();
             if (!data || !data.details) return;
             const missedQs = data.details.filter(item => item.user !== item.actual);
             if (missedQs.length === 0) {
@@ -418,13 +421,12 @@
             if (window.lucide) lucide.createIcons();
 
             try {
-                // Dimensions & Theme configuration
                 const A4_WIDTH = 794; 
                 const A4_HEIGHT = 1123;
-                const USABLE_HEIGHT = 1050; // Increased to fix blank space issues
+                const USABLE_HEIGHT = 1050; 
                 
                 const isMPSC = currentExamMode === 'MPSC';
-                const themeColor = isMPSC ? '#0f172a' : '#004b87'; // Black for MPSC, Blue for MCAER
+                const themeColor = isMPSC ? '#0f172a' : '#004b87'; 
                 const pdfTitle = isMPSC ? 'MPSC PRELIMS - 2026' : 'MCAER PG CET - 2026';
 
                 const container = document.createElement('div');
@@ -435,18 +437,15 @@
 
                 const pages = [];
 
-                // --- PAGE 1: COVER & INSTRUCTIONS ONLY ---
                 let coverPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT, themeColor);
                 let coverContent = coverPage.querySelector('.page-content');
                 coverContent.innerHTML = generateCoverHTML(data, missedQs.length, themeColor, pdfTitle);
                 pages.push(coverPage);
                 container.appendChild(coverPage);
 
-                // --- PAGE 2+ : MCQs ONLY ---
                 let currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT, themeColor);
                 let contentArea = currentPdfPage.querySelector('.page-content');
                 
-                // Add a small header for continuity on MCQ pages
                 contentArea.innerHTML = `<div style="font-size:12px; font-weight:bold; color:${themeColor}; border-bottom:1px solid ${themeColor}; padding-bottom:8px; margin-bottom:15px; text-align:right;">AgriQ Pro | ${pdfTitle}</div>`;
                 container.appendChild(currentPdfPage);
 
@@ -455,22 +454,19 @@
                     qDiv.innerHTML = generateQuestionHTML(missedQs[i], i + 1, themeColor);
                     contentArea.appendChild(qDiv);
 
-                    // Check if question breaks layout
                     if (contentArea.scrollHeight > USABLE_HEIGHT) {
-                        contentArea.removeChild(qDiv); // Overflow detected, remove from current
-                        pages.push(currentPdfPage); // Save current page
+                        contentArea.removeChild(qDiv); 
+                        pages.push(currentPdfPage); 
                         
-                        // Setup new page
                         currentPdfPage = createBlankA4Page(A4_WIDTH, A4_HEIGHT, themeColor);
                         contentArea = currentPdfPage.querySelector('.page-content');
                         contentArea.innerHTML = `<div style="font-size:12px; font-weight:bold; color:${themeColor}; border-bottom:1px solid ${themeColor}; padding-bottom:8px; margin-bottom:15px; text-align:right;">AgriQ Pro | ${pdfTitle}</div>`;
                         container.appendChild(currentPdfPage);
-                        contentArea.appendChild(qDiv); // Add overflowed question here safely
+                        contentArea.appendChild(qDiv); 
                     }
                 }
                 pages.push(currentPdfPage); 
 
-                // Add footer pagination tags
                 pages.forEach((p, idx) => {
                     const footer = document.createElement('div');
                     footer.style.cssText = `position:absolute; bottom:28px; left:0; width:100%; text-align:center; font-size:11px; font-weight:bold; color:${themeColor}; font-family:sans-serif;`;
@@ -478,21 +474,18 @@
                     p.appendChild(footer);
                 });
 
-                // Init jsPDF
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-                // Loop Pages - Render High Speed (JPEG + scale 1.5)
                 for (let i = 0; i < pages.length; i++) {
                     const canvas = await html2canvas(pages[i], { 
-                        scale: 1.5, // 1.5 is visually perfect for A4 but vastly faster than 2.0
+                        scale: 1.5, 
                         useCORS: true, 
                         logging: false, 
                         width: A4_WIDTH, 
                         height: A4_HEIGHT 
                     });
                     
-                    // JPEG encoding is substantially faster and uses far less memory than PNG
                     const imgData = canvas.toDataURL('image/jpeg', 0.95); 
                     
                     if (i > 0) pdf.addPage();
@@ -512,7 +505,6 @@
             }
         }
 
-        // Helper: Skeleton A4 Page Engine
         function createBlankA4Page(width, height, themeColor) {
             const page = document.createElement('div');
             page.style.cssText = `width:${width}px; height:${height}px; background:#fff; position:relative; box-sizing:border-box; overflow:hidden;`;
@@ -525,7 +517,6 @@
             return page;
         }
 
-        // Helper: Full Page 1 HTML
         function generateCoverHTML(data, missedCount, themeColor, titleRight) {
             const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             const displayScore = (data.isRetake && data.rawScore !== undefined) ? data.rawScore : data.score;
@@ -565,7 +556,6 @@
             `;
         }
 
-        // Helper: Tightly Packed MCQ HTML
         function generateQuestionHTML(item, qNum, themeColor) {
             const qText = DOMPurify.sanitize(item.question || "");
             let html = `
