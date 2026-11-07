@@ -355,6 +355,13 @@
                 return;
             }
 
+            // Natural Sort added here to fix the "Chapter 10 vs Chapter 9" ordering issue
+            mergedModules.sort((a, b) => {
+                const nameA = (a.config && a.config.displayName) ? a.config.displayName : a.key;
+                const nameB = (b.config && b.config.displayName) ? b.config.displayName : b.key;
+                return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
             mergedModules.forEach(data => {
                 const subtopicKey = data.key;
                 const sourcePath = data.source;
