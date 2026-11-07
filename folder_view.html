@@ -240,10 +240,10 @@
             window.location.href = `test.html?folder=${folderKey}&mod=${subtopicKey}&source=${sourcePath}&random=false${urlQueryAppend}`;
         };
 
-        // NEW: Function to safely navigate to analysis avoiding URL parameter loss in TrebEdit
-        window.openAnalysis = function(e, targetSessionId) {
+        // NEW: Stores the specific attempt ID to pass to analysis.html safely
+        window.openAnalysis = function(e, attemptId) {
             e.stopPropagation();
-            localStorage.setItem('agriq_view_session', targetSessionId);
+            localStorage.setItem('current_analysis_attempt_id', attemptId);
             window.location.href = 'analysis.html';
         };
 
@@ -355,7 +355,6 @@
                 return;
             }
 
-            // Natural Sort added here to fix the "Chapter 10 vs Chapter 9" ordering issue
             mergedModules.sort((a, b) => {
                 const nameA = (a.config && a.config.displayName) ? a.config.displayName : a.key;
                 const nameB = (b.config && b.config.displayName) ? b.config.displayName : b.key;
@@ -401,13 +400,13 @@
                 if (testState === 'completed') {
                     badgesHtml += `<div class="stat-badge score-badge"><i data-lucide="check-circle-2" size="12"></i> Score: ${scoreText}</div>`;
                     
-                    // NEW LOGIC: ONLY show the Analyze button if the detailed data actually exists in memory.
-                    const detailedAnalysisAvailable = localStorage.getItem(`analysis_${targetSessionId}`) !== null;
+                    // CHECK FOR UNIQUE ATTEMPT ID instead of generic session
+                    const latestAttemptId = localStorage.getItem(`latest_attempt_${targetSessionId}`);
                     
                     let analyzeButtonHtml = '';
-                    if (detailedAnalysisAvailable) {
+                    if (latestAttemptId) {
                         analyzeButtonHtml = `
-                            <div class="play-btn analyze-btn" title="Analyze Test" onclick="openAnalysis(event, '${targetSessionId}')">
+                            <div class="play-btn analyze-btn" title="Analyze Test" onclick="openAnalysis(event, '${latestAttemptId}')">
                                 <i data-lucide="bar-chart-2" size="20"></i>
                             </div>
                         `;
