@@ -51,7 +51,6 @@
         }
         #app-loader.fade-out { opacity: 0; visibility: hidden; pointer-events: none; transition: 0.6s; }
         
-        /* PAUSE OVERLAY STYLES */
         #pause-overlay {
             position: fixed; inset: 0; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(15px);
             z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
@@ -108,6 +107,47 @@
             letter-spacing: 1px;
             margin-bottom: 10px;
             display: block;
+        }
+
+        /* NEW UI FOR EXAM BADGE & MATCH PAIRS */
+        .exam-badge {
+            float: right;
+            background: var(--primary-glow);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-style: italic;
+            font-weight: 800;
+            display: none; /* Hidden by default */
+        }
+
+        #q-display {
+            font-size: 17px; 
+            font-weight: 700; 
+            line-height: 1.6; 
+            color: var(--text-main);
+            white-space: pre-wrap; /* Forces \n to render as actual line breaks */
+        }
+
+        .match-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px dashed #cbd5e1;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .match-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .retake-badge {
@@ -194,8 +234,9 @@
             <span id="q-number" class="q-number-label">
                 QUESTION <span id="q-current-count">--</span> OF <span id="q-total-count">--</span>
                 <span id="retake-badge" class="retake-badge">RETAKE</span>
+                <span id="exam-badge" class="exam-badge"></span>
             </span>
-            <div id="q-display" style="font-size: 17px; font-weight: 700; line-height: 1.6; color: var(--text-main);">Preparing your assessment...</div>
+            <div id="q-display">Preparing your assessment...</div>
         </div>
 
         <div id="opts-display"></div>
@@ -237,11 +278,9 @@
         const reviewIndexParam = params.get('reviewIndex');
         const isReviewMode = reviewIndexParam !== null;
         
-        // Grab the version and random parameters from the URL
         const dbVersion = params.get('v');
         const isRandomMode = params.get('random') === 'true';
         
-        // Initialize Active Session ID
         let activeSessionId = folderKey ? `${folderKey}_${moduleKey}` : moduleKey; 
         if (dbVersion === '2') {
             activeSessionId += '_v2';
@@ -254,7 +293,6 @@
         let isSubmitting = false;
         let isPaused = false;
 
-        // Auto-save function to persist test progress
         function saveProgress() {
             if (isReviewMode || isSubmitting) return;
             const progress = {
@@ -273,7 +311,6 @@
             localStorage.removeItem(`test_progress_${activeSessionId}`);
         }
 
-        // Comprehensive background event handling
         function handleBackgroundChange() {
             if (!isSubmitting && !isPaused && !isReviewMode) {
                 togglePause();
@@ -291,13 +328,10 @@
             document.getElementById('retake-badge').style.display = 'inline-block';
         }
 
-        // --- BACK BUTTON INTERCEPTION --- //
         window.history.pushState({ page: 'test' }, null, window.location.href);
-
         window.addEventListener('popstate', function(event) {
             if (!isSubmitting && !isReviewMode) {
                 saveProgress(); 
-                
                 let returnUrl = 'folder_view.html';
                 if (folderKey) {
                     returnUrl += `?folder=${folderKey}`;
@@ -305,7 +339,6 @@
                         returnUrl += `&v=2`;
                     }
                 }
-                
                 window.location.replace(returnUrl);
             } else if (isReviewMode) {
                 window.location.replace('analysis.html');
@@ -329,11 +362,9 @@
             }
         });
 
-        // ---------------- REVIEW MODE LOGIC ---------------- //
         function setupReviewMode(index) {
             document.getElementById('app-loader').classList.add('fade-out');
             
-            // Read from the specific specific attempt first, fallback to generic last_result
             const currentAttemptId = localStorage.getItem('current_analysis_attempt_id');
             const storedData = currentAttemptId 
                 ? localStorage.getItem(`agriq_result_${currentAttemptId}`) 
@@ -363,13 +394,28 @@
             document.getElementById('user-display-name').innerText = `Q${index + 1} OVERVIEW`;
 
             document.getElementById('q-number').innerHTML = `QUESTION <span style="color:var(--text-main);">${index + 1}</span>`;
-            document.getElementById('q-display').innerHTML = qData.question;
+            
+            // Build Review Question View
+            let qHTML = qData.question;
+            if (qData.pairs && qData.pairs.length > 0) {
+                let leftCol = '', rightCol = '';
+                qData.pairs.forEach(pair => {
+                    leftCol += `<div>${pair.left}</div>`;
+                    rightCol += `<div>${pair.right}</div>`;
+                });
+                qHTML += `
+                <div class="match-grid">
+                    <div class="match-col">${leftCol}</div>
+                    <div class="match-col">${rightCol}</div>
+                </div>`;
+            }
+            document.getElementById('q-display').innerHTML = qHTML;
 
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
             
             if (opts.length === 0) {
-                optBox.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-dim); font-size:14px; font-weight:700;">Option details are not available.<br>Please take a new test to see them.</div>';
+                optBox.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-dim); font-size:14px; font-weight:700;">Option details are not available.</div>';
             } else {
                 opts.forEach(opt => {
                     const div = document.createElement('div');
@@ -389,7 +435,6 @@
                         div.style.color = 'var(--danger)';
                         div.innerHTML += ' <i data-lucide="x-circle" size="18" style="float:right;"></i>';
                     }
-                    
                     optBox.appendChild(div);
                 });
             }
@@ -405,7 +450,6 @@
             lucide.createIcons();
         }
 
-        // ---------------- NORMAL TEST LOGIC ---------------- //
         async function loadQuestions() {
             if (!moduleKey) return window.location.href = 'courses.html';
 
@@ -415,14 +459,10 @@
                     if (storedQs) {
                         document.getElementById('assessment-type-label').innerText = "🔥 QUICK REVISION";
                         document.getElementById('assessment-type-label').style.color = "var(--warning)";
-                        
                         const parsedQs = JSON.parse(storedQs);
-                        
                         localStorage.removeItem('isRevision');
                         localStorage.removeItem('revisionQuestions');
-
                         totalSecondsRemaining = parsedQs.length * 60;
-                        
                         setupQuestions(parsedQs);
                         return; 
                     } else {
@@ -448,17 +488,13 @@
                 
                 if (snap.exists()) {
                     const data = snap.val();
-                    
                     if (data.current_session_id) {
                         activeSessionId = dbVersion === '2' ? data.current_session_id + '_v2' : data.current_session_id;
                     }
-
                     const rawQuestions = data.questions?.data || data.questions || [];
-                    
                     if (data.config && data.config.timeLimit) {
                         totalSecondsRemaining = parseInt(data.config.timeLimit, 10);
                     }
-                    
                     setupQuestions(rawQuestions);
                 } else {
                     showModal("ERROR", "Module not found or not available.", "alert", () => window.location.href='courses.html');
@@ -561,21 +597,49 @@
             saveProgress();
         }
 
+        // --- NEW UPDATED QUESTION RENDER FUNCTION --- //
         function showQ() {
             const q = questions[currentIdx];
             
             document.getElementById('q-current-count').innerText = currentIdx + 1;
-            document.getElementById('q-display').innerHTML = `<span style="color: var(--primary); font-weight: 800;">Q.${currentIdx + 1}</span> ${q.displayQ}`;
             
+            // EXAM BADGE LOGIC
+            const examBadge = document.getElementById('exam-badge');
+            if (q.exam) {
+                examBadge.innerText = q.exam;
+                examBadge.style.display = 'inline-block';
+            } else {
+                examBadge.style.display = 'none';
+            }
+
+            // BUILD QUESTION HTML
+            let qHTML = `<span style="color: var(--primary); font-weight: 800;">Q.${currentIdx + 1}</span> ${q.displayQ}`;
+            
+            // ADD MATCH THE PAIRS GRID IF DATA EXISTS
+            if (q.pairs && q.pairs.length > 0) {
+                let leftCol = '';
+                let rightCol = '';
+                q.pairs.forEach(pair => {
+                    leftCol += `<div>${pair.left}</div>`;
+                    rightCol += `<div>${pair.right}</div>`;
+                });
+                qHTML += `
+                <div class="match-grid">
+                    <div class="match-col">${leftCol}</div>
+                    <div class="match-col">${rightCol}</div>
+                </div>`;
+            }
+            
+            document.getElementById('q-display').innerHTML = qHTML;
+            
+            // UPDATE TRACKER PILLS
             document.querySelectorAll('.q-pill').forEach((p, i) => {
                 p.classList.remove('active', 'done', 'marked');
-                
                 if (markedQuestions[i]) {
                     p.classList.add('marked');
                 } else if (userChoices[i] !== undefined && userChoices[i] !== null) {
                     p.classList.add('done');
                 }
-                
                 if (i === currentIdx) {
                     p.classList.add('active');
                 }
@@ -592,6 +656,7 @@
                 markBtn.innerHTML = 'MARK <i data-lucide="bookmark" size="18"></i>';
             }
 
+            // RENDER OPTIONS
             const optBox = document.getElementById('opts-display');
             optBox.innerHTML = '';
             q.shuffledOpts.forEach(opt => {
@@ -623,10 +688,8 @@
 
         function startGlobalTimer() {
             updateTimerUI(); 
-            
             timer = setInterval(() => {
                 if (isPaused) return; 
-
                 if (totalSecondsRemaining <= 0) { 
                     clearInterval(timer); 
                     processFinalResults(); 
@@ -670,6 +733,7 @@
                 
                 return { 
                     question: q.displayQ, 
+                    pairs: q.pairs || [],
                     user: userAns, 
                     actual: q.correct,
                     options: q.shuffledOpts 
@@ -677,8 +741,6 @@
             });
 
             let earnedXP = correctCount;
-
-            // GENERATE UNIQUE ATTEMPT ID
             const attemptId = 'attempt_' + Date.now();
 
             const resultData = { 
@@ -696,13 +758,11 @@
 
             try {
                 await db.ref('leaderboard').push(resultData);
-                
                 const userRef = db.ref(`students/${auth.currentUser.uid}`);
                 const snap = await userRef.once('value');
                 const d = snap.val() || {};
                 
                 const newTests = (d.testsTaken || 0) + 1;
-                
                 await userRef.update({
                     totalScore: (d.totalScore || 0) + earnedXP,
                     testsTaken: newTests,
@@ -714,16 +774,9 @@
                     timestamp: Date.now()
                 });
 
-                // NEW: Store the generated ID for the folder view to read
                 localStorage.setItem(`latest_attempt_${activeSessionId}`, attemptId);
-
-                // NEW: Save details using the ATTEMPT ID so analysis page targets this specific run
                 localStorage.setItem(`agriq_result_${attemptId}`, JSON.stringify({ ...resultData, details }));
-                
-                // Set the current analysis target so it loads instantly upon redirect
                 localStorage.setItem('current_analysis_attempt_id', attemptId);
-                
-                // Keep the old key populated as a fallback
                 localStorage.setItem('agriq_last_result', JSON.stringify({ ...resultData, details }));
                 
                 window.location.replace('analysis.html');
